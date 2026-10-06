@@ -1,0 +1,33 @@
+# dependencies and build output
+node_modules/
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+.coverage
+htmlcov/
+coverage/
+dist/
+build/
+.next/
+.expo/
+.vite/
+*.tsbuildinfo
+
+# secrets and local runtime
+.env
+.env.*
+*.pem
+*.key
+*.log
+*.bak
+*.bak.*
+.DS_Store
+
+# local agent/runtime artifacts
+.claude/checkpoints/
+.claude/learning/snapshots/
+ui-shots/
