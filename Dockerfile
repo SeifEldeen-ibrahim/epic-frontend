@@ -19,8 +19,11 @@ ARG APP_GID
 COPY . .
 RUN chown -R ${APP_UID}:${APP_GID} /app
 USER ${APP_UID}:${APP_GID}
+# The runtime user has no writable HOME; keep npm's cache in /tmp.
+ENV npm_config_cache=/tmp/.npm npm_config_update_notifier=false
 EXPOSE 8080
-CMD ["npm", "run", "dev"]
+# The bind mount hides the image node_modules; install from the lockfile on first start.
+CMD ["sh", "-c", "[ -x node_modules/.bin/vite ] || npm ci --no-audit --no-fund; exec npm run dev"]
 
 # --- build: type-check and produce static assets ----------------------------
 FROM deps AS build

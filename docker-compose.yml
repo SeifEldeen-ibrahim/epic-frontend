@@ -12,8 +12,9 @@ services:
         APP_GID: "${TENX_HOST_GID:-1000}"
     user: "${TENX_HOST_UID:-1000}:${TENX_HOST_GID:-1000}"
     volumes:
+      # node_modules is a plain (git-ignored) directory inside this bind mount, never a
+      # volume mount point, so the declared install (`npm ci`) can replace it.
       - .:/app
-      - frontend_node_modules:/app/node_modules
     security_opt:
       - no-new-privileges:true
     healthcheck:
@@ -23,5 +24,3 @@ services:
       start_period: 120s
       retries: 12
 
-volumes:
-  frontend_node_modules:
