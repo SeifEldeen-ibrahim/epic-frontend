@@ -1,0 +1,26 @@
+# Frontend component stack. Included from the control docker-compose.yml;
+# relative paths resolve against this directory (frontend/).
+# Task runtimes (TENX_PROXY_PORT set) build the Vite `dev` target; otherwise
+# the target is empty and the final static nginx stage is built.
+services:
+  frontend:
+    build:
+      context: .
+      target: "${TENX_PROXY_PORT:+dev}"
+      args:
+        APP_UID: "${TENX_HOST_UID:-1000}"
+        APP_GID: "${TENX_HOST_GID:-1000}"
+    user: "${TENX_HOST_UID:-1000}:${TENX_HOST_GID:-1000}"
+    volumes:
+      # node_modules is a plain (git-ignored) directory inside this bind mount, never a
+      # volume mount point, so the declared install (`npm ci`) can replace it.
+      - .:/app
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/ >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      start_period: 120s
+      retries: 12
+
