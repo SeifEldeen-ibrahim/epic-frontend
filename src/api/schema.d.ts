@@ -55,6 +55,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/calls/{call_id}/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Call-state stream (Server-Sent Events, `event: call`) */
+        get: operations["streamCallEvents"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/health": {
         parameters: {
             query?: never;
@@ -76,10 +93,34 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /**
+         * CallEvent
+         * @description One `event: call` message on the call-state stream.
+         */
+        CallEvent: {
+            /** End Reason */
+            end_reason: string | null;
+            /** Language */
+            language: string | null;
+            /** Outcome */
+            outcome: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "live" | "ended";
+            /**
+             * Type
+             * @constant
+             */
+            type: "state";
+        };
         /** CallStatusResponse */
         CallStatusResponse: {
             /** End Reason */
             end_reason: string | null;
+            /** Language */
+            language: string | null;
             /** Outcome */
             outcome: string | null;
             /**
@@ -280,6 +321,49 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CallStatusResponse"];
+                };
+            };
+            /** @description No such call. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotFoundResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    streamCallEvents: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Call-Secret"?: string | null;
+            };
+            path: {
+                call_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description text/event-stream of `event: call` messages carrying a CallEvent; the current state first, then changes, comment heartbeats, closed after `ended`. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CallEvent"];
+                    "text/event-stream": unknown;
                 };
             };
             /** @description No such call. */

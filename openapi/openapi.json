@@ -1,6 +1,66 @@
 {
   "components": {
     "schemas": {
+      "CallEvent": {
+        "description": "One `event: call` message on the call-state stream.",
+        "properties": {
+          "end_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End Reason"
+          },
+          "language": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language"
+          },
+          "outcome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Outcome"
+          },
+          "status": {
+            "enum": [
+              "live",
+              "ended"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "type": {
+            "const": "state",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "status",
+          "outcome",
+          "end_reason",
+          "language"
+        ],
+        "title": "CallEvent",
+        "type": "object"
+      },
       "CallStatusResponse": {
         "properties": {
           "end_reason": {
@@ -13,6 +73,17 @@
               }
             ],
             "title": "End Reason"
+          },
+          "language": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language"
           },
           "outcome": {
             "anyOf": [
@@ -37,7 +108,8 @@
         "required": [
           "status",
           "outcome",
-          "end_reason"
+          "end_reason",
+          "language"
         ],
         "title": "CallStatusResponse",
         "type": "object"
@@ -410,6 +482,76 @@
           }
         },
         "summary": "End a call (caller hang-up)",
+        "tags": [
+          "calls"
+        ]
+      }
+    },
+    "/api/calls/{call_id}/events": {
+      "get": {
+        "operationId": "streamCallEvents",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "call_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Call Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Call-Secret",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Call-Secret"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CallEvent"
+                }
+              },
+              "text/event-stream": {}
+            },
+            "description": "text/event-stream of `event: call` messages carrying a CallEvent; the current state first, then changes, comment heartbeats, closed after `ended`."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundResponse"
+                }
+              }
+            },
+            "description": "No such call."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Call-state stream (Server-Sent Events, `event: call`)",
         "tags": [
           "calls"
         ]
