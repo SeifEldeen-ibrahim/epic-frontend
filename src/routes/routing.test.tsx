@@ -1,7 +1,7 @@
 import { QueryClientProvider } from '@tanstack/react-query'
 import { cleanup, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createQueryClient } from '../api/queryClient'
 import { App } from '../App'
 
@@ -9,7 +9,19 @@ vi.mock('../api/client', () => ({
   api: { GET: vi.fn(() => new Promise(() => {})) },
 }))
 
-afterEach(cleanup)
+beforeEach(() => {
+  vi.stubGlobal('RTCPeerConnection', class {})
+  vi.stubGlobal('isSecureContext', true)
+  Object.defineProperty(navigator, 'mediaDevices', {
+    value: { getUserMedia: vi.fn() },
+    configurable: true,
+  })
+})
+
+afterEach(() => {
+  cleanup()
+  vi.unstubAllGlobals()
+})
 
 function renderAt(path: string) {
   return render(
@@ -28,12 +40,17 @@ describe('routing', () => {
     expect(document.title).toBe('Call · EPIC Voice Agent')
   })
 
-  it('renders the call page honestly, with no call button', async () => {
+  it('renders the idle call page with the Call button', async () => {
     renderAt('/call')
-    expect(await screen.findByText('Calls are recorded.')).toBeInTheDocument()
+    expect(await screen.findByTestId('call-state-idle')).toBeInTheDocument()
+    expect(screen.getByText('Calls are recorded.')).toBeInTheDocument()
     expect(screen.getByText('Use fictional details only — this is a test line.')).toBeInTheDocument()
-    expect(screen.getByText('Calling opens with the talking demo.')).toBeInTheDocument()
-    expect(screen.queryByRole('button')).toBeNull()
+    expect(screen.getByRole('button', { name: 'Call' })).toBeEnabled()
+  })
+
+  it('renders the call check page', async () => {
+    renderAt('/call/check')
+    expect(await screen.findByTestId('call-check')).toBeInTheDocument()
   })
 
   it('renders 404 for an unknown path with a link back to /call', async () => {

@@ -4,6 +4,57 @@
  */
 
 export interface paths {
+    "/api/calls": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start a call (public; budget-capped) */
+        post: operations["createCall"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/calls/{call_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Call state and end reason */
+        get: operations["getCall"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/calls/{call_id}/end": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** End a call (caller hang-up) */
+        post: operations["endCall"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/health": {
         parameters: {
             query?: never;
@@ -25,6 +76,61 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** CallStatusResponse */
+        CallStatusResponse: {
+            /** End Reason */
+            end_reason: string | null;
+            /** Outcome */
+            outcome: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "live" | "ended";
+        };
+        /** CallUnavailable */
+        CallUnavailable: {
+            /**
+             * Reason
+             * @enum {string}
+             */
+            reason: "capacity" | "unavailable";
+        };
+        /** CreateCallRequest */
+        CreateCallRequest: {
+            /**
+             * Sdp
+             * @description The browser's WebRTC SDP offer.
+             */
+            sdp: string;
+            /**
+             * Tester
+             * @description Optional tester pseudonym from ?tester=.
+             */
+            tester?: string | null;
+        };
+        /** CreateCallResponse */
+        CreateCallResponse: {
+            /**
+             * Call Id
+             * Format: uuid
+             */
+            call_id: string;
+            /**
+             * Call Secret
+             * @description Send back as X-Call-Secret. Shown once.
+             */
+            call_secret: string;
+            /** Max Call Seconds */
+            max_call_seconds: number;
+            /** Sdp Answer */
+            sdp_answer: string;
+        };
+        /** HTTPValidationError */
+        HTTPValidationError: {
+            /** Detail */
+            detail?: components["schemas"]["ValidationError"][];
+        };
         /** HealthResponse */
         HealthResponse: {
             /**
@@ -43,6 +149,24 @@ export interface components {
              */
             storage: "ok" | "error";
         };
+        /** NotFoundResponse */
+        NotFoundResponse: {
+            /** Detail */
+            detail: string;
+        };
+        /** ValidationError */
+        ValidationError: {
+            /** Context */
+            ctx?: Record<string, never>;
+            /** Input */
+            input?: unknown;
+            /** Location */
+            loc: (string | number)[];
+            /** Message */
+            msg: string;
+            /** Error Type */
+            type: string;
+        };
     };
     responses: never;
     parameters: never;
@@ -52,6 +176,132 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    createCall: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateCallRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreateCallResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description A cap is reached or the voice service is unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CallUnavailable"];
+                };
+            };
+        };
+    };
+    getCall: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Call-Secret"?: string | null;
+            };
+            path: {
+                call_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CallStatusResponse"];
+                };
+            };
+            /** @description No such call. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotFoundResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    endCall: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Call-Secret"?: string | null;
+            };
+            path: {
+                call_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CallStatusResponse"];
+                };
+            };
+            /** @description No such call. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotFoundResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     getHealth: {
         parameters: {
             query?: never;
