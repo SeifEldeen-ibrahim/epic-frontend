@@ -1,0 +1,90 @@
+/* Caller page. Tokens only (DOCS/ui-standards.md). */
+
+.call-panel {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space-unit) * 2);
+  /* One fixed-height area for every state: no layout shift between states. */
+  min-height: calc(var(--space-unit) * 28);
+  padding: calc(var(--space-unit) * 3);
+  border: calc(var(--space-unit) / 8) solid var(--brand-border);
+  border-radius: var(--radius-lg);
+  background: var(--brand-surface);
+  color: var(--brand-text);
+  overflow-wrap: anywhere;
+}
+
+.call-panel p {
+  margin: 0;
+}
+
+.call-status {
+  font-family: var(--font-heading);
+  font-weight: var(--type-heading-weight);
+  font-size: calc(var(--type-base-size) * 1.25);
+}
+
+.call-es {
+  color: var(--brand-muted);
+}
+
+.call-timer {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: calc(var(--type-base-size) * 2);
+  min-width: 5ch;
+}
+
+.call-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(var(--space-unit) * 1.5);
+}
+
+.call-actions .ui-button {
+  min-width: calc(var(--space-unit) * 18);
+}
+
+.call-help {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-unit);
+}
+
+.call-numbers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(var(--space-unit) * 2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.call-check-list {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space-unit) * 1.5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.call-check-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-unit);
+}
+
+.call-meter {
+  width: 100%;
+  height: calc(var(--space-unit) * 2);
+  accent-color: var(--brand-primary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .call-meter {
+    transition: none;
+  }
+}
