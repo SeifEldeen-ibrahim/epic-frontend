@@ -1,10 +1,14 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react'
+import { streamCallEvents } from '../../api/callEvents'
 import { createCall, endCall, endCallOnUnload, getCall } from '../../api/calls'
 import { callReducer, detectUnsupported, INITIAL_CALL_STATE, type CallState } from './callMachine'
 
-/** No SSE yet (orchestrator): while a call exists, ask the backend whether it ended. */
-export const POLL_MS = 5_000
 export const CONNECT_TIMEOUT_MS = 15_000
+/** Call-state stream: reconnect delay, how long a stream must stay open to reset the failure
+ * count, and how many consecutive failures end the call safely. */
+export const RECONNECT_MS = 1_000
+export const STABLE_STREAM_MS = 30_000
+export const MAX_STREAM_FAILURES = 3
 
 const TESTER_RE = /^[A-Za-z0-9 _.-]{1,40}$/
 
@@ -20,10 +24,12 @@ interface LiveCall {
   callId?: string
   secret?: string
   audioBlocked?: boolean
+  eventsAbort?: AbortController
+  failures: number
   timers: number[]
 }
 
-const idleLive = (): LiveCall => ({ active: false, timers: [] })
+const idleLive = (): LiveCall => ({ active: false, failures: 0, timers: [] })
 
 function initialState(): CallState {
   const reason = detectUnsupported()
@@ -37,7 +43,8 @@ function micDenied(error: unknown): boolean {
 
 /**
  * The call: microphone, WebRTC to GPT-Live (offer/answer through our backend, no data channel),
- * polling for a server-side end, End call, and a keepalive end when the page is hidden.
+ * the call-state stream (SSE over fetch) for a server-side end, End call, and a keepalive end
+ * when the page is hidden.
  * Everything starts from the Call click, never from an effect (StrictMode-safe).
  */
 export function useCall(tester?: string) {
@@ -54,6 +61,7 @@ export function useCall(tester?: string) {
   const teardown = useCallback(() => {
     const l = live.current
     l.timers.forEach((t) => window.clearTimeout(t))
+    l.eventsAbort?.abort()
     l.stream?.getTracks().forEach((track) => track.stop())
     l.pc?.close()
     if (audioRef.current) audioRef.current.srcObject = null
@@ -71,18 +79,64 @@ export function useCall(tester?: string) {
     [teardown],
   )
 
+  const serverEnded = useCallback(
+    (l: LiveCall) => {
+      if (live.current !== l) return
+      teardown()
+      dispatch({ type: stateRef.current.key === 'on_call' ? 'ENDED' : 'UNAVAILABLE' })
+    },
+    [teardown],
+  )
+
   const check = useCallback(async () => {
     const l = live.current
     if (!l.callId || !l.secret) return
     const status = await getCall(l.callId, l.secret)
     if (live.current !== l || status?.status !== 'ended') return
-    teardown()
-    dispatch({ type: stateRef.current.key === 'on_call' ? 'ENDED' : 'UNAVAILABLE' })
-  }, [teardown])
+    serverEnded(l)
+  }, [serverEnded])
+
+  /** Follows the call-state stream; on a drop asks for the call, reconnects, and after
+   * MAX_STREAM_FAILURES consecutive failures ends the call safely. */
+  const listen = useCallback(
+    async (l: LiveCall) => {
+      const callId = l.callId
+      const secret = l.secret
+      if (!callId || !secret) return
+      while (live.current === l) {
+        const controller = new AbortController()
+        l.eventsAbort = controller
+        const opened = Date.now()
+        const end = await streamCallEvents(callId, secret, () => undefined, controller.signal)
+        if (live.current !== l || end === 'aborted') return
+        if (end === 'ended') {
+          serverEnded(l)
+          return
+        }
+        if (Date.now() - opened >= STABLE_STREAM_MS) l.failures = 0
+        l.failures += 1
+        const status = await getCall(callId, secret)
+        if (live.current !== l) return
+        if (status?.status === 'ended') {
+          serverEnded(l)
+          return
+        }
+        if (status === null) l.failures += 1
+        if (l.failures >= MAX_STREAM_FAILURES) {
+          void hangup(stateRef.current.key === 'on_call' ? 'ENDED' : 'UNAVAILABLE')
+          return
+        }
+        await new Promise<void>((resolve) => {
+          l.timers.push(window.setTimeout(resolve, RECONNECT_MS))
+        })
+      }
+    },
+    [hangup, serverEnded],
+  )
 
   const start = useCallback(async () => {
     if (live.current.active) return
-    const l: LiveCall = { active: true, timers: [] }
+    const l: LiveCall = { active: true, failures: 0, timers: [] }
     live.current = l
     dispatch({ type: 'START' })
 
@@ -144,7 +198,7 @@ export function useCall(tester?: string) {
       l.callId = result.call.callId
       l.secret = result.call.secret
       await pc.setRemoteDescription({ type: 'answer', sdp: result.call.sdpAnswer })
-      l.timers.push(window.setInterval(() => void check(), POLL_MS))
+      void listen(l)
       l.timers.push(
         window.setTimeout(() => {
           if (live.current === l && stateRef.current.key === 'connecting') void hangup('UNAVAILABLE')
@@ -153,7 +207,7 @@ export function useCall(tester?: string) {
     } catch {
       if (live.current === l) void hangup('UNAVAILABLE')
     }
-  }, [check, hangup, teardown, tester])
+  }, [check, hangup, listen, teardown, tester])
 
   const end = useCallback(() => void hangup('ENDED'), [hangup])
   const reset = useCallback(() => dispatch({ type: 'RESET' }), [])
