@@ -3,9 +3,10 @@ import userEvent from '@testing-library/user-event'
 import { StrictMode } from 'react'
 import { MemoryRouter } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { streamCallEvents, type StreamEnd } from '../../api/callEvents'
 import { createCall, endCall, endCallOnUnload, getCall } from '../../api/calls'
 import { CallPage } from './CallPage'
-import { POLL_MS } from './useCall'
+import { MAX_STREAM_FAILURES, RECONNECT_MS } from './useCall'
 
 vi.mock('../../api/calls', () => ({
   createCall: vi.fn(),
@@ -13,6 +14,12 @@ vi.mock('../../api/calls', () => ({
   getCall: vi.fn(),
   endCallOnUnload: vi.fn(),
 }))
+
+vi.mock('../../api/callEvents', () => ({ streamCallEvents: vi.fn() }))
+
+const streamMock = vi.mocked(streamCallEvents)
+/** Each stream connection waits here until the test resolves it (or the page aborts it). */
+let streams: { resolve: (end: StreamEnd) => void; signal: AbortSignal }[] = []
 
 const createCallMock = vi.mocked(createCall)
 const endCallMock = vi.mocked(endCall)
@@ -47,7 +54,12 @@ class FakePC {
 const track = { stop: vi.fn() }
 const stream = { getTracks: () => [track] }
 const getUserMedia = vi.fn()
-const ENDED = { status: 'ended' as const, outcome: 'abandoned', end_reason: 'hangup' }
+const ENDED = {
+  status: 'ended' as const,
+  outcome: 'abandoned',
+  end_reason: 'hangup',
+  language: null,
+}
 
 function renderPage(url = '/call') {
   return render(
@@ -79,8 +91,18 @@ beforeEach(() => {
     call: { callId: 'c1', secret: 's3cret', sdpAnswer: 'v=0 answer', maxCallSeconds: 1200 },
   })
   endCallMock.mockReset().mockResolvedValue(ENDED)
-  getCallMock.mockReset().mockResolvedValue({ status: 'live', outcome: null, end_reason: null })
+  getCallMock
+    .mockReset()
+    .mockResolvedValue({ status: 'live', outcome: null, end_reason: null, language: null })
   unloadMock.mockReset()
+  streams = []
+  streamMock.mockReset().mockImplementation(
+    (_callId, _secret, _onEvent, signal) =>
+      new Promise<StreamEnd>((resolve) => {
+        streams.push({ resolve, signal })
+        signal.addEventListener('abort', () => resolve('aborted'))
+      }),
+  )
   vi.stubGlobal('RTCPeerConnection', FakePC)
   vi.stubGlobal('isSecureContext', true)
   Object.defineProperty(navigator, 'mediaDevices', {
@@ -158,18 +180,88 @@ describe('CallPage', () => {
     expect(await screen.findByTestId('call-state-ended')).toBeInTheDocument()
   })
 
-  it('registers a 5 s poll that reads the call with the secret', async () => {
+  it('follows the call-state stream instead of polling', async () => {
     const spy = vi.spyOn(window, 'setInterval')
     await startCall()
-    const poll = spy.mock.calls.find(([, ms]) => ms === POLL_MS)
-    expect(poll).toBeDefined()
-    getCallMock.mockResolvedValue(ENDED)
-    await act(async () => {
-      ;(poll![0] as () => void)()
-    })
-    expect(getCallMock).toHaveBeenCalledWith('c1', 's3cret')
-    expect(await screen.findByTestId('call-state-ended')).toBeInTheDocument()
+    expect(spy.mock.calls.filter(([, ms]) => ms === 5_000)).toHaveLength(0)
+    expect(streamMock).toHaveBeenCalledTimes(1)
+    expect(streamMock.mock.calls[0][0]).toBe('c1')
+    expect(streamMock.mock.calls[0][1]).toBe('s3cret')
     spy.mockRestore()
+  })
+
+  it('an ended event while on call shows Ended and stops the mic', async () => {
+    await startCall()
+    await act(async () => streams[0].resolve('ended'))
+    expect(await screen.findByTestId('call-state-ended')).toBeInTheDocument()
+    expect(track.stop).toHaveBeenCalled()
+    expect(endCallMock).not.toHaveBeenCalled()
+  })
+
+  it('an ended event while connecting shows Unavailable', async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await user.click(screen.getByTestId('call-button'))
+    await waitFor(() => expect(streams).toHaveLength(1))
+    await act(async () => streams[0].resolve('ended'))
+    expect(await screen.findByTestId('call-state-unavailable')).toBeInTheDocument()
+  })
+
+  it('a dropped stream asks for the call, then reconnects after 1 s', async () => {
+    await startCall()
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    await act(async () => streams[0].resolve('dropped'))
+    expect(getCallMock).toHaveBeenCalledWith('c1', 's3cret')
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(RECONNECT_MS)
+    })
+    expect(streams).toHaveLength(2)
+    vi.useRealTimers()
+  })
+
+  it('a dropped stream whose call ended shows Ended without /end', async () => {
+    await startCall()
+    getCallMock.mockResolvedValue(ENDED)
+    await act(async () => streams[0].resolve('dropped'))
+    expect(await screen.findByTestId('call-state-ended')).toBeInTheDocument()
+    expect(endCallMock).not.toHaveBeenCalled()
+  })
+
+  it(`${MAX_STREAM_FAILURES} quick drops end the call safely with /end`, async () => {
+    await startCall()
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    for (let i = 0; i < MAX_STREAM_FAILURES; i += 1) {
+      await waitFor(() => expect(streams).toHaveLength(i + 1))
+      await act(async () => streams[i].resolve('dropped'))
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(RECONNECT_MS)
+      })
+    }
+    vi.useRealTimers()
+    expect(await screen.findByTestId('call-state-ended')).toBeInTheDocument()
+    expect(endCallMock).toHaveBeenCalledWith('c1', 's3cret')
+  })
+
+  it('unreachable status during drops (e.g. 502 in a deploy) ends the call', async () => {
+    await startCall()
+    getCallMock.mockResolvedValue(null)
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    await act(async () => streams[0].resolve('dropped'))
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(RECONNECT_MS)
+    })
+    await waitFor(() => expect(streams).toHaveLength(2))
+    await act(async () => streams[1].resolve('dropped'))
+    vi.useRealTimers()
+    expect(await screen.findByTestId('call-state-ended')).toBeInTheDocument()
+    expect(endCallMock).toHaveBeenCalledWith('c1', 's3cret')
+  })
+
+  it('ending the call aborts the stream', async () => {
+    const user = await startCall()
+    await user.click(screen.getByTestId('call-end'))
+    expect(streams[0].signal.aborted).toBe(true)
+    expect(streamMock).toHaveBeenCalledTimes(1)
   })
 
   it('a failed peer connection ends the call', async () => {
