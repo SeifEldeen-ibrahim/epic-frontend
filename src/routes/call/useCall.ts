@@ -1,6 +1,16 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router'
 import { streamCallEvents } from '../../api/callEvents'
-import { answerSession, createCall, endCall, endCallOnUnload, getCall, type CallStatus } from '../../api/calls'
+import {
+  answerSession,
+  createCall,
+  endCall,
+  endCallOnUnload,
+  getCall,
+  reconnectCall,
+  type CallStatus,
+  type CallTestOptions,
+} from '../../api/calls'
 import {
   callReducer,
   classifySignal,
@@ -8,7 +18,17 @@ import {
   INITIAL_CALL_STATE,
   type CallSignal,
   type CallState,
+  type CallStateKey,
 } from './callMachine'
+
+const inCall = (key: CallStateKey) => key === 'on_call' || key === 'reconnecting'
+
+/** `?test=after_hours` or `?test=turn_limit:N` (N 1-99); anything else is ignored. */
+export function parseTestParam(raw: string | null): CallTestOptions | undefined {
+  if (raw === 'after_hours') return { after_hours: true }
+  const match = raw?.match(/^turn_limit:([1-9][0-9]?)$/)
+  return match ? { turn_limit: Number(match[1]) } : undefined
+}
 
 export const CONNECT_TIMEOUT_MS = 15_000
 /** Call-state stream: reconnect delay, how long a stream must stay open to reset the failure
@@ -50,8 +70,15 @@ interface LiveCall {
   crisis?: boolean
   /** The voice session the current peer belongs to (1 = the first session). */
   appliedSeq: number
-  /** The highest session_seq a swap was attempted for: a failed seq is not retried. */
+  /** The highest session_seq a swap was attempted for. A failed seq is retried once, only when
+   * its request got no HTTP answer (network); 409/503 are never retried. */
   attemptedSeq: number
+  /** A seq whose swap request failed on the network and may be tried once more. */
+  retryable?: number
+  /** The seq that already used its one retry. */
+  retriedSeq?: number
+  /** A peer being built to reconnect the current voice session. */
+  reconnecting?: RTCPeerConnection
   /** A swap in progress: the pending peer, its answer request and its deadline. */
   swapping?: Swap
 }
@@ -99,6 +126,8 @@ export function useCall(tester?: string) {
   const audioRef = useRef<HTMLAudioElement>(null)
   const live = useRef<LiveCall>(idleLive())
   const stateRef = useRef(state)
+  const [searchParams] = useSearchParams()
+  const testRaw = searchParams.get('test')
 
   useEffect(() => {
     stateRef.current = state
@@ -114,6 +143,7 @@ export function useCall(tester?: string) {
       l.swapping.pc.close()
       l.swapping = undefined
     }
+    l.reconnecting?.close()
     l.stream?.getTracks().forEach((track) => track.stop())
     l.pc?.close()
     const audio = audioRef.current
@@ -150,7 +180,7 @@ export function useCall(tester?: string) {
         return true
       }
       if (verdict === null || live.current !== l) return false
-      const onCall = stateRef.current.key === 'on_call'
+      const onCall = inCall(stateRef.current.key)
       teardown()
       if (!onCall) dispatch({ type: 'UNAVAILABLE' })
       else if (verdict === 'ENDED') dispatch({ type: 'ENDED' })
@@ -188,6 +218,7 @@ export function useCall(tester?: string) {
    * Returns true when the status was handled (ended, crisis, or a pending swap). */
   const learn = useCallback(
     (l: LiveCall, status: CallStatus): boolean => {
+      if (status.language) dispatch({ type: 'LANGUAGE', language: status.language })
       if (apply(l, status)) return true
       if (status.status === 'live' && status.pending_session_seq != null) {
         swapRef.current(l, status.pending_session_seq)
@@ -206,24 +237,34 @@ export function useCall(tester?: string) {
     learn(l, status)
   }, [learn])
 
-  /** The current peer failed or disconnected: ask the server before ending anything (the
-   * switchboard session is hung up on purpose during a bridge). */
+  /** Set after render: a reconnect is started from recover, declared before wirePeer. */
+  const reconnectRef = useRef<(l: LiveCall, pc: RTCPeerConnection) => void>(() => undefined)
+
+  /** The current peer failed, disconnected or was closed: ask the server before ending anything
+   * (the switchboard session is hung up on purpose during a bridge). Still dead after one grace
+   * re-check while the server says live with no swap pending: reconnect the voice session. */
   const recover = useCallback(
-    async (l: LiveCall, pc: RTCPeerConnection, failed: boolean) => {
+    async (l: LiveCall, pc: RTCPeerConnection) => {
       for (let attempt = 0; ; attempt += 1) {
         const status = l.callId && l.secret ? await getCall(l.callId, l.secret) : null
-        if (live.current !== l || l.pc !== pc) return
+        if (live.current !== l || l.pc !== pc || l.reconnecting) return
         if (status && learn(l, status)) return
-        if (l.swapping || !failed) return
-        if (status?.status !== 'live' || attempt > 0) break
-        // The server may have hung the switchboard up just before announcing the swap: ask
-        // once more before treating the dead peer as a dropped call.
+        if (l.swapping || l.crisis) return
+        if (!['failed', 'disconnected', 'closed'].includes(pc.connectionState)) return
+        if (status?.status !== 'live') break
+        if (attempt > 0) {
+          if (stateRef.current.key !== 'on_call') break
+          reconnectRef.current(l, pc)
+          return
+        }
+        // The server may have hung the switchboard up just before announcing the swap, or the
+        // peer may come back by itself: ask once more before acting on the dead peer.
         await new Promise<void>((resolve) => {
           l.timers.push(window.setTimeout(resolve, RECOVER_GRACE_MS))
         })
         if (live.current !== l) return
       }
-      void hangup(stateRef.current.key === 'on_call' ? 'ENDED' : 'UNAVAILABLE')
+      void hangup(inCall(stateRef.current.key) ? 'ENDED' : 'UNAVAILABLE')
     },
     [hangup, learn],
   )
@@ -231,7 +272,7 @@ export function useCall(tester?: string) {
   /** Handlers for a peer; each acts only while its peer is the current or the pending one. */
   const wirePeer = useCallback(
     (l: LiveCall, pc: RTCPeerConnection) => {
-      const owns = () => live.current === l && (l.pc === pc || l.swapping?.pc === pc)
+      const owns = () => live.current === l && (l.pc === pc || l.swapping?.pc === pc || l.reconnecting === pc)
       pc.ontrack = (event) => {
         const audio = audioRef.current
         if (!audio || !owns() || l.crisis) return
@@ -248,20 +289,81 @@ export function useCall(tester?: string) {
           if (stateRef.current.key !== 'on_call') dispatch({ type: 'CONNECTED', at: Date.now() })
           if (l.audioBlocked) dispatch({ type: 'AUDIO_BLOCKED' })
         } else if (l.pc === pc && (state === 'failed' || state === 'disconnected')) {
-          void recover(l, pc, state === 'failed')
+          void recover(l, pc)
         }
       }
     },
     [recover],
   )
 
+  /** Reconnects the voice session on a new peer with the same mic tracks. Any refusal or failure
+   * takes the end path; a crisis meanwhile wins and the answer is ignored. */
+  const reconnect = useCallback(
+    (l: LiveCall, old: RTCPeerConnection) => {
+      const { callId, secret, stream } = l
+      if (!callId || !secret || !stream || l.crisis || l.reconnecting) return
+      dispatch({ type: 'RECONNECTING' })
+      const pc = new RTCPeerConnection()
+      const abort = new AbortController()
+      const timer = window.setTimeout(() => abort.abort(), SWAP_DEADLINE_MS)
+      l.timers.push(timer)
+      l.reconnecting = pc
+      stream.getTracks().forEach((track) => pc.addTrack(track, stream))
+      wirePeer(l, pc)
+      const current = () => live.current === l && !l.crisis && l.reconnecting === pc
+      void (async () => {
+        let ok = false
+        try {
+          const offer = await pc.createOffer()
+          await pc.setLocalDescription(offer)
+          if (current()) {
+            const sdp = pc.localDescription?.sdp ?? offer.sdp ?? ''
+            const result = await reconnectCall(callId, secret, sdp, abort.signal)
+            if (current() && result.ok) {
+              await pc.setRemoteDescription({ type: 'answer', sdp: result.sdp_answer })
+              ok = current()
+              if (ok) {
+                dropPeer(old)
+                l.pc = pc
+                l.appliedSeq = result.session_seq
+                l.attemptedSeq = Math.max(l.attemptedSeq, result.session_seq)
+              }
+            }
+          }
+        } catch {
+          ok = false
+        }
+        window.clearTimeout(timer)
+        if (!current()) return
+        l.reconnecting = undefined
+        if (ok) {
+          dispatch({ type: 'RECONNECTED' })
+          return
+        }
+        dropPeer(pc)
+        const status = await getCall(callId, secret)
+        if (live.current !== l) return
+        if (status && apply(l, status)) return
+        void hangup('ENDED')
+      })()
+    },
+    [apply, hangup, wirePeer],
+  )
+
+  useEffect(() => {
+    reconnectRef.current = reconnect
+  })
+
   /** Moves the call to a new voice session: a second peer with the same mic tracks, a new
    * offer/answer, then the old peer is dropped. Failure never ends a live call here. */
   const beginSwap = useCallback(
     (l: LiveCall, seq: number) => {
       const { callId, secret, stream } = l
-      if (live.current !== l || !l.active || l.crisis || l.swapping) return
-      if (seq <= l.appliedSeq || seq <= l.attemptedSeq || !callId || !secret || !stream) return
+      if (live.current !== l || !l.active || l.crisis || l.swapping || l.reconnecting) return
+      const retry = seq === l.attemptedSeq && l.retryable === seq
+      if (seq <= l.appliedSeq || (seq <= l.attemptedSeq && !retry) || !callId || !secret || !stream) return
+      if (retry) l.retriedSeq = seq
+      l.retryable = undefined
       l.attemptedSeq = seq
       const pc = new RTCPeerConnection()
       const swap: Swap = { seq, pc, abort: new AbortController(), timer: 0 }
@@ -290,6 +392,8 @@ export function useCall(tester?: string) {
             return
           }
           if (result.kind !== 'ok') {
+            // Only a request that got no HTTP answer may be retried, once per seq.
+            if (result.kind === 'unavailable' && result.network && l.retriedSeq !== seq) l.retryable = seq
             fail()
             return
           }
@@ -351,6 +455,7 @@ export function useCall(tester?: string) {
               return
             }
             l.last = event
+            if (event.language) dispatch({ type: 'LANGUAGE', language: event.language })
             if (classifySignal(event) === 'CRISIS') enterCrisis(l)
           },
           controller.signal,
@@ -368,7 +473,7 @@ export function useCall(tester?: string) {
         if (status && learn(l, status)) return
         if (status === null) l.failures += 1
         if (l.failures >= MAX_STREAM_FAILURES) {
-          void hangup(stateRef.current.key === 'on_call' ? 'ENDED' : 'UNAVAILABLE')
+          void hangup(inCall(stateRef.current.key) ? 'ENDED' : 'UNAVAILABLE')
           return
         }
         await new Promise<void>((resolve) => {
@@ -412,7 +517,9 @@ export function useCall(tester?: string) {
 
       const offer = await pc.createOffer()
       await pc.setLocalDescription(offer)
-      const result = await createCall(pc.localDescription?.sdp ?? offer.sdp ?? '', tester)
+      const sdp = pc.localDescription?.sdp ?? offer.sdp ?? ''
+      const test = parseTestParam(testRaw)
+      const result = await (test ? createCall(sdp, tester, test) : createCall(sdp, tester))
       if (live.current !== l) {
         // Ended while connecting: make sure a call created meanwhile does not stay open.
         if (result.ok) endCallOnUnload(result.call.callId, result.call.secret)
@@ -435,7 +542,7 @@ export function useCall(tester?: string) {
     } catch {
       if (live.current === l) void hangup('UNAVAILABLE')
     }
-  }, [hangup, listen, teardown, tester, wirePeer])
+  }, [hangup, listen, teardown, testRaw, tester, wirePeer])
 
   const end = useCallback(() => void hangup('ENDED'), [hangup])
   const reset = useCallback(() => dispatch({ type: 'RESET' }), [])
@@ -450,6 +557,24 @@ export function useCall(tester?: string) {
       })
       .catch(() => undefined)
   }, [])
+
+  // Test hook (dev, or VITE_EPIC_TEST_HOOKS=1): drop the current voice peer to exercise recover.
+  useEffect(() => {
+    if (!(import.meta.env.DEV || import.meta.env.VITE_EPIC_TEST_HOOKS === '1')) return
+    const w = window as Window & { __epicTest?: { dropVoice: () => void } }
+    w.__epicTest = {
+      dropVoice: () => {
+        const l = live.current
+        const pc = l.pc
+        if (!l.active || !pc) return
+        pc.close()
+        void recover(l, pc)
+      },
+    }
+    return () => {
+      delete w.__epicTest
+    }
+  }, [recover])
 
   // Tab closed or navigated away: end the call with a keepalive request.
   useEffect(() => {
@@ -467,13 +592,13 @@ export function useCall(tester?: string) {
 
   // Call timer (only while on call).
   useEffect(() => {
-    if (state.key !== 'on_call') return
+    if (!inCall(state.key)) return
     const id = window.setInterval(() => setNow(Date.now()), 1_000)
     return () => window.clearInterval(id)
   }, [state.key])
 
   const elapsedSeconds =
-    state.key === 'on_call' && state.startedAt ? Math.max(0, (now - state.startedAt) / 1000) : 0
+    inCall(state.key) && state.startedAt ? Math.max(0, (now - state.startedAt) / 1000) : 0
 
   return { state, elapsedSeconds, start, end, reset, unlockAudio, audioRef }
 }

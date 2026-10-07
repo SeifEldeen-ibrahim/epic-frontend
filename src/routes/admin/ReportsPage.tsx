@@ -10,6 +10,8 @@ type Outcome = ReportsResponse['outcomes'][number]
 type Routing = ReportsResponse['routing_mix'][number]
 type Latency = ReportsResponse['latency'][number]
 type Delegation = ReportsResponse['delegation'][number]
+type Gate = ReportsResponse['gate_results'][number]
+type Unapproved = ReportsResponse['unapproved'][number]
 
 const ms = (n: number) => String(Math.round(n))
 const unmetCols: Column<Unmet>[] = [
@@ -38,6 +40,71 @@ const delegationCols: Column<Delegation>[] = [
   { key: 'p50', header: c.cols.p50, cell: (r) => ms(r.p50_ms) },
   { key: 'p90', header: c.cols.p90, cell: (r) => ms(r.p90_ms) },
 ]
+
+const KIND_ORDER: Record<Gate['kind'], number> = { gate: 0, harness: 1, live: 2 }
+const orDash = (v: string | number | null) => (v === null ? c.dash : String(v))
+const gateCols: Column<Gate>[] = [
+  { key: 'kind', header: c.cols.kind, cell: (r) => c.reports.kinds[r.kind] },
+  { key: 'story', header: c.cols.story, cell: (r) => orDash(r.story_id) },
+  { key: 'mode', header: c.cols.mode, cell: (r) => label(r.mode) },
+  { key: 'repeat', header: c.cols.repeat, cell: (r) => orDash(r.repeat) },
+  { key: 'passed', header: c.cols.passed, cell: (r) => (r.passed ? c.reports.passed : c.reports.failed) },
+  { key: 'stop', header: c.cols.stop, cell: (r) => label(r.stop) },
+  { key: 'turns', header: c.cols.turnsBeforeRoute, cell: (r) => orDash(r.turns_before_route) },
+  { key: 'duration', header: c.cols.duration, cell: (r) => (r.duration_s === null ? c.dash : r.duration_s.toFixed(1)) },
+  { key: 'spend', header: c.cols.spend, cell: (r) => (r.spend_usd === null ? c.dash : `$${r.spend_usd.toFixed(2)}`) },
+  {
+    key: 'findings',
+    header: c.cols.findings,
+    cell: (r) =>
+      r.findings.length === 0 ? c.dash : r.findings.map((f) => `${f.table} · ${f.key_name} · ${f.count}`).join('; '),
+  },
+]
+const unapprovedCols: Column<Unapproved>[] = [
+  { key: 'file', header: c.cols.file, cell: (r) => r.file },
+  { key: 'status', header: c.cols.status, cell: (r) => label(r.status) },
+]
+
+/** Release-gate results and unapproved content come with every reports reply, whatever the call count. */
+function ContentSections({ data, loading }: { data?: ReportsResponse; loading?: boolean }) {
+  const gates = [...(data?.gate_results ?? [])].sort((a, b) => KIND_ORDER[a.kind] - KIND_ORDER[b.kind])
+  // Tolerate replies from a server that predates the `unapproved` field.
+  const unapproved: readonly Unapproved[] = Array.isArray(data?.unapproved) ? data.unapproved : []
+  let gatesBody
+  if (loading)
+    gatesBody = <DataTable name="reports-gates" caption={c.reports.gatesCaption} columns={gateCols} loading skeletonRows={3} />
+  else if (gates.length === 0) gatesBody = <EmptyState title={c.reports.gatesEmpty} data-testid="reports-gates-empty" />
+  else gatesBody = <DataTable name="reports-gates" caption={c.reports.gatesCaption} columns={gateCols} rows={gates} />
+  let unapprovedBody
+  if (loading)
+    unapprovedBody = (
+      <DataTable name="reports-unapproved" caption={c.reports.unapprovedCaption} columns={unapprovedCols} loading skeletonRows={3} />
+    )
+  else if (unapproved.length === 0)
+    unapprovedBody = <EmptyState title={c.reports.unapprovedEmpty} data-testid="reports-unapproved-empty" />
+  else
+    unapprovedBody = (
+      <DataTable
+        name="reports-unapproved"
+        caption={c.reports.unapprovedCaption}
+        columns={unapprovedCols}
+        rows={unapproved}
+        rowKey={(r) => r.file}
+      />
+    )
+  return (
+    <>
+      <div className="admin-section" data-testid="reports-gates">
+        <h2>{c.reports.gates}</h2>
+        {gatesBody}
+      </div>
+      <div className="admin-section" data-testid="reports-unapproved">
+        <h2>{c.reports.unapproved}</h2>
+        {unapprovedBody}
+      </div>
+    </>
+  )
+}
 
 interface Draft {
   from: string
@@ -70,14 +137,23 @@ export function ReportsPage() {
   }
 
   let body
-  if (q.isPending) body = <DataTable name="reports" caption={c.reports.outcomes} columns={outcomeCols} loading />
+  if (q.isPending)
+    body = (
+      <>
+        <DataTable name="reports" caption={c.reports.outcomes} columns={outcomeCols} loading />
+        <ContentSections loading />
+      </>
+    )
   else if (!q.data)
     body = <ErrorState message={c.reports.error} onRetry={() => void q.refetch()} data-testid="reports-error" />
   else if (q.data.total_calls === 0)
     body = (
-      <EmptyState title={c.reports.empty} data-testid="reports-empty">
-        {c.reports.emptyBody}
-      </EmptyState>
+      <>
+        <EmptyState title={c.reports.empty} data-testid="reports-empty">
+          {c.reports.emptyBody}
+        </EmptyState>
+        <ContentSections data={q.data} />
+      </>
     )
   else {
     const r = q.data
@@ -91,6 +167,7 @@ export function ReportsPage() {
         <DataTable name="reports-routing" caption={c.reports.routing} columns={routingCols} rows={r.routing_mix} />
         <DataTable name="reports-latency" caption={c.reports.latency} columns={latencyCols} rows={r.latency} />
         <DataTable name="reports-delegation" caption={c.reports.delegation} columns={delegationCols} rows={r.delegation} />
+        <ContentSections data={r} />
       </>
     )
   }
@@ -135,10 +212,6 @@ export function ReportsPage() {
         </div>
       </form>
       {body}
-      <div className="admin-section">
-        <h2>{c.reports.gates}</h2>
-        <EmptyState title={c.reports.gatesEmpty} data-testid="reports-gates-empty" />
-      </div>
     </AdminPage>
   )
 }

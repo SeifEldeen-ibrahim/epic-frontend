@@ -110,3 +110,13 @@ describe('streamCallEvents session swap', () => {
     expect(end).toBe('dropped')
   })
 })
+
+describe('streamCallEvents language', () => {
+  it('delivers the language carried by state events', async () => {
+    stubFetch(streamOf([msg({ ...LIVE, language: 'es' }), msg({ ...ENDED, language: 'es' })]))
+    const events: CallEvent[] = []
+    const end = await streamCallEvents('c1', 's', (e) => events.push(e), new AbortController().signal)
+    expect(end).toBe('ended')
+    expect(events.map((e) => (e.type === 'session_swap' ? undefined : e.language))).toEqual(['es', 'es'])
+  })
+})
