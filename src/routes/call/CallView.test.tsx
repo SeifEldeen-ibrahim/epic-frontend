@@ -57,7 +57,7 @@ describe('CallView', () => {
     expect(screen.getByRole('link', { name: '911' })).toHaveAttribute('href', 'tel:911')
     expect(screen.getByRole('link', { name: '516-227-8255' })).toHaveAttribute('href', 'tel:5162278255')
     expect(screen.getByText(/nearest emergency room/)).toBeInTheDocument()
-    expect(screen.getByText(/EPIC's main line/)).toBeInTheDocument()
+    expect(screen.getByText(/The clinic's main line/)).toBeInTheDocument()
   })
 
   it('shows a non-announcing timer, focuses End call and wires its handler', () => {
@@ -118,7 +118,7 @@ describe('CallView', () => {
 
   it('human needed: bilingual with the main line and Call again', () => {
     renderState({ key: 'human_needed' })
-    expect(screen.getByText(/EPIC's main line/)).toBeInTheDocument()
+    expect(screen.getByText(/The clinic's main line/)).toBeInTheDocument()
     expect(screen.getByTestId('call-again')).toHaveFocus()
   })
 })

@@ -3761,7 +3761,7 @@
     }
   },
   "info": {
-    "title": "EPIC Voice Agent API",
+    "title": "Clinic Voice Agent API",
     "version": "0.1.0"
   },
   "openapi": "3.1.0",

@@ -169,7 +169,7 @@ export const fxReports: ReportsResponse = {
   ],
   unapproved: [
     { file: 'content/greeting.en.md', status: 'placeholder' },
-    { file: 'content/after_hours.es.md', status: 'awaiting_epic_review' },
+    { file: 'content/after_hours.es.md', status: 'awaiting_review' },
   ],
 }
 
@@ -349,7 +349,7 @@ export const fxConfigProblems: ConfigState = {
   ...fxConfigState,
   draft_problems: [
     { document: 'agents.fixture_desk', path: 'voice', message: 'must differ from every agent that redirects here' },
-    { document: 'forms.fixture_form', path: 'fields.member_no', message: 'names something EPIC never collects' },
+    { document: 'forms.fixture_form', path: 'fields.member_no', message: 'names something the clinic never collects' },
   ],
 }
 export const fxConfigBanners: ConfigState = {
@@ -365,8 +365,8 @@ export const fxCatalog: Catalog = {
   voices: ['marin', 'cedar', 'sage'],
   tools: [
     { name: 'route_to', description: 'Redirect: tell the caller who handles their need, or hand them to another agent.', group: 'redirect', locked: false },
-    { name: 'give_referral', description: "Referral: give the approved referral when EPIC doesn't offer something.", group: 'info', locked: false },
-    { name: 'lookup_service', description: 'Service details: answer questions about EPIC services from approved text.', group: 'info', locked: false },
+    { name: 'give_referral', description: "Referral: give the approved referral when the clinic doesn't offer something.", group: 'info', locked: false },
+    { name: 'lookup_service', description: "Service details: answer questions about the clinic's services from approved text.", group: 'info', locked: false },
     { name: 'save_fields', description: 'Fill a form: save each detail the caller gives.', group: 'form', locked: false },
     { name: 'confirm_callback', description: 'Fill a form: confirm the callback number and permission to phone.', group: 'form', locked: false },
     { name: 'submit_form', description: 'Fill a form: submit the request for staff review.', group: 'form', locked: false },
@@ -454,8 +454,8 @@ export const fxAgentSwitchboard: SectionResponse = {
 }
 export const fxCompiled: Compiled = {
   name: 'fixture_desk',
-  gpt_live_prompt: "You are EPIC's Fixture Desk on EPIC's test phone line. (fixture text)",
-  luna_rules: "You act for EPIC's Fixture Desk on EPIC's test phone line. (fixture text)",
+  gpt_live_prompt: "You are the clinic's Fixture Desk on the clinic's test phone line. (fixture text)",
+  luna_rules: "You act for the clinic's Fixture Desk on the clinic's test phone line. (fixture text)",
   realtime_prompt: 'REALTIME MODE. (fixture text)',
 }
 
