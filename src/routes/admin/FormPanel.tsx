@@ -1,18 +1,24 @@
 import { useId, useState } from 'react'
 import { adminCopy, formStatusTone, formatTime, label, yesNo } from '../../admin/copy'
 import { useApprove, useEditField, useReject, type CallDetail, type FormDetail } from '../../api/admin'
+import { SelectField } from '../../admin/DataTable'
 import { Button, StatusBadge, TextField } from '../../ui'
 
 const c = adminCopy.detail
 
 export type HistoryItem = CallDetail['field_history'][number]
 
-type Kind = 'text' | 'bool' | 'list'
+type Kind = 'text' | 'bool' | 'list' | 'enum' | 'number' | 'date'
 interface FieldSpec {
   name: string
   kind: Kind
   value: unknown
+  /** From the form definition (the version the call ran on). */
+  label?: string
+  options?: readonly string[]
 }
+
+const COLUMNS = new Set(['caller_relationship', 'insurance_carrier_verbatim', 'documents_held'])
 
 const TYPED: readonly { name: string; kind: Kind }[] = [
   { name: 'caller_relationship', kind: 'text' },
@@ -22,7 +28,8 @@ const TYPED: readonly { name: string; kind: Kind }[] = [
   { name: 'documents_held', kind: 'list' },
 ]
 
-function fieldLabel(name: string): string {
+function fieldLabel(name: string, spec?: { label?: string }): string {
+  if (spec?.label) return spec.label
   const known: Record<string, string> = c.fieldLabels
   return known[name] ?? label(name)
 }
@@ -37,6 +44,22 @@ function display(value: unknown): string {
 }
 
 function specsFor(form: FormDetail): FieldSpec[] {
+  const def = form.definition
+  if (def) {
+    // Generic: the fields of this call's form version, in order, plus the callback block.
+    const fromDef: FieldSpec[] = def.fields.map((f) => ({
+      name: f.key,
+      kind: (['text', 'bool', 'list', 'enum', 'number', 'date'].includes(f.type) ? f.type : 'text') as Kind,
+      value: COLUMNS.has(f.key) ? (form[f.key as keyof FormDetail] ?? null) : (form.fields[f.key] ?? null),
+      label: f.label,
+      options: f.values,
+    }))
+    return [
+      ...fromDef,
+      { name: 'callback_number', kind: 'text', value: form.callback_number ?? null },
+      { name: 'callback_consent', kind: 'bool', value: form.callback_consent ?? null },
+    ]
+  }
   const typed = TYPED.map((t) => ({ ...t, value: form[t.name as keyof FormDetail] ?? null }))
   const names = new Set(TYPED.map((t) => t.name))
   const extra = Object.entries(form.fields)
@@ -48,6 +71,7 @@ function specsFor(form: FormDetail): FieldSpec[] {
 function initialDraft(spec: FieldSpec): string {
   if (spec.kind === 'bool') return spec.value === true ? 'true' : 'false'
   if (spec.kind === 'list') return Array.isArray(spec.value) ? spec.value.map(String).join(', ') : ''
+  if (spec.kind === 'number') return typeof spec.value === 'number' ? String(spec.value) : ''
   return typeof spec.value === 'string' ? spec.value : ''
 }
 
@@ -58,7 +82,8 @@ function toValue(spec: FieldSpec, draft: string): unknown {
       .split(',')
       .map((s) => s.trim())
       .filter(Boolean)
-  return draft === '' && spec.value === null ? null : draft
+  if (spec.kind === 'number') return draft.trim() === '' ? null : Number(draft)
+  return draft === '' && (spec.value === null || spec.kind !== 'text') ? null : draft
 }
 
 function FieldEditor({
@@ -71,7 +96,7 @@ function FieldEditor({
   onSave: (field: string, old: unknown, next: unknown) => void
 }) {
   const [draft, setDraft] = useState(() => initialDraft(spec))
-  const name = fieldLabel(spec.name)
+  const name = fieldLabel(spec.name, spec)
   const save = (
     <Button
       variant="secondary"
@@ -99,11 +124,27 @@ function FieldEditor({
       </div>
     )
   }
+  if (spec.kind === 'enum' && spec.options) {
+    return (
+      <div className="admin-field-row">
+        <SelectField
+          label={name}
+          value={draft}
+          onChange={setDraft}
+          options={[{ value: '', label: adminCopy.dash }, ...spec.options.map((o) => ({ value: o, label: label(o) }))]}
+          testId={`field-${spec.name}`}
+        />
+        {save}
+      </div>
+    )
+  }
   return (
     <div className="admin-field-row">
       <TextField
         label={name}
         hint={spec.kind === 'list' ? c.listHint : undefined}
+        type={spec.kind === 'date' ? 'date' : 'text'}
+        inputMode={spec.kind === 'number' ? 'numeric' : undefined}
         value={draft}
         maxLength={spec.kind === 'text' ? 500 : undefined}
         onChange={(e) => setDraft(e.target.value)}
@@ -177,7 +218,7 @@ function FormBody({
             source: 'staff' as HistoryItem['source'],
             staff_email: staffEmail,
           })
-          onDone(c.saved(fieldLabel(field)))
+          onDone(c.saved(fieldLabel(field, specs.find((s) => s.name === field))))
         },
         onError,
       },
@@ -241,7 +282,7 @@ function FormBody({
         <dl className="admin-facts">
           {specs.map((s) => (
             <div className="admin-facts__item" key={s.name}>
-              <dt>{fieldLabel(s.name)}</dt>
+              <dt>{fieldLabel(s.name, s)}</dt>
               <dd>{display(s.value)}</dd>
             </div>
           ))}
