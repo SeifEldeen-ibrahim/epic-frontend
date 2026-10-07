@@ -2,7 +2,7 @@ import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { CALL_STATES, type CallState, type CallStateKey } from './callMachine'
 import { CallView } from './CallView'
-import { COPY } from './copy'
+import { COPY, CRISIS } from './copy'
 
 afterEach(cleanup)
 
@@ -21,11 +21,25 @@ const EXPECTED_TEXT: Record<CallStateKey, string[]> = {
   on_call: [COPY.onCall],
   ended: [COPY.ended.en, COPY.ended.es],
   unavailable: [COPY.unavailable.en, COPY.unavailable.es],
+  crisis: [COPY.crisis.en, COPY.crisis.es],
+  handoff: [
+    COPY.handoff.en('Residential & Day Programs'),
+    COPY.handoff.es('Residential & Day Programs'),
+    COPY.handoff.recordedEn,
+    COPY.handoff.recordedEs,
+  ],
+  human_needed: [COPY.humanNeeded.en, COPY.humanNeeded.es],
+}
+
+function stateFor(key: CallStateKey): CallState {
+  if (key === 'on_call') return { key, startedAt: 0 }
+  if (key === 'handoff') return { key, handoffTitle: 'Residential & Day Programs' }
+  return { key }
 }
 
 describe('CallView', () => {
   it.each(CALL_STATES)('renders the %s state with its copy', (key) => {
-    renderState(key === 'on_call' ? { key, startedAt: 0 } : { key })
+    renderState(stateFor(key))
     expect(screen.getByTestId(`call-state-${key}`)).toBeInTheDocument()
     for (const text of EXPECTED_TEXT[key]) expect(screen.getByText(text)).toBeInTheDocument()
     expect(document.body.textContent).not.toMatch(/listening|thinking/i)
@@ -74,5 +88,36 @@ describe('CallView', () => {
     expect(again).toHaveFocus()
     again.click()
     expect(handlers.onReset).toHaveBeenCalledOnce()
+  })
+
+  it('crisis: bilingual alert with 516-227-8255 in both sentences, heading focused, no Call again', () => {
+    renderState({ key: 'crisis' })
+    const panel = screen.getByTestId('call-state-crisis')
+    expect(panel).toHaveAttribute('role', 'alert')
+    expect(screen.getByText(CRISIS.en)).toBeInTheDocument()
+    expect(screen.getByText(CRISIS.es)).toBeInTheDocument()
+    expect(CRISIS.en).toContain('516-227-8255')
+    expect(CRISIS.es).toContain('516-227-8255')
+    expect(screen.getByRole('link', { name: '516-227-8255' })).toHaveAttribute('href', 'tel:5162278255')
+    expect(screen.getByTestId('call-crisis-heading')).toHaveFocus()
+    expect(screen.queryByTestId('call-again')).toBeNull()
+    expect(screen.queryByTestId('call-retry')).toBeNull()
+  })
+
+  it('handoff: title only, honest wording, Call again focused', () => {
+    const handlers = renderState({ key: 'handoff', handoffTitle: 'Residential & Day Programs' })
+    expect(screen.getByText('Your request is for Residential & Day Programs.')).toBeInTheDocument()
+    expect(screen.getByText('Su solicitud es para Residential & Day Programs.')).toBeInTheDocument()
+    expect(document.body.textContent).not.toMatch(/connecting|transfer|call you back|\d{4}/i)
+    const again = screen.getByTestId('call-again')
+    expect(again).toHaveFocus()
+    again.click()
+    expect(handlers.onReset).toHaveBeenCalledOnce()
+  })
+
+  it('human needed: bilingual with the main line and Call again', () => {
+    renderState({ key: 'human_needed' })
+    expect(screen.getByText(/EPIC's main line/)).toBeInTheDocument()
+    expect(screen.getByTestId('call-again')).toHaveFocus()
   })
 })

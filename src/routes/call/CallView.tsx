@@ -13,9 +13,21 @@ export interface CallViewProps {
   onUnlockAudio: () => void
 }
 
-function Panel({ stateKey, children }: { stateKey: CallStateKey; children: ReactNode }) {
+function Panel({
+  stateKey,
+  children,
+  alert = false,
+}: {
+  stateKey: CallStateKey
+  children: ReactNode
+  alert?: boolean
+}) {
   return (
-    <section className="call-panel" data-testid={`call-state-${stateKey}`} aria-live="polite">
+    <section
+      className="call-panel"
+      data-testid={`call-state-${stateKey}`}
+      {...(alert ? { role: 'alert' } : { 'aria-live': 'polite' as const })}
+    >
       {children}
     </section>
   )
@@ -70,8 +82,15 @@ export function CallView(props: CallViewProps) {
   const { key } = props.state
 
   useEffect(() => {
-    const target = key === 'on_call' ? 'call-end' : key === 'ended' ? 'call-again' : null
-    if (target) rootRef.current?.querySelector<HTMLButtonElement>(`[data-testid=${target}]`)?.focus()
+    const target =
+      key === 'on_call'
+        ? 'call-end'
+        : key === 'ended' || key === 'handoff' || key === 'human_needed'
+          ? 'call-again'
+          : key === 'crisis'
+            ? 'call-crisis-heading'
+            : null
+    if (target) rootRef.current?.querySelector<HTMLElement>(`[data-testid=${target}]`)?.focus()
   }, [key])
 
   return <div ref={rootRef}>{renderState(props)}</div>
@@ -161,6 +180,45 @@ function renderState({ state, elapsedSeconds, onCall, onEnd, onReset, onUnlockAu
           <div className="call-actions">
             <Button variant="secondary" data-testid="call-retry" onClick={onReset}>
               {COPY.tryAgain}
+            </Button>
+          </div>
+        </Panel>
+      )
+    case 'crisis':
+      // Final for this page: no Call again (a reload is acceptable).
+      return (
+        <Panel stateKey="crisis" alert>
+          <h2 className="call-status call-heading" tabIndex={-1} data-testid="call-crisis-heading">
+            {COPY.crisis.en}
+          </h2>
+          <p className="call-es" lang="es">
+            {COPY.crisis.es}
+          </p>
+          <CrisisHelp />
+        </Panel>
+      )
+    case 'handoff': {
+      const title = state.handoffTitle ?? ''
+      return (
+        <Panel stateKey="handoff">
+          <Bilingual en={COPY.handoff.en(title)} es={COPY.handoff.es(title)} />
+          <Bilingual en={COPY.handoff.recordedEn} es={COPY.handoff.recordedEs} />
+          <div className="call-actions">
+            <Button data-testid="call-again" onClick={onReset}>
+              {COPY.callAgain}
+            </Button>
+          </div>
+        </Panel>
+      )
+    }
+    case 'human_needed':
+      return (
+        <Panel stateKey="human_needed">
+          <Bilingual {...COPY.humanNeeded} />
+          <MainLine />
+          <div className="call-actions">
+            <Button data-testid="call-again" onClick={onReset}>
+              {COPY.callAgain}
             </Button>
           </div>
         </Panel>

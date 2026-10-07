@@ -24,6 +24,15 @@
   font-size: calc(var(--type-base-size) * 1.25);
 }
 
+.call-heading {
+  margin: 0;
+}
+
+.call-heading:focus-visible {
+  outline: calc(var(--space-unit) / 4) solid var(--brand-primary);
+  outline-offset: calc(var(--space-unit) / 2);
+}
+
 .call-es {
   color: var(--brand-muted);
 }
