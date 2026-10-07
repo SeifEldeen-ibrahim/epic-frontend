@@ -142,6 +142,20 @@
         "title": "CallChannel",
         "type": "string"
       },
+      "CallConflict": {
+        "properties": {
+          "reason": {
+            "const": "no_pending_session",
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "title": "CallConflict",
+        "type": "object"
+      },
       "CallDetail": {
         "properties": {
           "call": {
@@ -213,75 +227,22 @@
       },
       "CallEvent": {
         "description": "One `event: call` message on the call-state stream.",
-        "properties": {
-          "end_reason": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "End Reason"
+        "discriminator": {
+          "mapping": {
+            "session_swap": "#/components/schemas/CallSessionSwapEvent",
+            "state": "#/components/schemas/CallStateEvent"
           },
-          "handoff_title": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Department title (never a name or extension) for a handoff outcome.",
-            "title": "Handoff Title"
-          },
-          "language": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Language"
-          },
-          "outcome": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Outcome"
-          },
-          "status": {
-            "enum": [
-              "live",
-              "ended"
-            ],
-            "title": "Status",
-            "type": "string"
-          },
-          "type": {
-            "const": "state",
-            "title": "Type",
-            "type": "string"
-          }
+          "propertyName": "type"
         },
-        "required": [
-          "type",
-          "status",
-          "outcome",
-          "end_reason",
-          "language"
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/CallStateEvent"
+          },
+          {
+            "$ref": "#/components/schemas/CallSessionSwapEvent"
+          }
         ],
-        "title": "CallEvent",
-        "type": "object"
+        "title": "CallEvent"
       },
       "CallHeader": {
         "properties": {
@@ -590,6 +551,139 @@
         "title": "CallOutcome",
         "type": "string"
       },
+      "CallSessionRequest": {
+        "properties": {
+          "sdp": {
+            "description": "The browser's WebRTC SDP offer.",
+            "maxLength": 16384,
+            "title": "Sdp",
+            "type": "string"
+          },
+          "session_seq": {
+            "description": "The session_seq from the session_swap event.",
+            "minimum": 2,
+            "title": "Session Seq",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "sdp",
+          "session_seq"
+        ],
+        "title": "CallSessionRequest",
+        "type": "object"
+      },
+      "CallSessionResponse": {
+        "properties": {
+          "sdp_answer": {
+            "title": "Sdp Answer",
+            "type": "string"
+          },
+          "session_seq": {
+            "title": "Session Seq",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "sdp_answer",
+          "session_seq"
+        ],
+        "title": "CallSessionResponse",
+        "type": "object"
+      },
+      "CallSessionSwapEvent": {
+        "description": "The call moves to a new voice session; the browser must renegotiate.",
+        "properties": {
+          "session_seq": {
+            "description": "Send a new SDP offer for this session to POST /api/calls/{call_id}/sessions",
+            "title": "Session Seq",
+            "type": "integer"
+          },
+          "type": {
+            "const": "session_swap",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "session_seq"
+        ],
+        "title": "CallSessionSwapEvent",
+        "type": "object"
+      },
+      "CallStateEvent": {
+        "description": "A call-state message on the call-state stream.",
+        "properties": {
+          "end_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End Reason"
+          },
+          "handoff_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Department title (never a name or extension) for a handoff outcome.",
+            "title": "Handoff Title"
+          },
+          "language": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language"
+          },
+          "outcome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Outcome"
+          },
+          "status": {
+            "enum": [
+              "live",
+              "ended"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "type": {
+            "const": "state",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "status",
+          "outcome",
+          "end_reason",
+          "language"
+        ],
+        "title": "CallStateEvent",
+        "type": "object"
+      },
       "CallStatus": {
         "enum": [
           "live",
@@ -644,6 +738,18 @@
               }
             ],
             "title": "Outcome"
+          },
+          "pending_session_seq": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Set while the call waits for a new SDP offer for this session (POST /api/calls/{call_id}/sessions); null otherwise.",
+            "title": "Pending Session Seq"
           },
           "status": {
             "enum": [
@@ -3754,6 +3860,105 @@
           }
         },
         "summary": "Call-state stream (Server-Sent Events, `event: call`)",
+        "tags": [
+          "calls"
+        ]
+      }
+    },
+    "/api/calls/{call_id}/sessions": {
+      "post": {
+        "operationId": "answerCallSession",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "call_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Call Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Call-Secret",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Call-Secret"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CallSessionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CallSessionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundResponse"
+                }
+              }
+            },
+            "description": "No such call."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CallConflict"
+                }
+              }
+            },
+            "description": "No pending session swap with that session_seq (none, already answered, timed out, or the call has ended)."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CallUnavailable"
+                }
+              }
+            },
+            "description": "The new session could not be started."
+          }
+        },
+        "summary": "Answer a session swap with a new SDP offer",
         "tags": [
           "calls"
         ]
