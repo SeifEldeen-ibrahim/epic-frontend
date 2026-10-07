@@ -212,3 +212,48 @@
 .ui-badge--warning {
   color: var(--brand-warning);
 }
+
+.ui-field {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space-unit) / 2);
+  min-width: 0;
+}
+
+.ui-field__label {
+  font-weight: var(--type-heading-weight);
+}
+
+.ui-field__hint {
+  margin: 0;
+  color: var(--brand-muted);
+}
+
+.ui-field__error {
+  margin: 0;
+  color: var(--brand-danger);
+}
+
+.ui-input {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: var(--target-min);
+  padding: var(--space-unit) calc(var(--space-unit) * 1.5);
+  border: calc(var(--space-unit) / 8) solid var(--brand-muted);
+  border-radius: var(--radius-md);
+  background: var(--brand-bg);
+  color: var(--brand-text);
+  font: inherit;
+}
+
+.ui-input[aria-invalid='true'] {
+  border-color: var(--brand-danger);
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+.ui-input:focus-visible {
+  outline: calc(var(--space-unit) / 4) solid var(--brand-focus);
+  outline-offset: calc(var(--space-unit) / 4);
+}
