@@ -1,6 +1,216 @@
 {
   "components": {
     "schemas": {
+      "AgentActionKind": {
+        "enum": [
+          "function_call",
+          "handoff",
+          "reconnect",
+          "crisis_stop",
+          "human_needed",
+          "steering",
+          "turn_limit",
+          "read_back"
+        ],
+        "title": "AgentActionKind",
+        "type": "string"
+      },
+      "AgentPackage": {
+        "enum": [
+          "switchboard",
+          "clinic"
+        ],
+        "title": "AgentPackage",
+        "type": "string"
+      },
+      "AuditAction": {
+        "enum": [
+          "login",
+          "login_failed",
+          "logout",
+          "change_password",
+          "view_call",
+          "play_recording",
+          "edit_field",
+          "approve",
+          "reject",
+          "export",
+          "resolve_flag",
+          "acknowledge_follow_up",
+          "user_admin",
+          "soft_delete",
+          "restore"
+        ],
+        "title": "AuditAction",
+        "type": "string"
+      },
+      "AuditActor": {
+        "enum": [
+          "staff",
+          "cli"
+        ],
+        "title": "AuditActor",
+        "type": "string"
+      },
+      "AuditItem": {
+        "properties": {
+          "action": {
+            "$ref": "#/components/schemas/AuditAction"
+          },
+          "actor": {
+            "$ref": "#/components/schemas/AuditActor"
+          },
+          "at": {
+            "format": "date-time",
+            "title": "At",
+            "type": "string"
+          },
+          "detail": {
+            "title": "Detail"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "staff_email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Staff Email"
+          },
+          "target": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target"
+          }
+        },
+        "required": [
+          "id",
+          "at",
+          "actor",
+          "staff_email",
+          "action",
+          "target"
+        ],
+        "title": "AuditItem",
+        "type": "object"
+      },
+      "AuditListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AuditItem"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor"
+        ],
+        "title": "AuditListResponse",
+        "type": "object"
+      },
+      "CallChannel": {
+        "enum": [
+          "web",
+          "sip"
+        ],
+        "title": "CallChannel",
+        "type": "string"
+      },
+      "CallDetail": {
+        "properties": {
+          "call": {
+            "$ref": "#/components/schemas/CallHeader"
+          },
+          "field_history": {
+            "items": {
+              "$ref": "#/components/schemas/FieldHistoryItem"
+            },
+            "title": "Field History",
+            "type": "array"
+          },
+          "form": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FormDetail"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "recording": {
+            "$ref": "#/components/schemas/RecordingSummary"
+          },
+          "sessions": {
+            "items": {
+              "$ref": "#/components/schemas/SessionItem"
+            },
+            "title": "Sessions",
+            "type": "array"
+          },
+          "timeline": {
+            "items": {
+              "discriminator": {
+                "mapping": {
+                  "action": "#/components/schemas/TimelineAction",
+                  "flag": "#/components/schemas/TimelineFlag",
+                  "turn": "#/components/schemas/TimelineTurn"
+                },
+                "propertyName": "entry_type"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/TimelineTurn"
+                },
+                {
+                  "$ref": "#/components/schemas/TimelineAction"
+                },
+                {
+                  "$ref": "#/components/schemas/TimelineFlag"
+                }
+              ]
+            },
+            "title": "Timeline",
+            "type": "array"
+          }
+        },
+        "required": [
+          "call",
+          "sessions",
+          "timeline",
+          "form",
+          "field_history",
+          "recording"
+        ],
+        "title": "CallDetail",
+        "type": "object"
+      },
       "CallEvent": {
         "description": "One `event: call` message on the call-state stream.",
         "properties": {
@@ -60,6 +270,321 @@
         ],
         "title": "CallEvent",
         "type": "object"
+      },
+      "CallHeader": {
+        "properties": {
+          "after_hours": {
+            "title": "After Hours",
+            "type": "boolean"
+          },
+          "agent_version": {
+            "title": "Agent Version",
+            "type": "string"
+          },
+          "channel": {
+            "$ref": "#/components/schemas/CallChannel"
+          },
+          "clarify_turns": {
+            "title": "Clarify Turns",
+            "type": "integer"
+          },
+          "ended_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ended At"
+          },
+          "follow_up_status": {
+            "$ref": "#/components/schemas/FollowUpStatus"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "inquiry_category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Inquiry Category"
+          },
+          "language": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language"
+          },
+          "outcome": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CallOutcome"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "route_role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Route Role"
+          },
+          "started_at": {
+            "format": "date-time",
+            "title": "Started At",
+            "type": "string"
+          },
+          "stated_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stated Name"
+          },
+          "stated_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stated Reason"
+          },
+          "status": {
+            "$ref": "#/components/schemas/CallStatus"
+          },
+          "tester_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tester Label"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "outcome",
+          "channel",
+          "started_at",
+          "ended_at",
+          "language",
+          "inquiry_category",
+          "route_role",
+          "after_hours",
+          "clarify_turns",
+          "agent_version",
+          "tester_label",
+          "follow_up_status",
+          "stated_name",
+          "stated_reason"
+        ],
+        "title": "CallHeader",
+        "type": "object"
+      },
+      "CallListItem": {
+        "properties": {
+          "agent_version": {
+            "title": "Agent Version",
+            "type": "string"
+          },
+          "ended_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ended At"
+          },
+          "follow_up_status": {
+            "$ref": "#/components/schemas/FollowUpStatus"
+          },
+          "form_status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FormStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "inquiry_category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Inquiry Category"
+          },
+          "language": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language"
+          },
+          "open_flags": {
+            "title": "Open Flags",
+            "type": "integer"
+          },
+          "outcome": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CallOutcome"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "route_role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Route Role"
+          },
+          "started_at": {
+            "format": "date-time",
+            "title": "Started At",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/CallStatus"
+          },
+          "tester_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tester Label"
+          }
+        },
+        "required": [
+          "id",
+          "started_at",
+          "ended_at",
+          "status",
+          "outcome",
+          "language",
+          "route_role",
+          "inquiry_category",
+          "tester_label",
+          "agent_version",
+          "follow_up_status",
+          "form_status",
+          "open_flags"
+        ],
+        "title": "CallListItem",
+        "type": "object"
+      },
+      "CallListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CallListItem"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor"
+        ],
+        "title": "CallListResponse",
+        "type": "object"
+      },
+      "CallOutcome": {
+        "enum": [
+          "routed",
+          "referred",
+          "clinic_form",
+          "human_needed",
+          "crisis",
+          "department_handoff",
+          "current_client_handoff",
+          "abandoned",
+          "error"
+        ],
+        "title": "CallOutcome",
+        "type": "string"
+      },
+      "CallStatus": {
+        "enum": [
+          "live",
+          "ended"
+        ],
+        "title": "CallStatus",
+        "type": "string"
       },
       "CallStatusResponse": {
         "properties": {
@@ -131,6 +656,25 @@
         "title": "CallUnavailable",
         "type": "object"
       },
+      "ChangePasswordRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "current_password": {
+            "title": "Current Password",
+            "type": "string"
+          },
+          "new_password": {
+            "title": "New Password",
+            "type": "string"
+          }
+        },
+        "required": [
+          "current_password",
+          "new_password"
+        ],
+        "title": "ChangePasswordRequest",
+        "type": "object"
+      },
       "CreateCallRequest": {
         "properties": {
           "sdp": {
@@ -189,6 +733,751 @@
         "title": "CreateCallResponse",
         "type": "object"
       },
+      "DelegationItem": {
+        "properties": {
+          "actions": {
+            "title": "Actions",
+            "type": "integer"
+          },
+          "agent_version": {
+            "title": "Agent Version",
+            "type": "string"
+          },
+          "p50_ms": {
+            "title": "P50 Ms",
+            "type": "number"
+          },
+          "p90_ms": {
+            "title": "P90 Ms",
+            "type": "number"
+          }
+        },
+        "required": [
+          "agent_version",
+          "actions",
+          "p50_ms",
+          "p90_ms"
+        ],
+        "title": "DelegationItem",
+        "type": "object"
+      },
+      "EmptyActionRequest": {
+        "additionalProperties": false,
+        "properties": {},
+        "title": "EmptyActionRequest",
+        "type": "object"
+      },
+      "ErrorDetail": {
+        "properties": {
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          }
+        },
+        "required": [
+          "detail"
+        ],
+        "title": "ErrorDetail",
+        "type": "object"
+      },
+      "ExportPendingItem": {
+        "properties": {
+          "call_id": {
+            "format": "uuid",
+            "title": "Call Id",
+            "type": "string"
+          },
+          "caller_relationship": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Caller Relationship"
+          },
+          "decided_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decided At"
+          },
+          "form_id": {
+            "format": "uuid",
+            "title": "Form Id",
+            "type": "string"
+          },
+          "inquiry_category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Inquiry Category"
+          },
+          "language": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language"
+          },
+          "submitted_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Submitted At"
+          }
+        },
+        "required": [
+          "form_id",
+          "call_id",
+          "decided_at",
+          "submitted_at",
+          "language",
+          "inquiry_category",
+          "caller_relationship"
+        ],
+        "title": "ExportPendingItem",
+        "type": "object"
+      },
+      "ExportPendingResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ExportPendingItem"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "ExportPendingResponse",
+        "type": "object"
+      },
+      "ExportResponse": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "csv": {
+            "title": "Csv",
+            "type": "string"
+          },
+          "exported_at": {
+            "format": "date-time",
+            "title": "Exported At",
+            "type": "string"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/ExportRow"
+            },
+            "title": "Rows",
+            "type": "array"
+          }
+        },
+        "required": [
+          "exported_at",
+          "count",
+          "rows",
+          "csv"
+        ],
+        "title": "ExportResponse",
+        "type": "object"
+      },
+      "ExportRow": {
+        "properties": {
+          "after_hours_queued": {
+            "title": "After Hours Queued",
+            "type": "boolean"
+          },
+          "call_id": {
+            "format": "uuid",
+            "title": "Call Id",
+            "type": "string"
+          },
+          "callback_consent": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Callback Consent"
+          },
+          "callback_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Callback Number"
+          },
+          "caller_relationship": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Caller Relationship"
+          },
+          "decided_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decided At"
+          },
+          "decided_by_email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decided By Email"
+          },
+          "documents_held": {
+            "title": "Documents Held"
+          },
+          "fields": {
+            "additionalProperties": true,
+            "title": "Fields",
+            "type": "object"
+          },
+          "form_id": {
+            "format": "uuid",
+            "title": "Form Id",
+            "type": "string"
+          },
+          "inquiry_category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Inquiry Category"
+          },
+          "insurance_carrier_verbatim": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Insurance Carrier Verbatim"
+          },
+          "language": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language"
+          },
+          "submitted_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Submitted At"
+          }
+        },
+        "required": [
+          "form_id",
+          "call_id",
+          "submitted_at",
+          "decided_at",
+          "decided_by_email",
+          "language",
+          "inquiry_category",
+          "caller_relationship",
+          "insurance_carrier_verbatim",
+          "callback_number",
+          "callback_consent",
+          "after_hours_queued",
+          "fields"
+        ],
+        "title": "ExportRow",
+        "type": "object"
+      },
+      "FieldEditRequest": {
+        "additionalProperties": false,
+        "description": "Edit one form field; `old` is the value the reviewer saw (optimistic check).",
+        "properties": {
+          "field": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Field",
+            "type": "string"
+          },
+          "new": {
+            "title": "New"
+          },
+          "old": {
+            "title": "Old"
+          }
+        },
+        "required": [
+          "field",
+          "old",
+          "new"
+        ],
+        "title": "FieldEditRequest",
+        "type": "object"
+      },
+      "FieldHistoryItem": {
+        "properties": {
+          "at": {
+            "format": "date-time",
+            "title": "At",
+            "type": "string"
+          },
+          "field": {
+            "title": "Field",
+            "type": "string"
+          },
+          "new": {
+            "title": "New"
+          },
+          "old": {
+            "title": "Old"
+          },
+          "source": {
+            "$ref": "#/components/schemas/FormFieldSource"
+          },
+          "staff_email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Staff Email"
+          }
+        },
+        "required": [
+          "field",
+          "source",
+          "staff_email",
+          "at"
+        ],
+        "title": "FieldHistoryItem",
+        "type": "object"
+      },
+      "FlagCounts": {
+        "properties": {
+          "acknowledged": {
+            "default": 0,
+            "title": "Acknowledged",
+            "type": "integer"
+          },
+          "carried": {
+            "default": 0,
+            "title": "Carried",
+            "type": "integer"
+          },
+          "open": {
+            "default": 0,
+            "title": "Open",
+            "type": "integer"
+          },
+          "resolved": {
+            "default": 0,
+            "title": "Resolved",
+            "type": "integer"
+          }
+        },
+        "title": "FlagCounts",
+        "type": "object"
+      },
+      "FlagKind": {
+        "enum": [
+          "typo",
+          "missing_field",
+          "wrong_route",
+          "crisis",
+          "other"
+        ],
+        "title": "FlagKind",
+        "type": "string"
+      },
+      "FlagResolvedBy": {
+        "enum": [
+          "auto",
+          "staff"
+        ],
+        "title": "FlagResolvedBy",
+        "type": "string"
+      },
+      "FlagStatus": {
+        "enum": [
+          "open",
+          "resolved",
+          "carried",
+          "acknowledged"
+        ],
+        "title": "FlagStatus",
+        "type": "string"
+      },
+      "FollowUpAckResponse": {
+        "properties": {
+          "call_id": {
+            "format": "uuid",
+            "title": "Call Id",
+            "type": "string"
+          },
+          "follow_up_status": {
+            "$ref": "#/components/schemas/FollowUpStatus"
+          }
+        },
+        "required": [
+          "call_id",
+          "follow_up_status"
+        ],
+        "title": "FollowUpAckResponse",
+        "type": "object"
+      },
+      "FollowUpItem": {
+        "properties": {
+          "call_id": {
+            "format": "uuid",
+            "title": "Call Id",
+            "type": "string"
+          },
+          "ended_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ended At"
+          },
+          "form_status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FormStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "language": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language"
+          },
+          "outcome": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CallOutcome"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "started_at": {
+            "format": "date-time",
+            "title": "Started At",
+            "type": "string"
+          },
+          "stated_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stated Name"
+          },
+          "stated_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stated Reason"
+          }
+        },
+        "required": [
+          "call_id",
+          "outcome",
+          "form_status",
+          "stated_name",
+          "stated_reason",
+          "language",
+          "ended_at",
+          "started_at"
+        ],
+        "title": "FollowUpItem",
+        "type": "object"
+      },
+      "FollowUpResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/FollowUpItem"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "FollowUpResponse",
+        "type": "object"
+      },
+      "FollowUpStatus": {
+        "enum": [
+          "none",
+          "needed",
+          "acknowledged"
+        ],
+        "title": "FollowUpStatus",
+        "type": "string"
+      },
+      "FormDetail": {
+        "properties": {
+          "after_hours_queued": {
+            "title": "After Hours Queued",
+            "type": "boolean"
+          },
+          "callback_consent": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Callback Consent"
+          },
+          "callback_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Callback Number"
+          },
+          "caller_relationship": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Caller Relationship"
+          },
+          "decided_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decided At"
+          },
+          "decided_by_email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decided By Email"
+          },
+          "documents_held": {
+            "title": "Documents Held"
+          },
+          "exported_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exported At"
+          },
+          "fields": {
+            "additionalProperties": true,
+            "title": "Fields",
+            "type": "object"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "insurance_carrier_verbatim": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Insurance Carrier Verbatim"
+          },
+          "reject_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reject Reason"
+          },
+          "schema_version": {
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/FormStatus"
+          },
+          "submitted_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Submitted At"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "schema_version",
+          "fields",
+          "caller_relationship",
+          "insurance_carrier_verbatim",
+          "callback_number",
+          "callback_consent",
+          "after_hours_queued",
+          "submitted_at",
+          "decided_at",
+          "decided_by_email",
+          "reject_reason",
+          "exported_at"
+        ],
+        "title": "FormDetail",
+        "type": "object"
+      },
+      "FormFieldSource": {
+        "enum": [
+          "luna",
+          "staff"
+        ],
+        "title": "FormFieldSource",
+        "type": "string"
+      },
+      "FormStatus": {
+        "enum": [
+          "being_filled",
+          "flagged",
+          "read_back",
+          "awaiting_approval",
+          "approved",
+          "rejected",
+          "incomplete"
+        ],
+        "title": "FormStatus",
+        "type": "string"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -237,6 +1526,53 @@
         "title": "HealthResponse",
         "type": "object"
       },
+      "LatencyItem": {
+        "properties": {
+          "agent_version": {
+            "title": "Agent Version",
+            "type": "string"
+          },
+          "p50_ms": {
+            "title": "P50 Ms",
+            "type": "number"
+          },
+          "p90_ms": {
+            "title": "P90 Ms",
+            "type": "number"
+          },
+          "turns": {
+            "title": "Turns",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "agent_version",
+          "turns",
+          "p50_ms",
+          "p90_ms"
+        ],
+        "title": "LatencyItem",
+        "type": "object"
+      },
+      "LoginRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "password": {
+            "title": "Password",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ],
+        "title": "LoginRequest",
+        "type": "object"
+      },
       "NotFoundResponse": {
         "properties": {
           "detail": {
@@ -248,6 +1584,687 @@
           "detail"
         ],
         "title": "NotFoundResponse",
+        "type": "object"
+      },
+      "OutcomeItem": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "inquiry_category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Inquiry Category"
+          },
+          "outcome": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CallOutcome"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "inquiry_category",
+          "outcome",
+          "count"
+        ],
+        "title": "OutcomeItem",
+        "type": "object"
+      },
+      "QueueItem": {
+        "properties": {
+          "after_hours_queued": {
+            "title": "After Hours Queued",
+            "type": "boolean"
+          },
+          "call_id": {
+            "format": "uuid",
+            "title": "Call Id",
+            "type": "string"
+          },
+          "flag_counts": {
+            "$ref": "#/components/schemas/FlagCounts"
+          },
+          "form_id": {
+            "format": "uuid",
+            "title": "Form Id",
+            "type": "string"
+          },
+          "inquiry_category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Inquiry Category"
+          },
+          "language": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language"
+          },
+          "route_role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Route Role"
+          },
+          "submitted_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Submitted At"
+          }
+        },
+        "required": [
+          "form_id",
+          "call_id",
+          "submitted_at",
+          "after_hours_queued",
+          "language",
+          "inquiry_category",
+          "route_role",
+          "flag_counts"
+        ],
+        "title": "QueueItem",
+        "type": "object"
+      },
+      "QueueResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/QueueItem"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "QueueResponse",
+        "type": "object"
+      },
+      "RecordingSummary": {
+        "properties": {
+          "available": {
+            "title": "Available",
+            "type": "boolean"
+          },
+          "missing": {
+            "title": "Missing",
+            "type": "integer"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "segments": {
+            "title": "Segments",
+            "type": "integer"
+          },
+          "total_bytes": {
+            "title": "Total Bytes",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "segments",
+          "missing",
+          "total_bytes",
+          "available",
+          "reason"
+        ],
+        "title": "RecordingSummary",
+        "type": "object"
+      },
+      "RejectRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "reason": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "title": "RejectRequest",
+        "type": "object"
+      },
+      "ReportsResponse": {
+        "properties": {
+          "agent_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Agent Version"
+          },
+          "date_from": {
+            "format": "date-time",
+            "title": "Date From",
+            "type": "string"
+          },
+          "date_to": {
+            "format": "date-time",
+            "title": "Date To",
+            "type": "string"
+          },
+          "delegation": {
+            "items": {
+              "$ref": "#/components/schemas/DelegationItem"
+            },
+            "title": "Delegation",
+            "type": "array"
+          },
+          "gate_results": {
+            "items": {},
+            "title": "Gate Results",
+            "type": "array"
+          },
+          "latency": {
+            "items": {
+              "$ref": "#/components/schemas/LatencyItem"
+            },
+            "title": "Latency",
+            "type": "array"
+          },
+          "outcomes": {
+            "items": {
+              "$ref": "#/components/schemas/OutcomeItem"
+            },
+            "title": "Outcomes",
+            "type": "array"
+          },
+          "period": {
+            "enum": [
+              "day",
+              "week"
+            ],
+            "title": "Period",
+            "type": "string"
+          },
+          "routing_mix": {
+            "items": {
+              "$ref": "#/components/schemas/RoutingMixItem"
+            },
+            "title": "Routing Mix",
+            "type": "array"
+          },
+          "total_calls": {
+            "title": "Total Calls",
+            "type": "integer"
+          },
+          "unmet_demand": {
+            "items": {
+              "$ref": "#/components/schemas/UnmetDemandItem"
+            },
+            "title": "Unmet Demand",
+            "type": "array"
+          }
+        },
+        "required": [
+          "date_from",
+          "date_to",
+          "period",
+          "agent_version",
+          "total_calls",
+          "unmet_demand",
+          "outcomes",
+          "routing_mix",
+          "latency",
+          "delegation",
+          "gate_results"
+        ],
+        "title": "ReportsResponse",
+        "type": "object"
+      },
+      "RoutingMixItem": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "route_role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Route Role"
+          }
+        },
+        "required": [
+          "route_role",
+          "count"
+        ],
+        "title": "RoutingMixItem",
+        "type": "object"
+      },
+      "SessionEndReason": {
+        "enum": [
+          "handoff",
+          "reconnect",
+          "hangup",
+          "crisis",
+          "human_needed",
+          "department_handoff",
+          "idle_timeout",
+          "max_duration",
+          "error"
+        ],
+        "title": "SessionEndReason",
+        "type": "string"
+      },
+      "SessionItem": {
+        "properties": {
+          "agent_package": {
+            "$ref": "#/components/schemas/AgentPackage"
+          },
+          "end_reason": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SessionEndReason"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "ended_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ended At"
+          },
+          "seq": {
+            "title": "Seq",
+            "type": "integer"
+          },
+          "started_at": {
+            "format": "date-time",
+            "title": "Started At",
+            "type": "string"
+          },
+          "voice": {
+            "title": "Voice",
+            "type": "string"
+          }
+        },
+        "required": [
+          "seq",
+          "agent_package",
+          "voice",
+          "started_at",
+          "ended_at",
+          "end_reason"
+        ],
+        "title": "SessionItem",
+        "type": "object"
+      },
+      "Speaker": {
+        "enum": [
+          "caller",
+          "agent"
+        ],
+        "title": "Speaker",
+        "type": "string"
+      },
+      "StaffMe": {
+        "properties": {
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "must_change_password": {
+            "title": "Must Change Password",
+            "type": "boolean"
+          },
+          "role": {
+            "$ref": "#/components/schemas/StaffRole"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "display_name",
+          "role",
+          "must_change_password"
+        ],
+        "title": "StaffMe",
+        "type": "object"
+      },
+      "StaffRole": {
+        "enum": [
+          "reviewer",
+          "admin"
+        ],
+        "title": "StaffRole",
+        "type": "string"
+      },
+      "TimelineAction": {
+        "properties": {
+          "args": {
+            "title": "Args"
+          },
+          "at": {
+            "format": "date-time",
+            "title": "At",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "delegation_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delegation Ms"
+          },
+          "entry_type": {
+            "const": "action",
+            "default": "action",
+            "title": "Entry Type",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/AgentActionKind"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "result": {
+            "title": "Result"
+          }
+        },
+        "required": [
+          "at",
+          "id",
+          "kind",
+          "name",
+          "delegation_ms",
+          "created_at"
+        ],
+        "title": "TimelineAction",
+        "type": "object"
+      },
+      "TimelineFlag": {
+        "properties": {
+          "at": {
+            "format": "date-time",
+            "title": "At",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detail"
+          },
+          "entry_type": {
+            "const": "flag",
+            "default": "flag",
+            "title": "Entry Type",
+            "type": "string"
+          },
+          "form_field": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Form Field"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/FlagKind"
+          },
+          "resolved_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolved At"
+          },
+          "resolved_by": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FlagResolvedBy"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "status": {
+            "$ref": "#/components/schemas/FlagStatus"
+          }
+        },
+        "required": [
+          "at",
+          "id",
+          "kind",
+          "form_field",
+          "detail",
+          "status",
+          "resolved_by",
+          "resolved_at",
+          "created_at"
+        ],
+        "title": "TimelineFlag",
+        "type": "object"
+      },
+      "TimelineTurn": {
+        "properties": {
+          "at": {
+            "format": "date-time",
+            "title": "At",
+            "type": "string"
+          },
+          "ended_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ended At"
+          },
+          "entry_type": {
+            "const": "turn",
+            "default": "turn",
+            "title": "Entry Type",
+            "type": "string"
+          },
+          "language": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language"
+          },
+          "latency_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latency Ms"
+          },
+          "seq": {
+            "title": "Seq",
+            "type": "integer"
+          },
+          "speaker": {
+            "$ref": "#/components/schemas/Speaker"
+          },
+          "started_at": {
+            "format": "date-time",
+            "title": "Started At",
+            "type": "string"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "at",
+          "seq",
+          "speaker",
+          "text",
+          "language",
+          "started_at",
+          "ended_at",
+          "latency_ms"
+        ],
+        "title": "TimelineTurn",
+        "type": "object"
+      },
+      "UnmetDemandItem": {
+        "properties": {
+          "category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
+          },
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "period_start": {
+            "format": "date",
+            "title": "Period Start",
+            "type": "string"
+          }
+        },
+        "required": [
+          "period_start",
+          "category",
+          "count"
+        ],
+        "title": "UnmetDemandItem",
         "type": "object"
       },
       "ValidationError": {
@@ -298,6 +2315,1167 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/admin/audit": {
+      "get": {
+        "operationId": "get_audit_api_admin_audit_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "action",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/AuditAction"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Action"
+            }
+          },
+          {
+            "in": "query",
+            "name": "before",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Before"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Get Audit",
+        "tags": [
+          "admin-reads"
+        ]
+      }
+    },
+    "/api/admin/auth/change-password": {
+      "post": {
+        "operationId": "change_password_api_admin_auth_change_password_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffMe"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Change Password",
+        "tags": [
+          "admin-auth"
+        ]
+      }
+    },
+    "/api/admin/auth/login": {
+      "post": {
+        "operationId": "login_api_admin_auth_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffMe"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Login",
+        "tags": [
+          "admin-auth"
+        ]
+      }
+    },
+    "/api/admin/auth/logout": {
+      "post": {
+        "operationId": "logout_api_admin_auth_logout_post",
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Logout",
+        "tags": [
+          "admin-auth"
+        ]
+      }
+    },
+    "/api/admin/auth/me": {
+      "get": {
+        "operationId": "me_api_admin_auth_me_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffMe"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Me",
+        "tags": [
+          "admin-auth"
+        ]
+      }
+    },
+    "/api/admin/calls": {
+      "get": {
+        "operationId": "get_calls_api_admin_calls_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "date_from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Date From"
+            }
+          },
+          {
+            "in": "query",
+            "name": "date_to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Date To"
+            }
+          },
+          {
+            "in": "query",
+            "name": "outcome",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/CallOutcome"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Outcome"
+            }
+          },
+          {
+            "in": "query",
+            "name": "route_role",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Route Role"
+            }
+          },
+          {
+            "in": "query",
+            "name": "form_status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/FormStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Form Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "language",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Language"
+            }
+          },
+          {
+            "in": "query",
+            "name": "has_open_flags",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Has Open Flags"
+            }
+          },
+          {
+            "in": "query",
+            "name": "tester",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Tester"
+            }
+          },
+          {
+            "in": "query",
+            "name": "agent_version",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Agent Version"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 50,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CallListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Get Calls",
+        "tags": [
+          "admin-reads"
+        ]
+      }
+    },
+    "/api/admin/calls/{call_id}": {
+      "get": {
+        "operationId": "get_call_detail_api_admin_calls__call_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "call_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Call Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CallDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Call Detail",
+        "tags": [
+          "admin-reads"
+        ]
+      }
+    },
+    "/api/admin/calls/{call_id}/flags/{flag_id}/acknowledge": {
+      "post": {
+        "operationId": "post_acknowledge_flag_api_admin_calls__call_id__flags__flag_id__acknowledge_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "call_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Call Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "flag_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Flag Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmptyActionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TimelineFlag"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Post Acknowledge Flag",
+        "tags": [
+          "admin-actions"
+        ]
+      }
+    },
+    "/api/admin/calls/{call_id}/follow-up/acknowledge": {
+      "post": {
+        "operationId": "post_acknowledge_follow_up_api_admin_calls__call_id__follow_up_acknowledge_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "call_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Call Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmptyActionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FollowUpAckResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Post Acknowledge Follow Up",
+        "tags": [
+          "admin-actions"
+        ]
+      }
+    },
+    "/api/admin/calls/{call_id}/form/approve": {
+      "post": {
+        "operationId": "post_approve_api_admin_calls__call_id__form_approve_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "call_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Call Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmptyActionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Post Approve",
+        "tags": [
+          "admin-actions"
+        ]
+      }
+    },
+    "/api/admin/calls/{call_id}/form/fields": {
+      "post": {
+        "operationId": "post_edit_field_api_admin_calls__call_id__form_fields_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "call_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Call Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FieldEditRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Post Edit Field",
+        "tags": [
+          "admin-actions"
+        ]
+      }
+    },
+    "/api/admin/calls/{call_id}/form/reject": {
+      "post": {
+        "operationId": "post_reject_api_admin_calls__call_id__form_reject_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "call_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Call Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RejectRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Post Reject",
+        "tags": [
+          "admin-actions"
+        ]
+      }
+    },
+    "/api/admin/calls/{call_id}/recording": {
+      "get": {
+        "operationId": "get_recording_api_admin_calls__call_id__recording_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "call_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Call Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "audio/wav": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Whole recording as WAV"
+          },
+          "206": {
+            "content": {
+              "audio/wav": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Requested byte range of the WAV"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "416": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Requested Range Not Satisfiable"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Bad Gateway"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Get Recording",
+        "tags": [
+          "admin-recording"
+        ]
+      }
+    },
+    "/api/admin/exports": {
+      "get": {
+        "operationId": "get_exports_api_admin_exports_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExportPendingResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Exports",
+        "tags": [
+          "admin-data"
+        ]
+      },
+      "post": {
+        "operationId": "post_exports_api_admin_exports_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmptyActionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExportResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Post Exports",
+        "tags": [
+          "admin-data"
+        ]
+      }
+    },
+    "/api/admin/follow-up": {
+      "get": {
+        "operationId": "get_follow_up_api_admin_follow_up_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FollowUpResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Follow Up",
+        "tags": [
+          "admin-reads"
+        ]
+      }
+    },
+    "/api/admin/queue": {
+      "get": {
+        "operationId": "get_queue_api_admin_queue_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueueResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Queue",
+        "tags": [
+          "admin-reads"
+        ]
+      }
+    },
+    "/api/admin/reports": {
+      "get": {
+        "operationId": "get_reports_api_admin_reports_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "date_from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Date From"
+            }
+          },
+          {
+            "in": "query",
+            "name": "date_to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Date To"
+            }
+          },
+          {
+            "in": "query",
+            "name": "agent_version",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Agent Version"
+            }
+          },
+          {
+            "in": "query",
+            "name": "period",
+            "required": false,
+            "schema": {
+              "default": "week",
+              "enum": [
+                "day",
+                "week"
+              ],
+              "title": "Period",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Reports",
+        "tags": [
+          "admin-data"
+        ]
+      }
+    },
     "/api/calls": {
       "post": {
         "operationId": "createCall",
