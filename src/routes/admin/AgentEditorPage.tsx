@@ -17,7 +17,6 @@ import { CheckboxInput, SelectInput } from '../../admin/EditDialog'
 import { adminCopy } from '../../admin/copy'
 import { UNSAVED_MESSAGE, useUnsavedGuard } from '../../admin/useUnsavedGuard'
 import { Button, EmptyState, ErrorState, TextArea, TextField } from '../../ui'
-import { ConfigStateBar } from './KnowledgePage'
 
 const c = adminCopy.agents
 const FORM_TOOLS = ['save_fields', 'confirm_callback', 'submit_form']
@@ -183,7 +182,6 @@ export function AgentEditorPage() {
         </Button>
       }
     >
-      <ConfigStateBar />
       <ProblemList problems={saved?.problems.length ? saved.problems : problems} />
       <form
         className="admin-panel admin-section admin-editor"
@@ -237,6 +235,14 @@ export function AgentEditorPage() {
             <fieldset className="admin-fieldset admin-fieldset--nested" data-testid="agent-targets">
               <legend>{c.redirectTargets}</legend>
               <p className="admin-muted">{c.redirectHint}</p>
+              {rows.length === 0 ? (
+                <p className="admin-picker-empty" data-testid="agent-targets-empty">
+                  {c.noTargets}{' '}
+                  <Link className="ui-link" to="/admin/departments">
+                    {c.addDepartment}
+                  </Link>
+                </p>
+              ) : null}
               {rows.map((r) => (
                 <CheckboxInput
                   key={r.role}
@@ -250,7 +256,14 @@ export function AgentEditorPage() {
             </fieldset>
           ) : null}
           <CheckboxInput label={c.formGroup} checked={hasFormTools} disabled={locked} onChange={toggleForm} testId="agent-tool-form" />
-          {hasFormTools ? (
+          {hasFormTools && forms.data && forms.data.forms.filter((f) => !f.archived).length === 0 ? (
+            <p className="admin-picker-empty" data-testid="agent-form-empty">
+              {c.noForms}{' '}
+              <Link className="ui-link" to="/admin/forms/new">
+                {c.createForm}
+              </Link>
+            </p>
+          ) : hasFormTools ? (
             <SelectInput
               label={c.formPick}
               value={value.form ?? ''}

@@ -106,7 +106,7 @@ export function VersionDetailPage() {
         testId="version-confirm"
       >
         <p>{c.rollbackBody}</p>
-        <TextField label={adminCopy.config.publishNote} value={note} maxLength={200} onChange={(e) => setNote(e.target.value)} data-testid="version-note" />
+        <TextField label={adminCopy.changes.liveNote} value={note} maxLength={200} onChange={(e) => setNote(e.target.value)} data-testid="version-note" />
       </ConfirmDialog>
     </AdminPage>
   )

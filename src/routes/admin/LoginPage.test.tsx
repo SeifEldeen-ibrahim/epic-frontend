@@ -121,13 +121,13 @@ describe('LoginPage', () => {
   })
 
   it.each(['//evil.com', '/\\evil.com', 'https://evil.com/admin', 'javascript:alert(1)', '/call', '/admin/login'])(
-    'falls back to the queue for next=%s',
+    'falls back to Home for next=%s',
     async (next) => {
       POST.mockResolvedValue(reply(200, user))
       renderLogin(next)
       await fillAndSubmit()
-      expect(await screen.findByTestId('admin-queue')).toBeInTheDocument()
-      expect(where()).toBe('/admin/queue')
+      expect(await screen.findByTestId('admin-home')).toBeInTheDocument()
+      expect(where()).toBe('/admin')
     },
   )
 

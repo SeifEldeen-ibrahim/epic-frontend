@@ -114,10 +114,11 @@ describe('T-FE: agents', () => {
     expect(screen.getByTestId('agent-tool-route_to')).toBeChecked()
   })
 
-  it('shows the generated instructions read-only on demand', async () => {
+  it('keeps what the assistant is told in a collapsed Advanced section', async () => {
     renderAt('/admin/agents/fixture_desk')
     const details = await screen.findByTestId('agent-compiled')
-    await userEvent.click(within(details).getByText('Generated instructions (read-only)'))
+    expect(details).not.toHaveAttribute('open')
+    await userEvent.click(within(details).getByText('Advanced: what the assistant is told'))
     expect(await screen.findByTestId('agent-compiled-prompt')).toHaveTextContent("You are the clinic's Fixture Desk")
   })
 
@@ -127,6 +128,41 @@ describe('T-FE: agents', () => {
     renderAt('/admin/agents/fixture_desk')
     expect(await screen.findByTestId('agent-persona')).toBeDisabled()
     expect(screen.queryByTestId('agent-save')).toBeNull()
+  })
+
+  it('pickers say what is missing and link to create it', async () => {
+    replies['/api/admin/config/draft/knowledge/{section}'] = () =>
+      reply(200, { name: 'knowledge.routing', value: { status: 'UNAPPROVED', entitlement_words: [], roles: [] }, draft_problems: [] })
+    replies['/api/admin/config/draft/forms'] = () => reply(200, fxFormsEmpty)
+    renderAt('/admin/agents/new')
+    await userEvent.click(await screen.findByTestId('agent-tool-route_to'))
+    const targets = screen.getByTestId('agent-targets')
+    expect(within(targets).getByText('Where can this agent send callers? — Departments and agents')).toBeInTheDocument()
+    expect(within(targets).getByTestId('agent-targets-empty')).toHaveTextContent('No departments or agents to send callers to yet.')
+    expect(within(targets).getByRole('link', { name: 'Add a department' })).toHaveAttribute('href', '/admin/departments')
+    await userEvent.click(screen.getByTestId('agent-tool-form'))
+    expect(screen.getByTestId('agent-form-empty')).toHaveTextContent('No forms yet.')
+    expect(screen.getByRole('link', { name: 'Create one' })).toHaveAttribute('href', '/admin/forms/new')
+    expect(screen.queryByTestId('agent-form')).toBeNull()
+  })
+
+  it('with no assistants, explains what to do and offers the example setup', async () => {
+    replies['/api/admin/config/draft/agents'] = () => reply(200, { agents: [], entry_agent: null })
+    renderAt('/admin/agents')
+    const empty = await screen.findByTestId('agents-empty')
+    expect(empty).toHaveTextContent('Create your first assistant')
+    expect(within(empty).getByTestId('agents-empty-new')).toBeInTheDocument()
+    expect(within(empty).getByTestId('load-example')).toBeInTheDocument()
+  })
+
+  it('can set nobody to answer calls', async () => {
+    PUT.mockResolvedValue(reply(200, { name: 'entry_agent', value: null, draft_problems: [] }))
+    renderAt('/admin/agents')
+    const select = await screen.findByTestId('agents-entry-select')
+    await userEvent.selectOptions(select, '')
+    await userEvent.click(screen.getByTestId('agents-entry-save'))
+    await waitFor(() => expect(PUT).toHaveBeenCalled())
+    expect(PUT.mock.calls[0][1].body).toEqual({ value: null })
   })
 
   it('an unknown agent shows not found', async () => {
@@ -143,7 +179,8 @@ describe('T-FE: form builder', () => {
     replies['/api/admin/config/draft/forms'] = () => reply(200, fxFormsEmpty)
     serve()
     renderAt('/admin/forms')
-    expect(await screen.findByTestId('forms-empty')).toBeInTheDocument()
+    expect(await screen.findByTestId('forms-empty')).toHaveTextContent('Forms are optional')
+    expect(screen.getByTestId('forms-empty-build')).toBeInTheDocument()
   })
 
   it('adds, moves and removes fields, and shows inline never-collect problems', async () => {

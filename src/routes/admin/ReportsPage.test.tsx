@@ -60,9 +60,9 @@ describe('T-FE-REPORTS: gate results and unapproved content', () => {
     const rows = bodyRows('admin-table-reports-gates')
     expect(rows).toHaveLength(4)
     expect(rows.map((r) => within(r).getAllByRole('cell')[0].textContent)).toEqual([
-      'Release gate',
-      'Story harness',
-      'Story harness',
+      'Safety check',
+      'Practice calls',
+      'Practice calls',
       'Live check',
     ])
     expect(rows[0]).toHaveTextContent('calls · outcome · 3; forms · status · 2')
@@ -85,7 +85,7 @@ describe('T-FE-REPORTS: gate results and unapproved content', () => {
 
   it('shows each empty state when there are no results and nothing unapproved', async () => {
     renderWith(fxReportsEmpty)
-    expect(await screen.findByTestId('reports-gates-empty')).toHaveTextContent('No gate results yet')
+    expect(await screen.findByTestId('reports-gates-empty')).toHaveTextContent('No automatic checks yet')
     expect(screen.getByTestId('reports-unapproved-empty')).toHaveTextContent('All content is approved by the clinic')
     expect(screen.queryByTestId('admin-table-reports-gates')).not.toBeInTheDocument()
     expect(screen.queryByTestId('admin-table-reports-unapproved')).not.toBeInTheDocument()

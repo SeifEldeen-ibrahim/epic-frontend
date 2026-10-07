@@ -1,7 +1,7 @@
 import { QueryClientProvider } from '@tanstack/react-query'
 import { cleanup, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createQueryClient } from '../api/queryClient'
 import { App } from '../App'
 
@@ -32,6 +32,12 @@ function renderAt(path: string) {
     </QueryClientProvider>,
   )
 }
+
+// The admin area is a lazy chunk; load it once up front so its first (slow, cold) transform does
+// not eat into each test's 1 s find timeout.
+beforeAll(async () => {
+  await import('../admin/AdminRoutes')
+}, 30_000)
 
 describe('routing', () => {
   it('redirects / to /call', async () => {
