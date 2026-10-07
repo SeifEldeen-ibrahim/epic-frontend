@@ -44,6 +44,9 @@ const AA_PAIRS: [string, string][] = [
   ['primary', 'bg'],
   ['on-primary', 'primary'],
   ['danger', 'bg'],
+  // Admin area: nav current link and table links sit on surface; the shell alert too.
+  ['primary', 'surface'],
+  ['danger', 'surface'],
   ['success', 'bg'],
   ['warning', 'bg'],
 ]
