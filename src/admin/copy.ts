@@ -183,8 +183,8 @@ export const adminCopy = {
     passed: '✓ Passed',
     failed: '✗ Failed',
     unapproved: 'Unapproved content',
-    unapprovedCaption: 'Placeholder content not yet approved by EPIC',
-    unapprovedEmpty: 'All content is approved by EPIC',
+    unapprovedCaption: 'Placeholder content not yet approved by the clinic',
+    unapprovedEmpty: 'All content is approved by the clinic',
   },
   exports: {
     caption: 'Approved forms not yet exported',
@@ -340,7 +340,7 @@ export const adminCopy = {
     status: 'Approval status',
     statusOptions: [
       { value: 'UNAPPROVED', label: 'Unapproved (placeholder)' },
-      { value: 'APPROVED', label: 'Approved by EPIC' },
+      { value: 'APPROVED', label: 'Approved by the clinic' },
     ],
     locked: 'Locked: set in code, cannot be removed here.',
     lockedBadge: 'Locked',
@@ -368,7 +368,7 @@ export const adminCopy = {
       routing:
         'Where callers can be sent. A row handled by an agent passes the caller to that agent; any other row is a department: the caller hears its line and the request is recorded.',
       services: 'Approved service details the agents can look up.',
-      referrals: 'Needs EPIC does not meet, with the approved referral line.',
+      referrals: 'Needs the clinic does not meet, with the approved referral line.',
       hours: 'Opening hours and closure days (after hours, requests are still taken).',
       wording: 'Fixed lines the agents say (greeting with the recording notice, human-needed, corrections).',
       crisis:

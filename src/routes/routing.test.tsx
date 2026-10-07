@@ -37,7 +37,7 @@ describe('routing', () => {
   it('redirects / to /call', async () => {
     renderAt('/')
     expect(await screen.findByTestId('call-page')).toBeInTheDocument()
-    expect(document.title).toBe('Call · EPIC Voice Agent')
+    expect(document.title).toBe('Call · Clinic Voice Agent')
   })
 
   it('renders the idle call page with the Call button', async () => {
