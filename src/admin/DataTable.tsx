@@ -99,6 +99,11 @@ export function AdminPage({ page, actions, children }: { page: AdminPageKey; act
         <h1>{title}</h1>
         {actions}
       </div>
+      {adminCopy.help[page] ? (
+        <p className="admin-page__help" data-testid="page-help">
+          {adminCopy.help[page]}
+        </p>
+      ) : null}
       {children}
     </section>
   )

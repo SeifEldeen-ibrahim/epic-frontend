@@ -17,6 +17,7 @@ import type { components } from '../../api/schema'
 type AgentListResponse = components['schemas']['AgentListResponse']
 type FormListResponse = components['schemas']['FormListResponse']
 type VersionListResponse = components['schemas']['VersionListResponse']
+type HomeResponse = components['schemas']['HomeResponse']
 
 /** Runtime marker; present only in the dev-only fixture chunk. */
 export const FIXTURE_MARKER = 'FIXTURE-ONLY-7f3a'
@@ -360,6 +361,41 @@ export const fxConfigBanners: ConfigState = {
   fallback_problems: [{ document: 'agents.fixture_desk', path: 'voice', message: 'unknown voice' }],
 }
 export const fxConfigReviewer: ConfigState = { ...fxConfigState, can_edit: false }
+/** Nothing waiting to go live. */
+export const fxConfigClean: ConfigState = { ...fxConfigState, draft_changed_sections: [] }
+/** A blank start: nobody answers calls yet. */
+export const fxConfigNobody: ConfigState = { ...fxConfigState, entry_agent: null, draft_changed_sections: [] }
+
+const noSteps = {
+  basics: false,
+  departments: false,
+  forms: false,
+  specialists: false,
+  front_desk: false,
+  answering: false,
+  live: false,
+  test_call: false,
+}
+export const fxHomeBlank: HomeResponse = {
+  calls_today: 0,
+  forms_waiting: 0,
+  line_live: false,
+  answering_agent: null,
+  setup: noSteps,
+  can_edit: true,
+}
+export const fxHomePartial: HomeResponse = {
+  ...fxHomeBlank,
+  setup: { ...noSteps, basics: true, departments: true, specialists: true },
+}
+export const fxHomeLive: HomeResponse = {
+  calls_today: 7,
+  forms_waiting: 2,
+  line_live: true,
+  answering_agent: 'Front desk',
+  setup: { basics: true, departments: true, forms: true, specialists: true, front_desk: true, answering: true, live: true, test_call: true },
+  can_edit: true,
+}
 
 export const fxCatalog: Catalog = {
   voices: ['marin', 'cedar', 'sage'],

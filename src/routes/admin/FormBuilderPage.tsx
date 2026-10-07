@@ -7,7 +7,6 @@ import { CheckboxInput, ListTextField, SelectInput } from '../../admin/EditDialo
 import { adminCopy } from '../../admin/copy'
 import { UNSAVED_MESSAGE, useUnsavedGuard } from '../../admin/useUnsavedGuard'
 import { Button, EmptyState, ErrorState, TextField } from '../../ui'
-import { ConfigStateBar } from './KnowledgePage'
 
 const c = adminCopy.forms
 const NAME = /^[a-z][a-z0-9_]{2,31}$/
@@ -180,7 +179,6 @@ export function FormBuilderPage() {
         </Button>
       }
     >
-      <ConfigStateBar />
       {problems.length ? (
         <div className="admin-panel admin-section" data-testid="form-problems">
           <h2>{c.problems}</h2>

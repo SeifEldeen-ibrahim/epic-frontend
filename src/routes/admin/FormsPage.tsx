@@ -3,7 +3,6 @@ import { useConfigState, useForms, type FormSummary } from '../../api/config'
 import { AdminPage, CellLink, DataTable, type Column } from '../../admin/DataTable'
 import { adminCopy, label } from '../../admin/copy'
 import { Button, EmptyState, ErrorState, StatusBadge } from '../../ui'
-import { ConfigStateBar } from './KnowledgePage'
 
 const c = adminCopy.forms
 
@@ -41,7 +40,17 @@ export function FormsPage() {
   let body
   if (q.isPending) body = <DataTable name="forms" caption={adminCopy.pages.forms} columns={columns} loading />
   else if (!q.data) body = <ErrorState message={c.error} onRetry={() => void q.refetch()} data-testid="forms-error" />
-  else if (q.data.forms.length === 0) body = <EmptyState title={c.empty} data-testid="forms-empty" />
+  else if (q.data.forms.length === 0)
+    body = (
+      <EmptyState title={c.empty} data-testid="forms-empty">
+        <p>{c.emptyBody}</p>
+        {canEdit ? (
+          <Button onClick={() => navigate('/admin/forms/new')} data-testid="forms-empty-build">
+            {c.build}
+          </Button>
+        ) : null}
+      </EmptyState>
+    )
   else body = <DataTable name="forms" caption={adminCopy.pages.forms} columns={columns} rows={q.data.forms} rowKey={(f) => f.name} />
   return (
     <AdminPage
@@ -54,7 +63,6 @@ export function FormsPage() {
         ) : null
       }
     >
-      <ConfigStateBar />
       {body}
     </AdminPage>
   )

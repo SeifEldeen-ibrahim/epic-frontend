@@ -2,7 +2,7 @@ import { QueryClientProvider, type QueryClient } from '@tanstack/react-query'
 import { act, cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, useLocation } from 'react-router'
-import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from 'vitest'
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi, type Mock } from 'vitest'
 import { handle } from '../api/admin'
 import type { StaffMe } from '../api/auth'
 import { api } from '../api/client'
@@ -63,6 +63,12 @@ beforeEach(() => {
 })
 afterEach(cleanup)
 
+// The admin area is a lazy chunk; load it once up front so its first (slow, cold) transform does
+// not eat into each test's 1 s find timeout.
+beforeAll(async () => {
+  await import('./AdminRoutes')
+}, 30_000)
+
 describe('admin guards', () => {
   it('sends a signed-out visitor to login with next set to the page', async () => {
     signIn(null)
@@ -100,12 +106,12 @@ describe('admin guards', () => {
     renderAt(path)
     const forbidden = await screen.findByTestId('forbidden')
     expect(forbidden).toHaveTextContent("You don't have access to this page")
-    expect(within(forbidden).getByRole('link')).toHaveAttribute('href', '/admin/queue')
+    expect(within(forbidden).getByRole('link')).toHaveAttribute('href', '/admin')
     const nav = screen.getByTestId('admin-nav')
     expect(within(nav).queryByRole('link', { name: 'Exports' })).toBeNull()
     expect(within(nav).queryByRole('link', { name: 'Audit' })).toBeNull()
-    expect(within(nav).queryByRole('link', { name: 'Settings' })).toBeNull()
-    expect(within(nav).getByRole('link', { name: 'Queue' })).toBeInTheDocument()
+    expect(within(nav).queryByRole('link', { name: 'Voice settings' })).toBeNull()
+    expect(within(nav).getByRole('link', { name: 'Approval queue' })).toBeInTheDocument()
   })
 
   it.each([
@@ -119,23 +125,34 @@ describe('admin guards', () => {
     const nav = screen.getByTestId('admin-nav')
     expect(within(nav).getByRole('link', { name: 'Exports' })).toBeInTheDocument()
     expect(within(nav).getByRole('link', { name: 'Audit' })).toBeInTheDocument()
-    expect(within(nav).getByRole('link', { name: 'Settings' })).toBeInTheDocument()
+    expect(within(nav).getByRole('link', { name: 'Voice settings' })).toBeInTheDocument()
   })
 
-  it('redirects /admin to /admin/queue and marks the current nav link', async () => {
+  it('opens Home at /admin and marks only the Home nav link', async () => {
     signIn(admin)
     renderAt('/admin')
-    expect(await screen.findByTestId('admin-queue')).toBeInTheDocument()
-    expect(where()).toBe('/admin/queue')
-    expect(screen.getByRole('link', { name: 'Queue' })).toHaveAttribute('aria-current', 'page')
-    expect(screen.getByRole('link', { name: 'Calls' })).not.toHaveAttribute('aria-current')
+    expect(await screen.findByTestId('admin-home')).toBeInTheDocument()
+    expect(where()).toBe('/admin')
+    expect(screen.getByRole('link', { name: 'Home' })).toHaveAttribute('aria-current', 'page')
+    expect(screen.getByRole('link', { name: 'Approval queue' })).not.toHaveAttribute('aria-current')
   })
 
-  it('sends a signed-in user away from the login page to the queue', async () => {
+  it('groups the menu: Daily work, then Setup in setup order, then More (admins)', async () => {
+    signIn(admin)
+    renderAt('/admin')
+    expect(await screen.findByTestId('admin-home')).toBeInTheDocument()
+    const links = (group: string) =>
+      within(screen.getByTestId(`admin-nav-group-${group}`)).getAllByRole('link').map((a) => a.textContent)
+    expect(links('daily')).toEqual(['Approval queue', 'Follow-up', 'Calls', 'Reports'])
+    expect(links('setup')).toEqual(['Knowledge', 'Departments', 'Forms', 'Agents', 'History'])
+    expect(links('more')).toEqual(['Voice settings', 'Exports', 'Audit'])
+  })
+
+  it('sends a signed-in user away from the login page to Home', async () => {
     signIn(admin)
     renderAt('/admin/login')
-    expect(await screen.findByTestId('admin-queue')).toBeInTheDocument()
-    expect(where()).toBe('/admin/queue')
+    expect(await screen.findByTestId('admin-home')).toBeInTheDocument()
+    expect(where()).toBe('/admin')
   })
 
   it('never renders the shell on the login page', async () => {
