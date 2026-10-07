@@ -1,12 +1,12 @@
 /**
- * Caller-page copy. Spanish lines and EPIC's main number are UNAPPROVED placeholders until EPIC
+ * Caller-page copy. Spanish lines and the clinic's main number are UNAPPROVED placeholders until the client
  * approves the wording and the owner supplies the number (see the talking-demo plan).
  */
 
 export const EPIC_MAIN_NUMBER = {
   /** UNAPPROVED: number not yet supplied. */
-  label: "EPIC's main line — number to be confirmed",
-  labelEs: 'Línea principal de EPIC — número por confirmar',
+  label: "The clinic's main line — number to be confirmed",
+  labelEs: 'Línea principal de la clínica — número por confirmar',
   tel: null as string | null,
 }
 
@@ -21,11 +21,11 @@ export const CRISIS = {
 }
 
 export const COPY = {
-  heading: 'Talk to the EPIC voice agent',
+  heading: 'Talk to the clinic voice agent',
   recorded: 'Calls are recorded.',
   fictional: 'Use fictional details only — this is a test line.',
   call: 'Call',
-  requestingMic: 'Allow the microphone to talk to EPIC.',
+  requestingMic: 'Allow the microphone to talk to the clinic.',
   connecting: 'Connecting…',
   onCall: 'On call',
   /** Spanish UNAPPROVED. */
@@ -61,12 +61,12 @@ export const COPY = {
   handoff: {
     en: (title: string) => `Your request is for ${title}.`,
     es: (title: string) => `Su solicitud es para ${title}.`,
-    recordedEn: 'Your request has been recorded for EPIC staff. Call ended.',
-    recordedEs: 'Su solicitud quedó registrada para el personal de EPIC. Llamada terminada.',
+    recordedEn: 'Your request has been recorded for the clinic staff. Call ended.',
+    recordedEs: 'Su solicitud quedó registrada para el personal de la clínica. Llamada terminada.',
   },
   /** Human needed. Spanish UNAPPROVED. */
   humanNeeded: {
-    en: 'A member of EPIC staff needs to help with this.',
-    es: 'Un miembro del personal de EPIC necesita ayudarle con esto.',
+    en: 'A member of the clinic staff needs to help with this.',
+    es: 'Un miembro del personal de la clínica necesita ayudarle con esto.',
   },
 }

@@ -118,7 +118,7 @@ describe('T-FE: agents', () => {
     renderAt('/admin/agents/fixture_desk')
     const details = await screen.findByTestId('agent-compiled')
     await userEvent.click(within(details).getByText('Generated instructions (read-only)'))
-    expect(await screen.findByTestId('agent-compiled-prompt')).toHaveTextContent("You are EPIC's Fixture Desk")
+    expect(await screen.findByTestId('agent-compiled-prompt')).toHaveTextContent("You are the clinic's Fixture Desk")
   })
 
   it('a reviewer sees the agent without save controls', async () => {
@@ -158,7 +158,7 @@ describe('T-FE: form builder', () => {
       reply(200, {
         name: 'forms.fixture_form',
         value: fxForm.value,
-        draft_problems: [{ document: 'forms.fixture_form', path: 'fields.member_no', message: 'names something EPIC never collects' }],
+        draft_problems: [{ document: 'forms.fixture_form', path: 'fields.member_no', message: 'names something the clinic never collects' }],
       }),
     )
     await userEvent.click(screen.getByTestId('form-save'))

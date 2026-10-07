@@ -78,7 +78,7 @@ describe('T-FE-REPORTS: gate results and unapproved content', () => {
     expect(unapproved).toHaveLength(2)
     expect(unapproved[0]).toHaveTextContent('content/greeting.en.md')
     expect(unapproved[0]).toHaveTextContent('Placeholder')
-    expect(unapproved[1]).toHaveTextContent('Awaiting epic review')
+    expect(unapproved[1]).toHaveTextContent('Awaiting review')
     expect(screen.getByRole('heading', { name: 'Unapproved content' })).toBeInTheDocument()
     expect(screen.queryByTestId('reports-unapproved-empty')).not.toBeInTheDocument()
   })
@@ -86,7 +86,7 @@ describe('T-FE-REPORTS: gate results and unapproved content', () => {
   it('shows each empty state when there are no results and nothing unapproved', async () => {
     renderWith(fxReportsEmpty)
     expect(await screen.findByTestId('reports-gates-empty')).toHaveTextContent('No gate results yet')
-    expect(screen.getByTestId('reports-unapproved-empty')).toHaveTextContent('All content is approved by EPIC')
+    expect(screen.getByTestId('reports-unapproved-empty')).toHaveTextContent('All content is approved by the clinic')
     expect(screen.queryByTestId('admin-table-reports-gates')).not.toBeInTheDocument()
     expect(screen.queryByTestId('admin-table-reports-unapproved')).not.toBeInTheDocument()
   })

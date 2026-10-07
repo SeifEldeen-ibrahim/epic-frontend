@@ -82,7 +82,7 @@ export function CheckPage() {
             </StatusBadge>
           </li>
           <li>
-            <span>EPIC service</span>
+            <span>Clinic service</span>
             <StatusBadge tone={backend[0]}>{backend[1]}</StatusBadge>
           </li>
           <li>

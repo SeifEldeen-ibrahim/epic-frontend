@@ -1,9 +1,9 @@
 import { useEffect, type ReactNode } from 'react'
 
-export const APP_NAME = 'EPIC Voice Agent'
+export const APP_NAME = 'Clinic Voice Agent'
 
 export interface PageLayoutProps {
-  /** Page name; the document title becomes "<title> · EPIC Voice Agent". */
+  /** Page name; the document title becomes "<title> · Clinic Voice Agent". */
   title: string
   children: ReactNode
   'data-testid'?: string

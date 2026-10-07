@@ -102,7 +102,7 @@ describe('T-FE: knowledge page', () => {
   it('lists problems and disables publishing until they are fixed', async () => {
     replies['/api/admin/config'] = () => reply(200, fxConfigProblems)
     renderAt('/admin/knowledge')
-    expect(await screen.findByTestId('config-problems')).toHaveTextContent('names something EPIC never collects')
+    expect(await screen.findByTestId('config-problems')).toHaveTextContent('names something the clinic never collects')
     expect(screen.getByTestId('config-publish')).toBeDisabled()
   })
 

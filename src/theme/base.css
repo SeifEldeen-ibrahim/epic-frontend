@@ -1,5 +1,5 @@
 /*
- * Base styles for EPIC Voice Agent.
+ * Base styles for Clinic Voice Agent.
  * Hand-written. Uses ONLY custom properties emitted into tokens.css by
  * tools/apply-brand.mjs (from DOCS/brand.json). No raw colors, font names or
  * pixel values belong here — add a token to brand.json and recompile instead.
