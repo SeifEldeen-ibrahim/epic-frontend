@@ -452,6 +452,11 @@ export interface components {
         CallEvent: {
             /** End Reason */
             end_reason: string | null;
+            /**
+             * Handoff Title
+             * @description Department title (never a name or extension) for a handoff outcome.
+             */
+            handoff_title?: string | null;
             /** Language */
             language: string | null;
             /** Outcome */
@@ -556,6 +561,11 @@ export interface components {
         CallStatusResponse: {
             /** End Reason */
             end_reason: string | null;
+            /**
+             * Handoff Title
+             * @description Department title (never a name or extension) for a handoff outcome.
+             */
+            handoff_title?: string | null;
             /** Language */
             language: string | null;
             /** Outcome */

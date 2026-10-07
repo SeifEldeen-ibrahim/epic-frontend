@@ -225,6 +225,18 @@
             ],
             "title": "End Reason"
           },
+          "handoff_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Department title (never a name or extension) for a handoff outcome.",
+            "title": "Handoff Title"
+          },
           "language": {
             "anyOf": [
               {
@@ -598,6 +610,18 @@
               }
             ],
             "title": "End Reason"
+          },
+          "handoff_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Department title (never a name or extension) for a handoff outcome.",
+            "title": "Handoff Title"
           },
           "language": {
             "anyOf": [
