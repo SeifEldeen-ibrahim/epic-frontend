@@ -60,6 +60,39 @@ export async function endCall(callId: string, secret: string): Promise<CallStatu
   }
 }
 
+/** Outcome of answering a session swap: the clinic session's SDP answer, or why not. */
+export type AnswerSessionResult =
+  | { kind: 'ok'; sdp: string; seq: number }
+  | { kind: 'conflict' }
+  | { kind: 'unavailable' }
+  | { kind: 'gone' }
+
+/** Posts the new SDP offer for a pending session swap. 404 gone, 409 conflict (no pending swap,
+ * wrong seq, already claimed, too late); 503, other errors, network failure and abort are
+ * unavailable. */
+export async function answerSession(
+  callId: string,
+  secret: string,
+  sdp: string,
+  seq: number,
+  signal?: AbortSignal,
+): Promise<AnswerSessionResult> {
+  try {
+    const { data, response } = await api.POST('/api/calls/{call_id}/sessions', {
+      params: { path: { call_id: callId } },
+      headers: { [SECRET_HEADER]: secret },
+      body: { sdp, session_seq: seq },
+      signal,
+    })
+    if (data) return { kind: 'ok', sdp: data.sdp_answer, seq: data.session_seq }
+    if (response.status === 404) return { kind: 'gone' }
+    if (response.status === 409) return { kind: 'conflict' }
+  } catch {
+    // network failure or abort
+  }
+  return { kind: 'unavailable' }
+}
+
 /** Fire-and-forget end that survives the page closing (pagehide). Same header, same path. */
 export function endCallOnUnload(callId: string, secret: string): void {
   try {

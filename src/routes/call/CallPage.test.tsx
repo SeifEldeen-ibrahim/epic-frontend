@@ -4,11 +4,12 @@ import { StrictMode } from 'react'
 import { MemoryRouter } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { streamCallEvents, type CallEvent as CallEventMsg, type StreamEnd } from '../../api/callEvents'
-import { createCall, endCall, endCallOnUnload, getCall } from '../../api/calls'
+import { answerSession, createCall, endCall, endCallOnUnload, getCall } from '../../api/calls'
 import { CallPage } from './CallPage'
-import { MAX_STREAM_FAILURES, RECONNECT_MS, STATUS_POLL_MS } from './useCall'
+import { MAX_STREAM_FAILURES, RECONNECT_MS, STATUS_POLL_MS, SWAP_DEADLINE_MS } from './useCall'
 
 vi.mock('../../api/calls', () => ({
+  answerSession: vi.fn(),
   createCall: vi.fn(),
   endCall: vi.fn(),
   getCall: vi.fn(),
@@ -29,9 +30,13 @@ const createCallMock = vi.mocked(createCall)
 const endCallMock = vi.mocked(endCall)
 const getCallMock = vi.mocked(getCall)
 const unloadMock = vi.mocked(endCallOnUnload)
+const answerMock = vi.mocked(answerSession)
 
 class FakePC {
   static instances: FakePC[] = []
+  /** When set, applying the answer fires ontrack with this peer's remote stream. */
+  static trackOnAnswer = false
+  remote = { id: `remote-${FakePC.instances.length}` }
   connectionState = 'new'
   localDescription: { type: string; sdp: string } | null = null
   ontrack: ((event: unknown) => void) | null = null
@@ -39,7 +44,9 @@ class FakePC {
   addTrack = vi.fn()
   createDataChannel = vi.fn()
   close = vi.fn()
-  setRemoteDescription = vi.fn(async () => undefined)
+  setRemoteDescription = vi.fn(async () => {
+    if (FakePC.trackOnAnswer) act(() => this.ontrack?.({ streams: [this.remote], track: {} }))
+  })
   constructor() {
     FakePC.instances.push(this)
   }
@@ -88,6 +95,8 @@ async function startCall(url?: string) {
 
 beforeEach(() => {
   FakePC.instances = []
+  FakePC.trackOnAnswer = false
+  answerMock.mockReset().mockResolvedValue({ kind: 'ok', sdp: 'v=0 clinic', seq: 2 })
   track.stop.mockReset()
   getUserMedia.mockReset().mockResolvedValue(stream)
   createCallMock.mockReset().mockResolvedValue({
@@ -268,11 +277,35 @@ describe('CallPage', () => {
     expect(streamMock).toHaveBeenCalledTimes(1)
   })
 
-  it('a failed peer connection ends the call', async () => {
+  it('a failed peer connection ends the call after one grace re-check', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
     await startCall()
     FakePC.instances[0].fire('failed')
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(100)
+    })
+    expect(endCallMock).not.toHaveBeenCalled()
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(3_000)
+    })
     expect(await screen.findByTestId('call-state-ended')).toBeInTheDocument()
     expect(endCallMock).toHaveBeenCalledWith('c1', 's3cret')
+  })
+
+  it('a peer failing just before the swap is announced swaps on the grace re-check', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    await startCall()
+    FakePC.instances[0].fire('failed')
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(100)
+    })
+    getCallMock.mockResolvedValue({ ...LIVE, pending_session_seq: 2 })
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(3_000)
+    })
+    await waitFor(() => expect(FakePC.instances).toHaveLength(2))
+    expect(endCallMock).not.toHaveBeenCalled()
+    expect(screen.getByTestId('call-state-on_call')).toBeInTheDocument()
   })
 
   it('a double click starts one call', async () => {
@@ -396,5 +429,185 @@ describe('CallPage', () => {
     )
     await act(async () => streams[0].resolve('ended'))
     expect(await screen.findByTestId('call-state-human_needed')).toBeInTheDocument()
+  })
+})
+
+const LIVE = { status: 'live' as const, outcome: null, end_reason: null, language: null }
+const never = () => new Promise<never>(() => undefined)
+
+async function swapEvent(seq = 2) {
+  act(() => streams[0].onEvent({ type: 'session_swap', session_seq: seq }))
+  await waitFor(() => expect(FakePC.instances).toHaveLength(2))
+  return FakePC.instances[1]
+}
+
+describe('CallPage clinic session swap', () => {
+  it('renegotiates on a second peer with the same mic track and drops the old peer', async () => {
+    const play = vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue(undefined)
+    await startCall()
+    const first = FakePC.instances[0]
+    const timer = screen.getByRole('timer').textContent
+    FakePC.trackOnAnswer = true
+    const second = await swapEvent(2)
+    await waitFor(() => expect(first.close).toHaveBeenCalled())
+    expect(getUserMedia).toHaveBeenCalledTimes(1)
+    expect(second.addTrack).toHaveBeenCalledWith(track, stream)
+    expect(answerMock).toHaveBeenCalledWith('c1', 's3cret', 'v=0 offer', 2, expect.anything())
+    expect(second.setRemoteDescription).toHaveBeenCalledWith({ type: 'answer', sdp: 'v=0 clinic' })
+    const audio = screen.getByTestId('call-audio') as HTMLAudioElement
+    expect(audio.srcObject).toBe(second.remote)
+    expect(play).toHaveBeenCalledTimes(1)
+    expect(first.ontrack).toBeNull()
+    expect(first.onconnectionstatechange).toBeNull()
+    expect(second.close).not.toHaveBeenCalled()
+    expect(track.stop).not.toHaveBeenCalled()
+    // The switchboard hang-up reaching the old peer later does nothing.
+    first.fire('failed')
+    second.fire('connected')
+    expect(screen.getByTestId('call-state-on_call')).toBeInTheDocument()
+    expect(screen.getByRole('timer').textContent).toBe(timer)
+    expect(endCallMock).not.toHaveBeenCalled()
+    play.mockRestore()
+  })
+
+  it('an old peer failing before the event, with a pending swap, swaps instead of ending', async () => {
+    await startCall()
+    getCallMock.mockResolvedValue({ ...LIVE, pending_session_seq: 2 })
+    FakePC.instances[0].fire('failed')
+    await waitFor(() => expect(FakePC.instances).toHaveLength(2))
+    await waitFor(() => expect(FakePC.instances[0].close).toHaveBeenCalled())
+    act(() => streams[0].onEvent({ type: 'session_swap', session_seq: 2 }))
+    expect(FakePC.instances).toHaveLength(2)
+    expect(answerMock).toHaveBeenCalledTimes(1)
+    expect(endCallMock).not.toHaveBeenCalled()
+    expect(screen.getByTestId('call-state-on_call')).toBeInTheDocument()
+  })
+
+  it('a pending swap found by the status poll starts exactly one swap', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    await startCall()
+    getCallMock.mockResolvedValue({ ...LIVE, pending_session_seq: 3 })
+    answerMock.mockResolvedValue({ kind: 'ok', sdp: 'v=0 clinic', seq: 3 })
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(STATUS_POLL_MS)
+    })
+    await waitFor(() => expect(FakePC.instances[0].close).toHaveBeenCalled())
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(STATUS_POLL_MS * 2)
+    })
+    vi.useRealTimers()
+    expect(FakePC.instances).toHaveLength(2)
+    expect(answerMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('ignores stale and duplicate seqs', async () => {
+    answerMock.mockImplementation(never)
+    await startCall()
+    act(() => streams[0].onEvent({ type: 'session_swap', session_seq: 1 }))
+    expect(FakePC.instances).toHaveLength(1)
+    await swapEvent(2)
+    act(() => streams[0].onEvent({ type: 'session_swap', session_seq: 2 }))
+    expect(FakePC.instances).toHaveLength(2)
+  })
+
+  it('a conflict closes only the pending peer and checks the status, without ending', async () => {
+    answerMock.mockResolvedValue({ kind: 'conflict' })
+    await startCall()
+    getCallMock.mockClear()
+    const second = await swapEvent(2)
+    await waitFor(() => expect(second.close).toHaveBeenCalled())
+    await waitFor(() => expect(getCallMock).toHaveBeenCalledWith('c1', 's3cret'))
+    expect(FakePC.instances[0].close).not.toHaveBeenCalled()
+    expect(endCallMock).not.toHaveBeenCalled()
+    expect(screen.getByTestId('call-state-on_call')).toBeInTheDocument()
+  })
+
+  it('the swap deadline aborts the request and closes the pending peer, without ending', async () => {
+    answerMock.mockImplementation(never)
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    await startCall()
+    getCallMock.mockClear()
+    const second = await swapEvent(2)
+    await waitFor(() => expect(answerMock).toHaveBeenCalled())
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(SWAP_DEADLINE_MS)
+    })
+    vi.useRealTimers()
+    expect(second.close).toHaveBeenCalled()
+    expect((answerMock.mock.calls[0][4] as AbortSignal).aborted).toBe(true)
+    expect(getCallMock).toHaveBeenCalled()
+    expect(FakePC.instances[0].close).not.toHaveBeenCalled()
+    expect(endCallMock).not.toHaveBeenCalled()
+  })
+
+  it('End during a swap closes both peers and aborts the request', async () => {
+    answerMock.mockImplementation(never)
+    const user = await startCall()
+    const second = await swapEvent(2)
+    await waitFor(() => expect(answerMock).toHaveBeenCalled())
+    await user.click(screen.getByTestId('call-end'))
+    expect(FakePC.instances[0].close).toHaveBeenCalled()
+    expect(second.close).toHaveBeenCalled()
+    expect((answerMock.mock.calls[0][4] as AbortSignal).aborted).toBe(true)
+    expect(endCallMock).toHaveBeenCalledWith('c1', 's3cret')
+  })
+
+  it('a crisis event during a swap closes both peers', async () => {
+    answerMock.mockImplementation(never)
+    await startCall()
+    const second = await swapEvent(2)
+    act(() =>
+      streams[0].onEvent({ type: 'state', ...LIVE, outcome: 'crisis', end_reason: 'crisis' }),
+    )
+    expect(await screen.findByTestId('call-state-crisis')).toBeInTheDocument()
+    expect(FakePC.instances[0].close).toHaveBeenCalled()
+    expect(second.close).toHaveBeenCalled()
+  })
+
+  it('pagehide during a swap sends one keepalive end and closes both peers', async () => {
+    answerMock.mockImplementation(never)
+    await startCall()
+    const second = await swapEvent(2)
+    act(() => {
+      window.dispatchEvent(new Event('pagehide'))
+    })
+    expect(unloadMock).toHaveBeenCalledTimes(1)
+    expect(FakePC.instances[0].close).toHaveBeenCalled()
+    expect(second.close).toHaveBeenCalled()
+  })
+
+  it('a swap event after a crisis is ignored and the audio stays muted', async () => {
+    await startCall()
+    act(() =>
+      streams[0].onEvent({ type: 'state', ...LIVE, outcome: 'crisis', end_reason: 'crisis' }),
+    )
+    act(() => streams[0].onEvent({ type: 'session_swap', session_seq: 2 }))
+    expect(FakePC.instances).toHaveLength(1)
+    expect((screen.getByTestId('call-audio') as HTMLAudioElement).muted).toBe(true)
+  })
+
+  it('autoplay refused on the clinic track shows "Tap to hear the agent"', async () => {
+    const play = vi.spyOn(HTMLMediaElement.prototype, 'play').mockRejectedValue(new Error('NotAllowed'))
+    await startCall()
+    FakePC.trackOnAnswer = true
+    await swapEvent(2)
+    expect(await screen.findByTestId('call-audio-unlock')).toBeInTheDocument()
+    play.mockRestore()
+  })
+
+  it('after a tap, a swap and a new connected peer do not prompt again', async () => {
+    const play = vi.spyOn(HTMLMediaElement.prototype, 'play').mockRejectedValue(new Error('NotAllowed'))
+    const user = await startCall()
+    act(() => FakePC.instances[0].ontrack?.({ streams: [{}], track: {} }))
+    await user.click(await screen.findByTestId('call-audio-unlock'))
+    play.mockResolvedValue(undefined)
+    await user.click(screen.getByTestId('call-audio-unlock'))
+    await waitFor(() => expect(screen.queryByTestId('call-audio-unlock')).toBeNull())
+    FakePC.trackOnAnswer = true
+    const second = await swapEvent(2)
+    await waitFor(() => expect(FakePC.instances[0].close).toHaveBeenCalled())
+    second.fire('connected')
+    expect(screen.queryByTestId('call-audio-unlock')).toBeNull()
+    play.mockRestore()
   })
 })
