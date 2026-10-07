@@ -187,7 +187,7 @@ describe('call detail page', () => {
 
   it('shows the voice mode and keeps the player for a GPT-Live call', async () => {
     renderPage()
-    expect(await screen.findByTestId('call-voice-mode')).toHaveTextContent('GPT-Live + Luna')
+    expect(await screen.findByTestId('call-voice-mode')).toHaveTextContent('Standard (recorded)')
     expect(screen.getByTestId('detail-audio')).toBeInTheDocument()
     expect(screen.queryByTestId('call-no-recording-realtime')).toBeNull()
   })
@@ -196,8 +196,8 @@ describe('call detail page', () => {
     detailReply = () =>
       reply(200, detail({ call: { voice_mode: 'realtime', agent_version: 'v-test-1+rt-abc123' }, recording: { available: false, segments: 0 } }))
     renderPage()
-    expect(await screen.findByTestId('call-voice-mode')).toHaveTextContent('Realtime (no Luna)')
-    expect(screen.getByTestId('call-no-recording-realtime')).toHaveTextContent('No recording (Realtime mode)')
+    expect(await screen.findByTestId('call-voice-mode')).toHaveTextContent('Single voice (not recorded)')
+    expect(screen.getByTestId('call-no-recording-realtime')).toHaveTextContent('No recording (single voice)')
     expect(screen.queryByTestId('detail-audio')).toBeNull()
     expect(screen.queryByTestId('detail-recording-unavailable')).toBeNull()
   })
@@ -205,7 +205,7 @@ describe('call detail page', () => {
   it('shows an older call without a voice mode as GPT-Live', async () => {
     detailReply = () => reply(200, detail({ call: { voice_mode: undefined } }))
     renderPage()
-    expect(await screen.findByTestId('call-voice-mode')).toHaveTextContent('GPT-Live + Luna')
+    expect(await screen.findByTestId('call-voice-mode')).toHaveTextContent('Standard (recorded)')
   })
 
   it('makes a live call read-only with no action buttons', async () => {

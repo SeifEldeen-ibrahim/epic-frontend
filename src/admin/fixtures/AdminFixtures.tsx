@@ -29,6 +29,11 @@ import {
   fxCatalog,
   fxCompiled,
   fxConfigBanners,
+  fxConfigClean,
+  fxConfigNobody,
+  fxHomeBlank,
+  fxHomeLive,
+  fxHomePartial,
   fxConfigProblems,
   fxConfigReviewer,
   fxConfigState,
@@ -78,6 +83,14 @@ function fill(testId: string, value: string): boolean {
   if (!input) return false
   Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set?.call(input, value)
   input.dispatchEvent(new Event('input', { bubbles: true }))
+  return true
+}
+
+function clickInput(testId: string): boolean {
+  const el = document.querySelector(`[data-testid=${testId}]`)
+  const input = el instanceof HTMLInputElement ? el : el?.querySelector('input')
+  if (!input) return false
+  input.click()
   return true
 }
 
@@ -242,7 +255,7 @@ Object.assign(VIEWS, {
     path: '/admin/knowledge',
     me: fxAdmin,
     replies: CFG(),
-    after: () => drive(() => click('config-publish')),
+    after: () => drive(() => click('changes-make-live')),
   },
   'publish-errors': {
     path: '/admin/knowledge',
@@ -252,13 +265,13 @@ Object.assign(VIEWS, {
       'POST /api/admin/config/publish': () =>
         json(422, { detail: { code: 'invalid', problems: fxConfigProblems.draft_problems } }),
     },
-    after: () => drive(() => click('config-publish'), () => click('config-confirm-confirm')),
+    after: () => drive(() => click('changes-make-live'), () => click('changes-confirm-confirm')),
   },
   'stale-409': {
     path: '/admin/knowledge',
     me: fxAdmin,
     replies: { ...CFG(), 'POST /api/admin/config/publish': fail(409, 'stale_draft') },
-    after: () => drive(() => click('config-publish'), () => click('config-confirm-confirm')),
+    after: () => drive(() => click('changes-make-live'), () => click('changes-confirm-confirm')),
   },
   versions: { path: '/admin/versions', me: fxAdmin, replies: { ...CFG(), 'GET /api/admin/config/versions': ok(fxVersions) } },
   'version-diff': {
@@ -267,6 +280,65 @@ Object.assign(VIEWS, {
     replies: { ...CFG(), 'GET /api/admin/config/versions/{seq}/diff': ok(fxVersionDiff) },
   },
   'queue-generic-form': { path: DETAIL, me: fxAdmin, replies: { [DETAIL_GET]: ok(fxDetailGenericForm) } },
+} satisfies Record<string, ViewSpec>)
+
+// --- admin-simple views: Home, Departments, the changes bar -----------------------------------
+const HOME = (home: unknown, state: unknown = fxConfigClean): Record<string, Reply> => ({
+  ...CFG(state),
+  'GET /api/admin/home': ok(home),
+})
+Object.assign(VIEWS, {
+  'home-blank': { path: '/admin', me: fxAdmin, replies: HOME(fxHomeBlank, fxConfigNobody) },
+  'home-partial': { path: '/admin', me: fxAdmin, replies: HOME(fxHomePartial) },
+  'home-live': { path: '/admin', me: fxAdmin, replies: HOME(fxHomeLive) },
+  'home-loading': { path: '/admin', me: fxAdmin, replies: { ...CFG(), 'GET /api/admin/home': hang } },
+  'home-error': { path: '/admin', me: fxAdmin, replies: { ...CFG(), 'GET /api/admin/home': fail(500, 'fixture error') } },
+  'home-example-confirm': {
+    path: '/admin',
+    me: fxAdmin,
+    replies: HOME(fxHomeBlank, fxConfigNobody),
+    after: () => drive(() => click('load-example')),
+  },
+  departments: { path: '/admin/departments', me: fxAdmin, replies: CFG() },
+  'departments-clean': { path: '/admin/departments', me: fxAdmin, replies: CFG(fxConfigClean) },
+  'agents-empty': {
+    path: '/admin/agents',
+    me: fxAdmin,
+    replies: { ...CFG(fxConfigNobody), 'GET /api/admin/config/draft/agents': ok({ agents: [], entry_agent: null }) },
+  },
+  'agent-new-empty-pickers': {
+    path: '/admin/agents/new',
+    me: fxAdmin,
+    replies: {
+      ...CFG(),
+      'GET /api/admin/config/draft/knowledge/{section}': ok({ name: 'knowledge.routing', value: { status: 'UNAPPROVED', entitlement_words: [], roles: [] }, draft_problems: [] }),
+      'GET /api/admin/config/draft/forms': ok(fxFormsEmpty),
+    },
+    after: () => drive(() => clickInput('agent-tool-route_to'), () => clickInput('agent-tool-form')),
+  },
+  'bar-unsaved': {
+    path: '/admin/agents/fixture_desk',
+    me: fxAdmin,
+    replies: { ...CFG(), 'GET /api/admin/config/draft/agents/{name}': ok(fxAgentDesk) },
+    after: () => drive(() => fill('agent-title', 'Fixture Desk (edited)')),
+  },
+  'bar-publishing': {
+    path: '/admin/knowledge',
+    me: fxAdmin,
+    replies: { ...CFG(), 'POST /api/admin/config/publish': hang },
+    after: () => drive(() => click('changes-make-live'), () => click('changes-confirm-confirm')),
+  },
+  'bar-failed': {
+    path: '/admin/knowledge',
+    me: fxAdmin,
+    replies: { ...CFG(), 'POST /api/admin/config/publish': fail(500, 'fixture error') },
+    after: () => drive(() => click('changes-make-live'), () => click('changes-confirm-confirm')),
+  },
+  'versions-banners': {
+    path: '/admin/versions',
+    me: fxAdmin,
+    replies: { ...CFG(fxConfigBanners), 'GET /api/admin/config/versions': ok(fxVersions) },
+  },
 } satisfies Record<string, ViewSpec>)
 
 /** Clears the parent route match so the nested routes match `/admin/...` from the root. */

@@ -1116,8 +1116,15 @@
             "type": "boolean"
           },
           "entry_agent": {
-            "title": "Entry Agent",
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entry Agent"
           },
           "fallback_problems": {
             "anyOf": [
@@ -2494,6 +2501,98 @@
           "storage"
         ],
         "title": "HealthResponse",
+        "type": "object"
+      },
+      "HomeResponse": {
+        "properties": {
+          "answering_agent": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Answering Agent"
+          },
+          "calls_today": {
+            "title": "Calls Today",
+            "type": "integer"
+          },
+          "can_edit": {
+            "title": "Can Edit",
+            "type": "boolean"
+          },
+          "forms_waiting": {
+            "title": "Forms Waiting",
+            "type": "integer"
+          },
+          "line_live": {
+            "title": "Line Live",
+            "type": "boolean"
+          },
+          "setup": {
+            "$ref": "#/components/schemas/HomeSetup"
+          }
+        },
+        "required": [
+          "calls_today",
+          "forms_waiting",
+          "line_live",
+          "answering_agent",
+          "setup",
+          "can_edit"
+        ],
+        "title": "HomeResponse",
+        "type": "object"
+      },
+      "HomeSetup": {
+        "properties": {
+          "answering": {
+            "title": "Answering",
+            "type": "boolean"
+          },
+          "basics": {
+            "title": "Basics",
+            "type": "boolean"
+          },
+          "departments": {
+            "title": "Departments",
+            "type": "boolean"
+          },
+          "forms": {
+            "title": "Forms",
+            "type": "boolean"
+          },
+          "front_desk": {
+            "title": "Front Desk",
+            "type": "boolean"
+          },
+          "live": {
+            "title": "Live",
+            "type": "boolean"
+          },
+          "specialists": {
+            "title": "Specialists",
+            "type": "boolean"
+          },
+          "test_call": {
+            "title": "Test Call",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "basics",
+          "departments",
+          "forms",
+          "specialists",
+          "front_desk",
+          "answering",
+          "live",
+          "test_call"
+        ],
+        "title": "HomeSetup",
         "type": "object"
       },
       "LatencyItem": {
@@ -4863,7 +4962,7 @@
         ]
       },
       "put": {
-        "description": "Creates the agent when the name is new; `archived` toggles via the body.",
+        "description": "Creates the agent when the name is new; `archived` toggles via the body. Archiving the agent\nthat answers calls clears that choice, so the admin can always get back to a valid setup.",
         "operationId": "put_agent_api_admin_config_draft_agents__name__put",
         "parameters": [
           {
@@ -5986,6 +6085,27 @@
           }
         },
         "summary": "Get Follow Up",
+        "tags": [
+          "admin-reads"
+        ]
+      }
+    },
+    "/api/admin/home": {
+      "get": {
+        "operationId": "get_home_api_admin_home_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HomeResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Home",
         "tags": [
           "admin-reads"
         ]

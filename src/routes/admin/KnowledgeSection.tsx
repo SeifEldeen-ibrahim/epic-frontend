@@ -23,7 +23,7 @@ const ROWS: Partial<Record<KnowledgeSection, { list: string; id: string; fields:
     list: 'roles',
     id: 'role',
     fields: (agents) => [
-      { key: 'role', label: 'Key (lowercase, no spaces)', kind: 'text', fixedAfterCreate: true, max: 40 },
+      { key: 'role', label: 'Short id (lowercase, no spaces)', kind: 'text', fixedAfterCreate: true, max: 40 },
       { key: 'title', label: 'Title (what callers hear)', kind: 'text', max: 80 },
       { key: 'terms', label: 'Need words that belong here', kind: 'list' },
       {
@@ -321,7 +321,7 @@ function RowsEditor({
     <div className="admin-section">
       {section === 'routing' ? (
         <TextField
-          label="Benefit words (never routed on their own)"
+          label="Benefit words (never enough on their own to send a caller anywhere)"
           hint="Separate entries with commas."
           value={Array.isArray(value.entitlement_words) ? (value.entitlement_words as string[]).join(', ') : ''}
           disabled={!canEdit}

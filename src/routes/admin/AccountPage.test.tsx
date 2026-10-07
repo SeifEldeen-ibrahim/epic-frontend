@@ -127,12 +127,12 @@ describe('AccountPage', () => {
     })
   })
 
-  it('goes to the queue after a forced change', async () => {
+  it('goes to Home after a forced change', async () => {
     POST.mockResolvedValue(reply(200, user))
     renderRoutes(forcedUser)
     expect(await screen.findByTestId('account-forced')).toBeInTheDocument()
     await fill('temp fictional pw', 'a long fictional pw', 'a long fictional pw')
-    expect(await screen.findByTestId('admin-queue')).toBeInTheDocument()
-    expect(screen.getByTestId('location')).toHaveTextContent('/admin/queue')
+    expect(await screen.findByTestId('admin-home')).toBeInTheDocument()
+    expect(screen.getByTestId('location')).toHaveTextContent(/^\/admin$/)
   })
 })

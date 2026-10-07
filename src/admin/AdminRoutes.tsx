@@ -1,14 +1,16 @@
-import { Navigate, Route, Routes } from 'react-router'
+import { Route, Routes } from 'react-router'
 import { AccountPage } from '../routes/admin/AccountPage'
 import { AgentEditorPage } from '../routes/admin/AgentEditorPage'
 import { AgentsPage } from '../routes/admin/AgentsPage'
 import { AuditPage } from '../routes/admin/AuditPage'
 import { CallDetailPage } from '../routes/admin/CallDetailPage'
 import { CallsPage } from '../routes/admin/CallsPage'
+import { DepartmentsPage } from '../routes/admin/DepartmentsPage'
 import { ExportsPage } from '../routes/admin/ExportsPage'
 import { FollowUpPage } from '../routes/admin/FollowUpPage'
 import { FormBuilderPage } from '../routes/admin/FormBuilderPage'
 import { FormsPage } from '../routes/admin/FormsPage'
+import { HomePage } from '../routes/admin/HomePage'
 import { KnowledgePage } from '../routes/admin/KnowledgePage'
 import { LoginPage } from '../routes/admin/LoginPage'
 import { QueuePage } from '../routes/admin/QueuePage'
@@ -34,13 +36,14 @@ export function AdminRoutes() {
           </RequireAuth>
         }
       >
-        <Route index element={<Navigate to="queue" replace />} />
+        <Route index element={<HomePage />} />
         <Route path="queue" element={<QueuePage />} />
         <Route path="follow-up" element={<FollowUpPage />} />
         <Route path="calls" element={<CallsPage />} />
         <Route path="calls/:callId" element={<CallDetailPage />} />
         <Route path="reports" element={<ReportsPage />} />
         <Route path="knowledge" element={<KnowledgePage />} />
+        <Route path="departments" element={<DepartmentsPage />} />
         <Route path="agents" element={<AgentsPage />} />
         <Route
           path="agents/new"
