@@ -56,13 +56,21 @@ const LEGAL: Record<string, CallStateKey> = {
   'ended:HUMAN_NEEDED': 'human_needed',
   'handoff:RESET': 'idle',
   'human_needed:RESET': 'idle',
+  // voice reconnect: the call goes on; every stop signal still applies, crisis wins
+  'reconnecting:CONNECTED': 'on_call',
+  'reconnecting:AUDIO_BLOCKED': 'reconnecting',
+  'reconnecting:UNAVAILABLE': 'unavailable',
+  'reconnecting:ENDED': 'ended',
+  'reconnecting:CRISIS': 'crisis',
+  'reconnecting:HANDOFF': 'handoff',
+  'reconnecting:HUMAN_NEEDED': 'human_needed',
 }
 
 describe('callReducer', () => {
   it('has the 8 talking-demo states plus the 3 switchboard stop states', () => {
     expect(CALL_STATES).toEqual([
       'idle', 'requesting_mic', 'mic_denied', 'unsupported',
-      'connecting', 'on_call', 'ended', 'unavailable',
+      'connecting', 'on_call', 'reconnecting', 'ended', 'unavailable',
       'crisis', 'handoff', 'human_needed',
     ])
     expect(INITIAL_CALL_STATE).toEqual({ key: 'idle' })
@@ -151,5 +159,41 @@ describe('classifySignal', () => {
     expect(classifySignal({ status: 'ended', outcome: 'department_handoff' })).toBe('ENDED')
     expect(classifySignal({ status: 'ended', outcome: 'referred' })).toBe('ENDED')
     expect(classifySignal({ status: 'live', outcome: null })).toBeNull()
+  })
+})
+
+describe('callReducer reconnecting (T-FE-CALL)', () => {
+  const onCall: CallState = { key: 'on_call', startedAt: 5 }
+  const reconnecting = callReducer(onCall, { type: 'RECONNECTING' })
+
+  it('on_call -> reconnecting -> on_call keeps the call start', () => {
+    expect(reconnecting).toEqual({ key: 'reconnecting', startedAt: 5 })
+    expect(callReducer(reconnecting, { type: 'RECONNECTED' })).toEqual({ key: 'on_call', startedAt: 5 })
+    expect(callReducer(reconnecting, { type: 'CONNECTED', at: 99 })).toEqual({ key: 'on_call', startedAt: 5 })
+  })
+
+  it.each([
+    [{ type: 'ENDED' }, 'ended'],
+    [{ type: 'UNAVAILABLE' }, 'unavailable'],
+    [{ type: 'HUMAN_NEEDED' }, 'human_needed'],
+    [{ type: 'HANDOFF', title: 'Intake' }, 'handoff'],
+    [{ type: 'CRISIS' }, 'crisis'],
+  ] as [CallEvent, CallStateKey][])('reconnecting + %o -> %s', (event, key) => {
+    expect(callReducer(reconnecting, event).key).toBe(key)
+  })
+
+  it('RECONNECTING is only legal from on_call', () => {
+    const idle: CallState = { key: 'idle' }
+    expect(callReducer(idle, { type: 'RECONNECTING' })).toBe(idle)
+  })
+
+  it('carries the language across transitions and clears it on RESET', () => {
+    const es = callReducer(onCall, { type: 'LANGUAGE', language: 'es' })
+    expect(es.language).toBe('es')
+    expect(callReducer(es, { type: 'LANGUAGE', language: 'es' })).toBe(es)
+    const ended = callReducer(callReducer(es, { type: 'RECONNECTING' }), { type: 'ENDED' })
+    expect(ended).toEqual({ key: 'ended', language: 'es' })
+    expect(callReducer(ended, { type: 'CRISIS' })).toEqual({ key: 'crisis', language: 'es' })
+    expect(callReducer(ended, { type: 'RESET' })).toEqual({ key: 'idle' })
   })
 })

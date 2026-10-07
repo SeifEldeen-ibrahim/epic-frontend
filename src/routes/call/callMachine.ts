@@ -7,6 +7,7 @@ export const CALL_STATES = [
   'unsupported',
   'connecting',
   'on_call',
+  'reconnecting',
   'ended',
   'unavailable',
   'crisis',
@@ -26,6 +27,8 @@ export interface CallState {
   audioBlocked?: boolean
   /** Department title the caller's request is for (handoff only; title, never a name). */
   handoffTitle?: string
+  /** The call's language from the server (null/absent: not known yet). Kept until RESET. */
+  language?: string | null
 }
 
 export type CallEvent =
@@ -42,6 +45,9 @@ export type CallEvent =
   | { type: 'CRISIS' }
   | { type: 'HANDOFF'; title: string }
   | { type: 'HUMAN_NEEDED' }
+  | { type: 'RECONNECTING' }
+  | { type: 'RECONNECTED' }
+  | { type: 'LANGUAGE'; language: string | null }
 
 export const INITIAL_CALL_STATE: CallState = { key: 'idle' }
 
@@ -49,12 +55,22 @@ export function isCallStateKey(value: string | undefined): value is CallStateKey
   return value !== undefined && (CALL_STATES as readonly string[]).includes(value)
 }
 
-/** Illegal events leave the state unchanged (same object). */
+/** Illegal events leave the state unchanged (same object). The call's language carries across
+ * transitions until RESET. */
 export function callReducer(state: CallState, event: CallEvent): CallState {
+  if (event.type === 'LANGUAGE') {
+    return (state.language ?? null) === event.language ? state : { ...state, language: event.language }
+  }
+  const next = step(state, event)
+  if (next === state || event.type === 'RESET' || state.language === undefined) return next
+  return next.language === undefined ? { ...next, language: state.language } : next
+}
+
+function step(state: CallState, event: CallEvent): CallState {
   // A crisis always wins once a call exists, even after the page already showed an end.
   if (
     event.type === 'CRISIS' &&
-    ['connecting', 'on_call', 'ended', 'unavailable', 'handoff', 'human_needed'].includes(state.key)
+    ['connecting', 'on_call', 'reconnecting', 'ended', 'unavailable', 'handoff', 'human_needed'].includes(state.key)
   ) {
     return { key: 'crisis' }
   }
@@ -78,6 +94,16 @@ export function callReducer(state: CallState, event: CallEvent): CallState {
       if (event.type === 'UNAVAILABLE') return { key: 'unavailable' }
       if (event.type === 'AUDIO_BLOCKED') return { ...state, audioBlocked: true }
       if (event.type === 'AUDIO_UNBLOCKED') return { ...state, audioBlocked: false }
+      if (event.type === 'HANDOFF') return { key: 'handoff', handoffTitle: event.title }
+      if (event.type === 'HUMAN_NEEDED') return { key: 'human_needed' }
+      if (event.type === 'RECONNECTING') return { ...state, key: 'reconnecting' }
+      return state
+    case 'reconnecting':
+      // The voice session is being rebuilt on a new peer; the call (and its timer) goes on.
+      if (event.type === 'RECONNECTED' || event.type === 'CONNECTED') return { ...state, key: 'on_call' }
+      if (event.type === 'ENDED') return { key: 'ended' }
+      if (event.type === 'UNAVAILABLE') return { key: 'unavailable' }
+      if (event.type === 'AUDIO_BLOCKED') return { ...state, audioBlocked: true }
       if (event.type === 'HANDOFF') return { key: 'handoff', handoffTitle: event.title }
       if (event.type === 'HUMAN_NEEDED') return { key: 'human_needed' }
       return state

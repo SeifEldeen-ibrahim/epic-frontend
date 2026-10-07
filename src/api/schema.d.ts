@@ -362,6 +362,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/calls/{call_id}/reconnect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Replace a failed media connection with a new session */
+        post: operations["reconnectCall"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/calls/{call_id}/sessions": {
         parameters: {
             query?: never;
@@ -555,6 +572,32 @@ export interface components {
          * @enum {string}
          */
         CallOutcome: "routed" | "referred" | "clinic_form" | "human_needed" | "crisis" | "department_handoff" | "current_client_handoff" | "abandoned" | "error";
+        /** CallReconnectConflict */
+        CallReconnectConflict: {
+            /**
+             * Reason
+             * @enum {string}
+             */
+            reason: "ended" | "crisis" | "handoff_pending" | "in_progress" | "limit";
+        };
+        /**
+         * CallReconnectRequest
+         * @description A fresh offer after the browser's media connection failed.
+         */
+        CallReconnectRequest: {
+            /**
+             * Sdp
+             * @description The browser's WebRTC SDP offer.
+             */
+            sdp: string;
+        };
+        /** CallReconnectResponse */
+        CallReconnectResponse: {
+            /** Sdp Answer */
+            sdp_answer: string;
+            /** Session Seq */
+            session_seq: number;
+        };
         /** CallSessionRequest */
         CallSessionRequest: {
             /**
@@ -647,6 +690,19 @@ export interface components {
              */
             status: "live" | "ended";
         };
+        /** CallTestSwitches */
+        CallTestSwitches: {
+            /**
+             * After Hours
+             * @description Force the after-hours path (true) or the open path (false).
+             */
+            after_hours?: boolean | null;
+            /**
+             * Turn Limit
+             * @description Switchboard turn limit for this call only.
+             */
+            turn_limit?: number | null;
+        };
         /** CallUnavailable */
         CallUnavailable: {
             /**
@@ -669,6 +725,8 @@ export interface components {
              * @description The browser's WebRTC SDP offer.
              */
             sdp: string;
+            /** @description Per-call test switches. Honoured only when the server enables test switches; otherwise ignored. */
+            test?: components["schemas"]["CallTestSwitches"] | null;
             /**
              * Tester
              * @description Optional tester pseudonym from ?tester=.
@@ -947,6 +1005,48 @@ export interface components {
          * @enum {string}
          */
         FormStatus: "being_filled" | "flagged" | "read_back" | "awaiting_approval" | "approved" | "rejected" | "incomplete";
+        /** GateFindingItem */
+        GateFindingItem: {
+            /** Count */
+            count: number;
+            /** Key Name */
+            key_name: string;
+            /** Table */
+            table: string;
+        };
+        /** GateResultItem */
+        GateResultItem: {
+            /** Duration S */
+            duration_s: number | null;
+            /** Findings */
+            findings: components["schemas"]["GateFindingItem"][];
+            /** Git Sha */
+            git_sha: string | null;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "gate" | "harness" | "live";
+            /** Mode */
+            mode: ("fake" | "audio" | "live") | null;
+            /** Passed */
+            passed: boolean;
+            /** Repeat */
+            repeat: number | null;
+            /**
+             * Run At
+             * Format: date-time
+             */
+            run_at: string;
+            /** Spend Usd */
+            spend_usd: number | null;
+            /** Stop */
+            stop: string | null;
+            /** Story Id */
+            story_id: string | null;
+            /** Turns Before Route */
+            turns_before_route: number | null;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -1065,7 +1165,7 @@ export interface components {
             /** Delegation */
             delegation: components["schemas"]["DelegationItem"][];
             /** Gate Results */
-            gate_results: unknown[];
+            gate_results: components["schemas"]["GateResultItem"][];
             /** Latency */
             latency: components["schemas"]["LatencyItem"][];
             /** Outcomes */
@@ -1079,6 +1179,8 @@ export interface components {
             routing_mix: components["schemas"]["RoutingMixItem"][];
             /** Total Calls */
             total_calls: number;
+            /** Unapproved */
+            unapproved: components["schemas"]["UnapprovedItem"][];
             /** Unmet Demand */
             unmet_demand: components["schemas"]["UnmetDemandItem"][];
         };
@@ -1227,6 +1329,13 @@ export interface components {
             started_at: string;
             /** Text */
             text: string;
+        };
+        /** UnapprovedItem */
+        UnapprovedItem: {
+            /** File */
+            file: string;
+            /** Status */
+            status: string;
         };
         /** UnmetDemandItem */
         UnmetDemandItem: {
@@ -2158,6 +2267,70 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reconnectCall: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Call-Secret"?: string | null;
+            };
+            path: {
+                call_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CallReconnectRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CallReconnectResponse"];
+                };
+            };
+            /** @description No such call. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotFoundResponse"];
+                };
+            };
+            /** @description The call cannot reconnect now (ended, crisis, handoff pending, a reconnect already in progress, or the reconnect limit was reached). */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CallReconnectConflict"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description The new session could not be started. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CallUnavailable"];
                 };
             };
         };
