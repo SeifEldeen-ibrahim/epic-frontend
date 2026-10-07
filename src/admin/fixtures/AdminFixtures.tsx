@@ -23,6 +23,22 @@ import {
   fxReportsEmpty,
   fxReviewer,
   fxVoiceMode,
+  fxAgentDesk,
+  fxAgents,
+  fxAgentSwitchboard,
+  fxCatalog,
+  fxCompiled,
+  fxConfigBanners,
+  fxConfigProblems,
+  fxConfigReviewer,
+  fxConfigState,
+  fxDetailGenericForm,
+  fxForm,
+  fxForms,
+  fxFormsEmpty,
+  fxRouting,
+  fxVersionDiff,
+  fxVersions,
 } from './data'
 
 type Reply = (n: number) => Response | Promise<Response>
@@ -172,6 +188,85 @@ Object.assign(VIEWS, {
     },
     after: () => drive(() => click('form-approve')),
   },
+} satisfies Record<string, ViewSpec>)
+
+// --- admin-knowledge views -------------------------------------------------------------------
+const CFG = (state: unknown = fxConfigState): Record<string, Reply> => ({
+  'GET /api/admin/config': ok(state),
+  'GET /api/admin/config/catalog': ok(fxCatalog),
+  'GET /api/admin/config/draft/knowledge/{section}': ok(fxRouting),
+  'GET /api/admin/config/draft/agents': ok(fxAgents),
+  'GET /api/admin/config/draft/forms': ok(fxForms),
+  'GET /api/admin/config/draft/diff': ok(fxVersionDiff),
+})
+Object.assign(VIEWS, {
+  knowledge: { path: '/admin/knowledge', me: fxAdmin, replies: CFG() },
+  'knowledge-errors': { path: '/admin/knowledge', me: fxAdmin, replies: CFG(fxConfigProblems) },
+  'knowledge-banners': { path: '/admin/knowledge', me: fxAdmin, replies: CFG(fxConfigBanners) },
+  'knowledge-reviewer': { path: '/admin/knowledge', me: fxReviewer, replies: CFG(fxConfigReviewer) },
+  'knowledge-edit-dialog': {
+    path: '/admin/knowledge',
+    me: fxAdmin,
+    replies: CFG(),
+    after: () => drive(() => click('routing-edit-fixture_dept')),
+  },
+  agents: { path: '/admin/agents', me: fxAdmin, replies: CFG() },
+  'agent-new': { path: '/admin/agents/new', me: fxAdmin, replies: CFG() },
+  'agent-editor': {
+    path: '/admin/agents/fixture_desk',
+    me: fxAdmin,
+    replies: {
+      ...CFG(),
+      'GET /api/admin/config/draft/agents/{name}': ok(fxAgentDesk),
+      'GET /api/admin/config/draft/agents/{name}/compiled': ok(fxCompiled),
+    },
+  },
+  'agent-editor-switchboard': {
+    path: '/admin/agents/switchboard',
+    me: fxAdmin,
+    replies: { ...CFG(), 'GET /api/admin/config/draft/agents/{name}': ok(fxAgentSwitchboard) },
+  },
+  'agent-reviewer': {
+    path: '/admin/agents/fixture_desk',
+    me: fxReviewer,
+    replies: { ...CFG(fxConfigReviewer), 'GET /api/admin/config/draft/agents/{name}': ok(fxAgentDesk) },
+  },
+  forms: { path: '/admin/forms', me: fxAdmin, replies: CFG() },
+  'forms-empty': { path: '/admin/forms', me: fxAdmin, replies: { ...CFG(), 'GET /api/admin/config/draft/forms': ok(fxFormsEmpty) } },
+  'form-builder': {
+    path: '/admin/forms/fixture_form',
+    me: fxAdmin,
+    replies: { ...CFG(), 'GET /api/admin/config/draft/forms/{name}': ok(fxForm) },
+  },
+  'publish-confirm': {
+    path: '/admin/knowledge',
+    me: fxAdmin,
+    replies: CFG(),
+    after: () => drive(() => click('config-publish')),
+  },
+  'publish-errors': {
+    path: '/admin/knowledge',
+    me: fxAdmin,
+    replies: {
+      ...CFG(),
+      'POST /api/admin/config/publish': () =>
+        json(422, { detail: { code: 'invalid', problems: fxConfigProblems.draft_problems } }),
+    },
+    after: () => drive(() => click('config-publish'), () => click('config-confirm-confirm')),
+  },
+  'stale-409': {
+    path: '/admin/knowledge',
+    me: fxAdmin,
+    replies: { ...CFG(), 'POST /api/admin/config/publish': fail(409, 'stale_draft') },
+    after: () => drive(() => click('config-publish'), () => click('config-confirm-confirm')),
+  },
+  versions: { path: '/admin/versions', me: fxAdmin, replies: { ...CFG(), 'GET /api/admin/config/versions': ok(fxVersions) } },
+  'version-diff': {
+    path: '/admin/versions/2',
+    me: fxAdmin,
+    replies: { ...CFG(), 'GET /api/admin/config/versions/{seq}/diff': ok(fxVersionDiff) },
+  },
+  'queue-generic-form': { path: DETAIL, me: fxAdmin, replies: { [DETAIL_GET]: ok(fxDetailGenericForm) } },
 } satisfies Record<string, ViewSpec>)
 
 /** Clears the parent route match so the nested routes match `/admin/...` from the root. */

@@ -1,14 +1,21 @@
 import { Navigate, Route, Routes } from 'react-router'
 import { AccountPage } from '../routes/admin/AccountPage'
+import { AgentEditorPage } from '../routes/admin/AgentEditorPage'
+import { AgentsPage } from '../routes/admin/AgentsPage'
 import { AuditPage } from '../routes/admin/AuditPage'
 import { CallDetailPage } from '../routes/admin/CallDetailPage'
 import { CallsPage } from '../routes/admin/CallsPage'
 import { ExportsPage } from '../routes/admin/ExportsPage'
 import { FollowUpPage } from '../routes/admin/FollowUpPage'
+import { FormBuilderPage } from '../routes/admin/FormBuilderPage'
+import { FormsPage } from '../routes/admin/FormsPage'
+import { KnowledgePage } from '../routes/admin/KnowledgePage'
 import { LoginPage } from '../routes/admin/LoginPage'
 import { QueuePage } from '../routes/admin/QueuePage'
 import { ReportsPage } from '../routes/admin/ReportsPage'
 import { SettingsPage } from '../routes/admin/SettingsPage'
+import { VersionDetailPage } from '../routes/admin/VersionDetailPage'
+import { VersionsPage } from '../routes/admin/VersionsPage'
 import { NotFound } from '../routes/NotFound'
 import './admin.css'
 import { AdminShell } from './AdminShell'
@@ -33,6 +40,29 @@ export function AdminRoutes() {
         <Route path="calls" element={<CallsPage />} />
         <Route path="calls/:callId" element={<CallDetailPage />} />
         <Route path="reports" element={<ReportsPage />} />
+        <Route path="knowledge" element={<KnowledgePage />} />
+        <Route path="agents" element={<AgentsPage />} />
+        <Route
+          path="agents/new"
+          element={
+            <RequireRole allow={['admin']}>
+              <AgentEditorPage />
+            </RequireRole>
+          }
+        />
+        <Route path="agents/:name" element={<AgentEditorPage />} />
+        <Route path="forms" element={<FormsPage />} />
+        <Route
+          path="forms/new"
+          element={
+            <RequireRole allow={['admin']}>
+              <FormBuilderPage />
+            </RequireRole>
+          }
+        />
+        <Route path="forms/:name" element={<FormBuilderPage />} />
+        <Route path="versions" element={<VersionsPage />} />
+        <Route path="versions/:seq" element={<VersionDetailPage />} />
         <Route
           path="exports"
           element={
