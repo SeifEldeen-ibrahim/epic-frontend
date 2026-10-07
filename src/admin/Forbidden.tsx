@@ -11,7 +11,7 @@ export function Forbidden() {
     <section className="admin-page" data-testid="forbidden">
       <h1>{adminCopy.forbidden.title}</h1>
       <p className="admin-muted">{adminCopy.forbidden.body}</p>
-      <Link className="ui-link" to="/admin/queue">
+      <Link className="ui-link" to="/admin">
         {adminCopy.forbidden.link}
       </Link>
     </section>

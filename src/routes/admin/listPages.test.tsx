@@ -336,9 +336,9 @@ describe('reports', () => {
     handlers['/api/admin/reports'] = () => reply(200, reportsEmpty)
     renderAt('/admin/reports')
     expect(await screen.findByTestId('reports-empty')).toHaveTextContent('Not enough calls in this period')
-    expect(screen.getByRole('heading', { name: 'Release-gate and story-harness results' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Automatic checks' })).toBeInTheDocument()
     expect(screen.getByTestId('reports-gates-empty')).toHaveTextContent(
-      'No gate results yet — they appear once the release-gate command publishes them',
+      'No automatic checks yet. They appear after the developer runs them.',
     )
   })
 

@@ -8,7 +8,6 @@ import {
   fxAdmin,
   fxAgents,
   fxCatalog,
-  fxConfigProblems,
   fxConfigReviewer,
   fxConfigState,
   fxForms,
@@ -71,20 +70,21 @@ beforeEach(() => {
 })
 afterEach(cleanup)
 
-describe('T-FE: knowledge page', () => {
-  it('shows the live version, the draft state and searchable routing rows', async () => {
-    renderAt('/admin/knowledge')
-    expect(await screen.findByTestId('config-live-label')).toHaveTextContent('cfg-3-fx1a2b3c')
-    expect(screen.getByTestId('config-draft-state')).toHaveTextContent('2 sections changed')
+describe('T-FE: departments and knowledge pages', () => {
+  it('shows departments on their own page with a help line and searchable rows', async () => {
+    renderAt('/admin/departments')
+    expect(await screen.findByTestId('admin-departments')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 1, name: 'Departments' })).toBeInTheDocument()
+    expect(screen.getByTestId('page-help')).toHaveTextContent('The departments callers can be sent to')
     const table = await screen.findByTestId('admin-table-knowledge-routing')
     expect(within(table).getByText('Fixture Department')).toBeInTheDocument()
     await userEvent.type(screen.getByTestId('routing-search'), 'zzz')
     expect(await screen.findByTestId('routing-nomatch')).toBeInTheDocument()
   })
 
-  it('edits a row in a dialog and saves the section to the draft', async () => {
+  it('edits a department in a dialog and saves it', async () => {
     PUT.mockResolvedValue(reply(200, { name: 'knowledge.routing', value: fxRouting.value, draft_problems: [] }))
-    renderAt('/admin/knowledge')
+    renderAt('/admin/departments')
     await userEvent.click(await screen.findByTestId('routing-edit-fixture_dept'))
     const dialog = screen.getByTestId('routing-dialog')
     const title = within(dialog).getByTestId('routing-dialog-title')
@@ -96,39 +96,38 @@ describe('T-FE: knowledge page', () => {
     await waitFor(() => expect(PUT).toHaveBeenCalled())
     const body = PUT.mock.calls[0][1].body.value
     expect(body.roles[0].title).toBe('Renamed Department')
-    expect(await screen.findByTestId('knowledge-routing-result')).toHaveTextContent('Saved to the draft.')
+    expect(await screen.findByTestId('knowledge-routing-result')).toHaveTextContent('Saved. Make your changes live')
   })
 
-  it('lists problems and disables publishing until they are fixed', async () => {
-    replies['/api/admin/config'] = () => reply(200, fxConfigProblems)
+  it('orders knowledge like the setup checklist, without departments', async () => {
+    replies['/api/admin/config/draft/knowledge/{section}'] = () =>
+      reply(200, { name: 'knowledge.hours', value: { status: 'UNAPPROVED', timezone: 'America/New_York', weekly: {}, closures: [] }, draft_problems: [] })
     renderAt('/admin/knowledge')
-    expect(await screen.findByTestId('config-problems')).toHaveTextContent('names something the clinic never collects')
-    expect(screen.getByTestId('config-publish')).toBeDisabled()
+    const tabs = await screen.findByTestId('knowledge-tabs')
+    expect(within(tabs).getAllByRole('tab').map((t) => t.textContent)).toEqual([
+      'Hours & closures',
+      'Services',
+      'Referrals',
+      'Standard sentences',
+      'Crisis words',
+      'Never say',
+      'Medical topics',
+    ])
+    expect(within(tabs).getAllByRole('tab')[0]).toHaveAttribute('aria-selected', 'true')
+    expect(screen.queryByTestId('knowledge-tab-routing')).toBeNull()
   })
 
-  it('publishes after confirming, and reports a stale draft', async () => {
-    POST.mockResolvedValueOnce(reply(409, { detail: 'stale_draft' }))
-    renderAt('/admin/knowledge')
-    await userEvent.click(await screen.findByTestId('config-publish'))
-    await userEvent.click(screen.getByTestId('config-confirm-confirm'))
-    expect(await screen.findByTestId('config-result')).toHaveTextContent('Someone published since')
-    POST.mockResolvedValueOnce(reply(200, { seq: 4, label: 'cfg-4-x', live_label: 'cfg-4-x' }))
-    await userEvent.click(screen.getByTestId('config-publish'))
-    await userEvent.click(screen.getByTestId('config-confirm-confirm'))
-    await waitFor(() => expect(screen.getByTestId('config-result')).toHaveTextContent('cfg-4-x is live for new calls'))
-  })
-
-  it('a reviewer reads everything and gets no edit controls', async () => {
+  it('a reviewer reads everything and gets no edit controls and no changes bar', async () => {
     replies['/api/admin/config'] = () => reply(200, fxConfigReviewer)
     serve(fxReviewer)
-    renderAt('/admin/knowledge')
+    renderAt('/admin/departments')
     expect(await screen.findByTestId('admin-table-knowledge-routing')).toBeInTheDocument()
-    expect(screen.queryByTestId('config-publish')).toBeNull()
+    expect(screen.queryByTestId('changes-bar')).toBeNull()
     expect(screen.queryByTestId('routing-add')).toBeNull()
     expect(screen.queryByTestId('knowledge-routing-save')).toBeNull()
   })
 
-  it('shows locked floor entries that cannot be removed', async () => {
+  it('shows built-in crisis words as always on, not removable', async () => {
     replies['/api/admin/config/draft/knowledge/{section}'] = () =>
       reply(200, { name: 'knowledge.crisis', value: { status: 'UNAPPROVED', keywords: { en: ['added phrase'], es: [] }, agency_keywords: {} }, draft_problems: [] })
     renderAt('/admin/knowledge?section=crisis')
@@ -137,19 +136,21 @@ describe('T-FE: knowledge page', () => {
     expect(within(en).getAllByTestId('crisis-en-remove')).toHaveLength(1) // only the addition
   })
 
-  it('shows loading and a retryable error', async () => {
+  it('shows a retryable error', async () => {
     replies['/api/admin/config/draft/knowledge/{section}'] = () => reply(500, { detail: 'boom' })
-    renderAt('/admin/knowledge')
+    renderAt('/admin/departments')
     expect(await screen.findByTestId('knowledge-routing-error')).toBeInTheDocument()
   })
 })
 
-describe('T-FE: versions', () => {
-  it('lists versions with the live one marked, and shows a diff as plain text', async () => {
+describe('T-FE: history', () => {
+  it('lists what went live with the live one marked, and shows a diff as plain text', async () => {
     renderAt('/admin/versions')
+    expect(await screen.findByRole('heading', { level: 1, name: 'History' })).toBeInTheDocument()
+    expect(await screen.findByTestId('config-live-label')).toHaveTextContent('cfg-3-fx1a2b3c')
     const table = await screen.findByTestId('admin-table-versions')
     expect(within(table).getByText('cfg-3-fx1a2b3c')).toBeInTheDocument()
-    expect(within(table).getByText('Rollback')).toBeInTheDocument()
+    expect(within(table).getByText('Went back')).toBeInTheDocument()
     cleanup()
     serve()
     renderAt('/admin/versions/2')

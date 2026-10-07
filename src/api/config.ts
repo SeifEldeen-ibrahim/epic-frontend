@@ -188,6 +188,7 @@ function draftChanged(qc: QueryClient) {
   void qc.invalidateQueries({ queryKey: configKeys.forms() })
   void qc.invalidateQueries({ queryKey: configKeys.draftDiff() })
   void qc.invalidateQueries({ queryKey: ['admin', 'config', 'compiled'] })
+  void qc.invalidateQueries({ queryKey: ['admin', 'config', 'home'] })
 }
 
 export function useSaveKnowledge(section: KnowledgeSection) {
@@ -247,7 +248,7 @@ export function useSaveForm(name: string) {
 export function useSaveEntryAgent() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (name: string) =>
+    mutationFn: async (name: string | null) =>
       unwrap(qc, await api.PUT('/api/admin/config/draft/entry-agent', { body: { value: name } })),
     onSuccess: () => draftChanged(qc),
   })
