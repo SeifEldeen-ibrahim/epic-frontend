@@ -49,7 +49,7 @@ export function ExportsPage() {
   const onExport = () =>
     run.mutate(undefined, {
       onSuccess: (r) => {
-        const base = `epic-export-${stamp(r.exported_at)}`
+        const base = `clinic-export-${stamp(r.exported_at)}`
         save(`${base}.csv`, 'text/csv', r.csv)
         save(`${base}.json`, 'application/json', JSON.stringify(r.rows, null, 2))
         setResult((p) => ({ ok: true, count: r.count, n: (p?.n ?? 0) + 1 }))
