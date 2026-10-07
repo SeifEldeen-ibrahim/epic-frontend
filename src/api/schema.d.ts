@@ -287,7 +287,8 @@ export interface paths {
         get: operations["get_agent_api_admin_config_draft_agents__name__get"];
         /**
          * Put Agent
-         * @description Creates the agent when the name is new; `archived` toggles via the body.
+         * @description Creates the agent when the name is new; `archived` toggles via the body. Archiving the agent
+         *     that answers calls clears that choice, so the admin can always get back to a valid setup.
          */
         put: operations["put_agent_api_admin_config_draft_agents__name__put"];
         post?: never;
@@ -550,6 +551,23 @@ export interface paths {
         };
         /** Get Follow Up */
         get: operations["get_follow_up_api_admin_follow_up_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/home": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Home */
+        get: operations["get_home_api_admin_home_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1111,7 +1129,7 @@ export interface components {
             /** Drift */
             drift: boolean;
             /** Entry Agent */
-            entry_agent: string;
+            entry_agent: string | null;
             /** Fallback Problems */
             fallback_problems: components["schemas"]["ProblemItem"][] | null;
             /** Reload Pending */
@@ -1574,6 +1592,39 @@ export interface components {
              * @enum {string}
              */
             storage: "ok" | "error";
+        };
+        /** HomeResponse */
+        HomeResponse: {
+            /** Answering Agent */
+            answering_agent: string | null;
+            /** Calls Today */
+            calls_today: number;
+            /** Can Edit */
+            can_edit: boolean;
+            /** Forms Waiting */
+            forms_waiting: number;
+            /** Line Live */
+            line_live: boolean;
+            setup: components["schemas"]["HomeSetup"];
+        };
+        /** HomeSetup */
+        HomeSetup: {
+            /** Answering */
+            answering: boolean;
+            /** Basics */
+            basics: boolean;
+            /** Departments */
+            departments: boolean;
+            /** Forms */
+            forms: boolean;
+            /** Front Desk */
+            front_desk: boolean;
+            /** Live */
+            live: boolean;
+            /** Specialists */
+            specialists: boolean;
+            /** Test Call */
+            test_call: boolean;
         };
         /** LatencyItem */
         LatencyItem: {
@@ -3675,6 +3726,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FollowUpResponse"];
+                };
+            };
+        };
+    };
+    get_home_api_admin_home_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HomeResponse"];
                 };
             };
         };

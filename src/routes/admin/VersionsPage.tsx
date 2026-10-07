@@ -1,14 +1,16 @@
-import { useVersions, type VersionItem } from '../../api/config'
+import { useConfigState, useVersions, type VersionItem } from '../../api/config'
+import { LiveStatus } from '../../admin/ChangesBar'
 import { AdminPage, CellLink, DataTable, type Column } from '../../admin/DataTable'
 import { adminCopy, formatTime, orDash } from '../../admin/copy'
 import { EmptyState, ErrorState, StatusBadge } from '../../ui'
-import { ConfigStateBar } from './KnowledgePage'
 
 const c = adminCopy.versions
 
-/** /admin/versions: every published config version, newest first (never deleted). */
+/** /admin/versions ("History"): every time changes went live, newest first (never deleted), and
+ * what is live now. */
 export function VersionsPage() {
   const q = useVersions()
+  const state = useConfigState()
   const columns: Column<VersionItem>[] = [
     {
       key: 'seq',
@@ -20,7 +22,7 @@ export function VersionsPage() {
         </CellLink>
       ),
     },
-    { key: 'label', header: c.label, cell: (v) => <code>{v.label}</code> },
+    { key: 'label', header: c.label, cell: (v) => <code className="admin-small">{v.label}</code> },
     {
       key: 'source',
       header: c.source,
@@ -43,7 +45,7 @@ export function VersionsPage() {
   else body = <DataTable name="versions" caption={adminCopy.pages.versions} columns={columns} rows={q.data.versions} rowKey={(v) => String(v.seq)} />
   return (
     <AdminPage page="versions">
-      <ConfigStateBar />
+      {state.data ? <LiveStatus state={state.data} /> : null}
       {body}
     </AdminPage>
   )

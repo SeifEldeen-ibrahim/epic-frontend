@@ -5,7 +5,7 @@ import { useLogin, useSession } from '../../api/auth'
 import { adminCopy } from '../../admin/copy'
 import { Button, Notice, PageLayout, TextField } from '../../ui'
 
-const FALLBACK = '/admin/queue'
+const FALLBACK = '/admin'
 const c = adminCopy.login
 
 /** Only same-origin /admin paths (never the login page itself) are allowed as a post-login target. */

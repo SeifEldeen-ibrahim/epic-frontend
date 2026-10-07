@@ -22,6 +22,8 @@ export type AuditListResponse = S['AuditListResponse']
 export type ExportPendingResponse = S['ExportPendingResponse']
 export type ExportResponse = S['ExportResponse']
 export type ReportsResponse = S['ReportsResponse']
+export type HomeResponse = S['HomeResponse']
+export type HomeSetup = S['HomeSetup']
 export type CallsParams = NonNullable<paths['/api/admin/calls']['get']['parameters']['query']>
 export type AuditParams = NonNullable<paths['/api/admin/audit']['get']['parameters']['query']>
 export type ReportsParams = NonNullable<paths['/api/admin/reports']['get']['parameters']['query']>
@@ -124,6 +126,16 @@ export const adminKeys = {
 function invalidateLists(qc: QueryClient) {
   return qc.invalidateQueries({
     predicate: (q) => q.queryKey[0] === 'admin' && q.queryKey[1] !== 'call-detail',
+  })
+}
+
+/** Home: today's numbers, line status and the setup checklist. Keyed under the config prefix so
+ * every setup change (save, make live, discard, example) refreshes it. */
+export function useHome() {
+  const qc = useQueryClient()
+  return useQuery({
+    queryKey: ['admin', 'config', 'home'] as const,
+    queryFn: async () => handle(qc, await api.GET('/api/admin/home')),
   })
 }
 

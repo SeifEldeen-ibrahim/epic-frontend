@@ -58,7 +58,7 @@ export function AccountPage() {
           setNext('')
           setConfirm('')
           setDone(true)
-          if (wasForced) navigate('/admin/queue', { replace: true })
+          if (wasForced) navigate('/admin', { replace: true })
         },
       },
     )
