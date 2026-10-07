@@ -1,7 +1,14 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react'
 import { streamCallEvents } from '../../api/callEvents'
 import { createCall, endCall, endCallOnUnload, getCall } from '../../api/calls'
-import { callReducer, detectUnsupported, INITIAL_CALL_STATE, type CallState } from './callMachine'
+import {
+  callReducer,
+  classifySignal,
+  detectUnsupported,
+  INITIAL_CALL_STATE,
+  type CallSignal,
+  type CallState,
+} from './callMachine'
 
 export const CONNECT_TIMEOUT_MS = 15_000
 /** Call-state stream: reconnect delay, how long a stream must stay open to reset the failure
@@ -9,6 +16,10 @@ export const CONNECT_TIMEOUT_MS = 15_000
 export const RECONNECT_MS = 1_000
 export const STABLE_STREAM_MS = 30_000
 export const MAX_STREAM_FAILURES = 3
+/** While the call-state stream is not healthy (no event yet on this connection), the status is
+ * polled this often: the WebRTC peer stays connected after a server close, so a missed crisis
+ * event would otherwise go unseen. */
+export const STATUS_POLL_MS = 3_000
 
 const TESTER_RE = /^[A-Za-z0-9 _.-]{1,40}$/
 
@@ -27,6 +38,12 @@ interface LiveCall {
   eventsAbort?: AbortController
   failures: number
   timers: number[]
+  /** An event arrived on the current stream connection. */
+  healthy?: boolean
+  /** The last call-state event (status, outcome, title). */
+  last?: CallSignal
+  /** Crisis: nothing may play audio again on this call. */
+  crisis?: boolean
 }
 
 const idleLive = (): LiveCall => ({ active: false, failures: 0, timers: [] })
@@ -64,9 +81,50 @@ export function useCall(tester?: string) {
     l.eventsAbort?.abort()
     l.stream?.getTracks().forEach((track) => track.stop())
     l.pc?.close()
-    if (audioRef.current) audioRef.current.srcObject = null
+    const audio = audioRef.current
+    if (audio) {
+      audio.muted = true
+      audio.srcObject = null
+    }
     live.current = idleLive()
   }, [])
+
+  /** Crisis: silence the agent first (synchronously), then end everything on this page. */
+  const enterCrisis = useCallback(
+    (l: LiveCall) => {
+      l.crisis = true
+      const audio = audioRef.current
+      if (audio) {
+        audio.muted = true
+        audio.pause()
+        audio.srcObject = null
+      }
+      if (live.current === l) teardown()
+      dispatch({ type: 'CRISIS' })
+    },
+    [teardown],
+  )
+
+  /** One classifier for every path that learns how the call stands (stream, status, drop). */
+  const apply = useCallback(
+    (l: LiveCall, signal: CallSignal | null | undefined): boolean => {
+      if (!signal) return false
+      const verdict = classifySignal(signal)
+      if (verdict === 'CRISIS') {
+        enterCrisis(l)
+        return true
+      }
+      if (verdict === null || live.current !== l) return false
+      const onCall = stateRef.current.key === 'on_call'
+      teardown()
+      if (!onCall) dispatch({ type: 'UNAVAILABLE' })
+      else if (verdict === 'ENDED') dispatch({ type: 'ENDED' })
+      else if (verdict === 'HUMAN_NEEDED') dispatch({ type: 'HUMAN_NEEDED' })
+      else dispatch(verdict)
+      return true
+    },
+    [enterCrisis, teardown],
+  )
 
   const hangup = useCallback(
     async (to: 'ENDED' | 'UNAVAILABLE') => {
@@ -80,21 +138,35 @@ export function useCall(tester?: string) {
   )
 
   const serverEnded = useCallback(
-    (l: LiveCall) => {
+    (l: LiveCall, signal?: CallSignal | null) => {
       if (live.current !== l) return
-      teardown()
-      dispatch({ type: stateRef.current.key === 'on_call' ? 'ENDED' : 'UNAVAILABLE' })
+      if (apply(l, signal ?? l.last ?? { status: 'ended' })) return
+      apply(l, { status: 'ended' })
     },
-    [teardown],
+    [apply],
   )
 
   const check = useCallback(async () => {
     const l = live.current
     if (!l.callId || !l.secret) return
     const status = await getCall(l.callId, l.secret)
-    if (live.current !== l || status?.status !== 'ended') return
-    serverEnded(l)
-  }, [serverEnded])
+    if (live.current !== l || !status) return
+    apply(l, status)
+  }, [apply])
+
+  /** Polls the status every STATUS_POLL_MS while the stream has delivered nothing. */
+  const poll = useCallback(
+    (l: LiveCall) => {
+      const tick = () => {
+        if (live.current !== l || l.healthy) return
+        void check().then(() => {
+          if (live.current === l && !l.healthy) l.timers.push(window.setTimeout(tick, STATUS_POLL_MS))
+        })
+      }
+      l.timers.push(window.setTimeout(tick, STATUS_POLL_MS))
+    },
+    [check],
+  )
 
   /** Follows the call-state stream; on a drop asks for the call, reconnects, and after
    * MAX_STREAM_FAILURES consecutive failures ends the call safely. */
@@ -107,20 +179,30 @@ export function useCall(tester?: string) {
         const controller = new AbortController()
         l.eventsAbort = controller
         const opened = Date.now()
-        const end = await streamCallEvents(callId, secret, () => undefined, controller.signal)
+        l.healthy = false
+        poll(l)
+        const end = await streamCallEvents(
+          callId,
+          secret,
+          (event) => {
+            if (live.current !== l) return
+            l.healthy = true
+            l.last = event
+            if (classifySignal(event) === 'CRISIS') enterCrisis(l)
+          },
+          controller.signal,
+        )
         if (live.current !== l || end === 'aborted') return
         if (end === 'ended') {
           serverEnded(l)
           return
         }
+        l.healthy = false
         if (Date.now() - opened >= STABLE_STREAM_MS) l.failures = 0
         l.failures += 1
         const status = await getCall(callId, secret)
         if (live.current !== l) return
-        if (status?.status === 'ended') {
-          serverEnded(l)
-          return
-        }
+        if (status && apply(l, status)) return
         if (status === null) l.failures += 1
         if (l.failures >= MAX_STREAM_FAILURES) {
           void hangup(stateRef.current.key === 'on_call' ? 'ENDED' : 'UNAVAILABLE')
@@ -131,13 +213,15 @@ export function useCall(tester?: string) {
         })
       }
     },
-    [hangup, serverEnded],
+    [apply, enterCrisis, hangup, poll, serverEnded],
   )
 
   const start = useCallback(async () => {
     if (live.current.active) return
     const l: LiveCall = { active: true, failures: 0, timers: [] }
     live.current = l
+    // A new call may play audio again (a crisis or teardown muted the shared element).
+    if (audioRef.current) audioRef.current.muted = false
     dispatch({ type: 'START' })
 
     let stream: MediaStream
@@ -163,7 +247,7 @@ export function useCall(tester?: string) {
       stream.getTracks().forEach((track) => pc.addTrack(track, stream))
       pc.ontrack = (event) => {
         const audio = audioRef.current
-        if (!audio || live.current !== l) return
+        if (!audio || live.current !== l || l.crisis) return
         audio.srcObject = event.streams[0] ?? new MediaStream([event.track])
         audio.play().catch(() => {
           l.audioBlocked = true
@@ -212,6 +296,7 @@ export function useCall(tester?: string) {
   const end = useCallback(() => void hangup('ENDED'), [hangup])
   const reset = useCallback(() => dispatch({ type: 'RESET' }), [])
   const unlockAudio = useCallback(() => {
+    if (live.current.crisis || stateRef.current.key === 'crisis') return
     audioRef.current
       ?.play()
       .then(() => dispatch({ type: 'AUDIO_UNBLOCKED' }))

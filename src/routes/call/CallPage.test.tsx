@@ -3,10 +3,10 @@ import userEvent from '@testing-library/user-event'
 import { StrictMode } from 'react'
 import { MemoryRouter } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { streamCallEvents, type StreamEnd } from '../../api/callEvents'
+import { streamCallEvents, type CallEvent as CallEventMsg, type StreamEnd } from '../../api/callEvents'
 import { createCall, endCall, endCallOnUnload, getCall } from '../../api/calls'
 import { CallPage } from './CallPage'
-import { MAX_STREAM_FAILURES, RECONNECT_MS } from './useCall'
+import { MAX_STREAM_FAILURES, RECONNECT_MS, STATUS_POLL_MS } from './useCall'
 
 vi.mock('../../api/calls', () => ({
   createCall: vi.fn(),
@@ -19,7 +19,11 @@ vi.mock('../../api/callEvents', () => ({ streamCallEvents: vi.fn() }))
 
 const streamMock = vi.mocked(streamCallEvents)
 /** Each stream connection waits here until the test resolves it (or the page aborts it). */
-let streams: { resolve: (end: StreamEnd) => void; signal: AbortSignal }[] = []
+let streams: {
+  resolve: (end: StreamEnd) => void
+  signal: AbortSignal
+  onEvent: (event: CallEventMsg) => void
+}[] = []
 
 const createCallMock = vi.mocked(createCall)
 const endCallMock = vi.mocked(endCall)
@@ -97,9 +101,9 @@ beforeEach(() => {
   unloadMock.mockReset()
   streams = []
   streamMock.mockReset().mockImplementation(
-    (_callId, _secret, _onEvent, signal) =>
+    (_callId, _secret, onEvent, signal) =>
       new Promise<StreamEnd>((resolve) => {
-        streams.push({ resolve, signal })
+        streams.push({ resolve, signal, onEvent })
         signal.addEventListener('abort', () => resolve('aborted'))
       }),
   )
@@ -305,5 +309,92 @@ describe('CallPage', () => {
     act(() => FakePC.instances[0].ontrack?.({ streams: [{}], track: {} }))
     expect(await screen.findByTestId('call-audio-unlock')).toBeInTheDocument()
     play.mockRestore()
+  })
+
+  it('a crisis event mutes, pauses and drops the agent audio before anything else, then shows the crisis screen', async () => {
+    const pause = vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => undefined)
+    await startCall()
+    const audio = screen.getByTestId('call-audio') as HTMLAudioElement
+    audio.srcObject = {} as MediaStream
+    act(() =>
+      streams[0].onEvent({
+        type: 'state',
+        status: 'live',
+        outcome: 'crisis',
+        end_reason: 'crisis',
+        language: null,
+      }),
+    )
+    expect(audio.muted).toBe(true)
+    expect(pause).toHaveBeenCalled()
+    expect(audio.srcObject).toBeNull()
+    expect(await screen.findByTestId('call-state-crisis')).toBeInTheDocument()
+    expect(screen.getAllByText(/516-227-8255/, { selector: 'p' })).toHaveLength(2)
+    expect(track.stop).toHaveBeenCalled()
+    expect(screen.queryByTestId('call-again')).toBeNull()
+    // A late track after the crisis plays nothing.
+    const play = vi.spyOn(HTMLMediaElement.prototype, 'play')
+    act(() => FakePC.instances[0].ontrack?.({ streams: [{}], track: {} }))
+    expect(play).not.toHaveBeenCalled()
+    expect(audio.srcObject).toBeNull()
+    play.mockRestore()
+    pause.mockRestore()
+  })
+
+  it('a dropped stream whose status says crisis shows the crisis screen', async () => {
+    await startCall()
+    getCallMock.mockResolvedValue({ ...ENDED, outcome: 'crisis', end_reason: 'crisis' })
+    await act(async () => streams[0].resolve('dropped'))
+    expect(await screen.findByTestId('call-state-crisis')).toBeInTheDocument()
+    expect(endCallMock).not.toHaveBeenCalled()
+  })
+
+  it('a silent stream (missed event, peer still connected) is polled and lands on crisis', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    await startCall()
+    getCallMock.mockResolvedValue({ status: 'live', outcome: 'crisis', end_reason: 'crisis', language: null })
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(STATUS_POLL_MS)
+    })
+    expect(await screen.findByTestId('call-state-crisis')).toBeInTheDocument()
+    vi.useRealTimers()
+  })
+
+  it('a handoff end shows the title, and Call again unmutes the audio', async () => {
+    const user = await startCall()
+    act(() =>
+      streams[0].onEvent({
+        type: 'state',
+        status: 'ended',
+        outcome: 'department_handoff',
+        end_reason: 'department_handoff',
+        language: null,
+        handoff_title: 'Residential & Day Programs',
+      }),
+    )
+    await act(async () => streams[0].resolve('ended'))
+    expect(await screen.findByTestId('call-state-handoff')).toHaveTextContent(
+      'Your request is for Residential & Day Programs.',
+    )
+    const audio = screen.getByTestId('call-audio') as HTMLAudioElement
+    expect(audio.muted).toBe(true)
+    await user.click(screen.getByTestId('call-again'))
+    await user.click(screen.getByTestId('call-button'))
+    expect(audio.muted).toBe(false)
+  })
+
+  it('a human-needed end shows the human-needed screen', async () => {
+    await startCall()
+    act(() =>
+      streams[0].onEvent({
+        type: 'state',
+        status: 'ended',
+        outcome: 'human_needed',
+        end_reason: 'human_needed',
+        language: null,
+      }),
+    )
+    await act(async () => streams[0].resolve('ended'))
+    expect(await screen.findByTestId('call-state-human_needed')).toBeInTheDocument()
   })
 })
