@@ -1,4 +1,4 @@
-import { Link, useParams } from 'react-router'
+import { Link, useParams, useSearchParams } from 'react-router'
 import { PageLayout } from '../../ui'
 import { CALL_STATES, isCallStateKey, type CallState } from './callMachine'
 import { CallView } from './CallView'
@@ -11,6 +11,7 @@ const FIXTURE_STATES: Record<string, CallState> = {
   unsupported: { key: 'unsupported', unsupportedReason: 'no_webrtc' },
   connecting: { key: 'connecting' },
   on_call: { key: 'on_call', startedAt: 0 },
+  reconnecting: { key: 'reconnecting', startedAt: 0 },
   ended: { key: 'ended' },
   unavailable: { key: 'unavailable' },
   crisis: { key: 'crisis' },
@@ -18,17 +19,40 @@ const FIXTURE_STATES: Record<string, CallState> = {
   human_needed: { key: 'human_needed' },
 }
 
+/** Call-language variants: `<state>-es` / `<state>-en` (or any state with `?lang=es|en`). */
+const LANGUAGE_VARIANTS = [
+  'reconnecting-es',
+  'ended-es',
+  'handoff-es',
+  'human_needed-es',
+  'ended-en',
+  'handoff-en',
+  'human_needed-en',
+  'crisis-en',
+  'crisis-es',
+]
+
+function fixtureFor(param: string | undefined, langParam: string | null): CallState | null {
+  const [base, suffix, extra] = (param ?? '').split('-')
+  if (!isCallStateKey(base) || extra !== undefined) return null
+  if (suffix !== undefined && suffix !== 'es' && suffix !== 'en') return null
+  const language = suffix ?? (langParam === 'es' || langParam === 'en' ? langParam : null)
+  return language ? { ...FIXTURE_STATES[base], language } : FIXTURE_STATES[base]
+}
+
 const noop = () => undefined
 
 /** Dev-only (loaded only when import.meta.env.DEV): every caller state, no mic, for screenshots. */
 export function CallFixtures() {
   const { state } = useParams()
+  const [searchParams] = useSearchParams()
+  const fixture = fixtureFor(state, searchParams.get('lang'))
   return (
     <PageLayout title="Call" data-testid="call-fixtures-root">
       <h1>{COPY.heading}</h1>
-      {isCallStateKey(state) ? (
+      {fixture ? (
         <CallView
-          state={FIXTURE_STATES[state]}
+          state={fixture}
           elapsedSeconds={83}
           onCall={noop}
           onEnd={noop}
@@ -37,7 +61,7 @@ export function CallFixtures() {
         />
       ) : (
         <ul>
-          {CALL_STATES.map((key) => (
+          {[...CALL_STATES, ...LANGUAGE_VARIANTS].map((key) => (
             <li key={key}>
               <Link className="ui-link" to={`/call/fixtures/${key}`}>
                 {key}

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { answerSession, createCall, endCall, endCallOnUnload, getCall } from './calls'
+import { answerSession, createCall, endCall, endCallOnUnload, getCall, reconnectCall } from './calls'
 import { api } from './client'
 
 vi.mock('./client', () => ({ api: { GET: vi.fn(), POST: vi.fn() } }))
@@ -109,6 +109,45 @@ describe('answerSession', () => {
 
   it('maps a network failure or abort to unavailable', async () => {
     POST.mockRejectedValue(new TypeError('Failed to fetch'))
-    expect(await answerSession('c1', 's', 'o', 2)).toEqual({ kind: 'unavailable' })
+    expect(await answerSession('c1', 's', 'o', 2)).toEqual({ kind: 'unavailable', network: true })
+  })
+})
+
+describe('createCall test options and reconnectCall', () => {
+  beforeEach(() => POST.mockReset())
+
+  it('forwards the test object only when present', async () => {
+    POST.mockResolvedValue(reply(201, STARTED))
+    await createCall('o', undefined, { turn_limit: 2 })
+    expect(POST.mock.calls[0][1].body).toEqual({ sdp: 'o', tester: null, test: { turn_limit: 2 } })
+    await createCall('o')
+    expect(POST.mock.calls[1][1].body).toEqual({ sdp: 'o', tester: null })
+    expect('test' in POST.mock.calls[1][1].body).toBe(false)
+  })
+
+  it('maps 200 to the new answer and posts the offer with the secret and signal', async () => {
+    POST.mockResolvedValue(reply(200, { sdp_answer: 'v=0 r', session_seq: 3 }))
+    const signal = new AbortController().signal
+    expect(await reconnectCall('c1', 's', 'o', signal)).toEqual({ ok: true, sdp_answer: 'v=0 r', session_seq: 3 })
+    expect(POST).toHaveBeenCalledWith('/api/calls/{call_id}/reconnect', {
+      params: { path: { call_id: 'c1' } },
+      headers: { 'X-Call-Secret': 's' },
+      body: { sdp: 'o' },
+      signal,
+    })
+  })
+
+  it('maps refusals and network failure', async () => {
+    POST.mockResolvedValue(reply(409, { reason: 'limit' }))
+    expect(await reconnectCall('c1', 's', 'o')).toEqual({ ok: false, status: 409, reason: 'limit' })
+    POST.mockResolvedValue(reply(503, {}))
+    expect(await reconnectCall('c1', 's', 'o')).toEqual({ ok: false, status: 503 })
+  })
+
+  it('maps a request with no HTTP answer to status 0', async () => {
+    POST.mockImplementationOnce(async () => {
+      throw new TypeError('Failed to fetch')
+    })
+    expect(await reconnectCall('c1', 's', 'o')).toEqual({ ok: false, status: 0 })
   })
 })

@@ -20,6 +20,7 @@ import {
   fxMustChange,
   fxQueue,
   fxReports,
+  fxReportsEmpty,
   fxReviewer,
 } from './data'
 
@@ -89,6 +90,7 @@ for (const [page, [key, body]] of Object.entries(PAGES)) {
   VIEWS[`${page}-error`] = { path: `/admin/${page}`, me: fxAdmin, replies: { [key]: fail(500, 'fixture error') } }
 }
 Object.assign(VIEWS, {
+  'reports-empty': { path: '/admin/reports', me: fxAdmin, replies: { 'GET /api/admin/reports': ok(fxReportsEmpty) } },
   'calls-filtered-empty': {
     path: '/admin/calls?outcome=crisis',
     me: fxAdmin,

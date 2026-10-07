@@ -551,6 +551,60 @@
         "title": "CallOutcome",
         "type": "string"
       },
+      "CallReconnectConflict": {
+        "properties": {
+          "reason": {
+            "enum": [
+              "ended",
+              "crisis",
+              "handoff_pending",
+              "in_progress",
+              "limit"
+            ],
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "title": "CallReconnectConflict",
+        "type": "object"
+      },
+      "CallReconnectRequest": {
+        "description": "A fresh offer after the browser's media connection failed.",
+        "properties": {
+          "sdp": {
+            "description": "The browser's WebRTC SDP offer.",
+            "maxLength": 16384,
+            "title": "Sdp",
+            "type": "string"
+          }
+        },
+        "required": [
+          "sdp"
+        ],
+        "title": "CallReconnectRequest",
+        "type": "object"
+      },
+      "CallReconnectResponse": {
+        "properties": {
+          "sdp_answer": {
+            "title": "Sdp Answer",
+            "type": "string"
+          },
+          "session_seq": {
+            "title": "Session Seq",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "sdp_answer",
+          "session_seq"
+        ],
+        "title": "CallReconnectResponse",
+        "type": "object"
+      },
       "CallSessionRequest": {
         "properties": {
           "sdp": {
@@ -769,6 +823,39 @@
         "title": "CallStatusResponse",
         "type": "object"
       },
+      "CallTestSwitches": {
+        "additionalProperties": false,
+        "properties": {
+          "after_hours": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Force the after-hours path (true) or the open path (false).",
+            "title": "After Hours"
+          },
+          "turn_limit": {
+            "anyOf": [
+              {
+                "maximum": 10,
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Switchboard turn limit for this call only.",
+            "title": "Turn Limit"
+          }
+        },
+        "title": "CallTestSwitches",
+        "type": "object"
+      },
       "CallUnavailable": {
         "properties": {
           "reason": {
@@ -812,6 +899,17 @@
             "maxLength": 16384,
             "title": "Sdp",
             "type": "string"
+          },
+          "test": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CallTestSwitches"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Per-call test switches. Honoured only when the server enables test switches; otherwise ignored."
           },
           "tester": {
             "anyOf": [
@@ -1608,6 +1706,167 @@
         "title": "FormStatus",
         "type": "string"
       },
+      "GateFindingItem": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "key_name": {
+            "title": "Key Name",
+            "type": "string"
+          },
+          "table": {
+            "title": "Table",
+            "type": "string"
+          }
+        },
+        "required": [
+          "table",
+          "key_name",
+          "count"
+        ],
+        "title": "GateFindingItem",
+        "type": "object"
+      },
+      "GateResultItem": {
+        "properties": {
+          "duration_s": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration S"
+          },
+          "findings": {
+            "items": {
+              "$ref": "#/components/schemas/GateFindingItem"
+            },
+            "title": "Findings",
+            "type": "array"
+          },
+          "git_sha": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Git Sha"
+          },
+          "kind": {
+            "enum": [
+              "gate",
+              "harness",
+              "live"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "mode": {
+            "anyOf": [
+              {
+                "enum": [
+                  "fake",
+                  "audio",
+                  "live"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mode"
+          },
+          "passed": {
+            "title": "Passed",
+            "type": "boolean"
+          },
+          "repeat": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Repeat"
+          },
+          "run_at": {
+            "format": "date-time",
+            "title": "Run At",
+            "type": "string"
+          },
+          "spend_usd": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Spend Usd"
+          },
+          "stop": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stop"
+          },
+          "story_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Story Id"
+          },
+          "turns_before_route": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Turns Before Route"
+          }
+        },
+        "required": [
+          "kind",
+          "run_at",
+          "git_sha",
+          "story_id",
+          "repeat",
+          "mode",
+          "passed",
+          "stop",
+          "turns_before_route",
+          "duration_s",
+          "spend_usd",
+          "findings"
+        ],
+        "title": "GateResultItem",
+        "type": "object"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -1933,7 +2192,9 @@
             "type": "array"
           },
           "gate_results": {
-            "items": {},
+            "items": {
+              "$ref": "#/components/schemas/GateResultItem"
+            },
             "title": "Gate Results",
             "type": "array"
           },
@@ -1970,6 +2231,13 @@
             "title": "Total Calls",
             "type": "integer"
           },
+          "unapproved": {
+            "items": {
+              "$ref": "#/components/schemas/UnapprovedItem"
+            },
+            "title": "Unapproved",
+            "type": "array"
+          },
           "unmet_demand": {
             "items": {
               "$ref": "#/components/schemas/UnmetDemandItem"
@@ -1989,7 +2257,8 @@
           "routing_mix",
           "latency",
           "delegation",
-          "gate_results"
+          "gate_results",
+          "unapproved"
         ],
         "title": "ReportsResponse",
         "type": "object"
@@ -2364,6 +2633,24 @@
           "latency_ms"
         ],
         "title": "TimelineTurn",
+        "type": "object"
+      },
+      "UnapprovedItem": {
+        "properties": {
+          "file": {
+            "title": "File",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file",
+          "status"
+        ],
+        "title": "UnapprovedItem",
         "type": "object"
       },
       "UnmetDemandItem": {
@@ -3860,6 +4147,105 @@
           }
         },
         "summary": "Call-state stream (Server-Sent Events, `event: call`)",
+        "tags": [
+          "calls"
+        ]
+      }
+    },
+    "/api/calls/{call_id}/reconnect": {
+      "post": {
+        "operationId": "reconnectCall",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "call_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Call Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Call-Secret",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Call-Secret"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CallReconnectRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CallReconnectResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundResponse"
+                }
+              }
+            },
+            "description": "No such call."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CallReconnectConflict"
+                }
+              }
+            },
+            "description": "The call cannot reconnect now (ended, crisis, handoff pending, a reconnect already in progress, or the reconnect limit was reached)."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CallUnavailable"
+                }
+              }
+            },
+            "description": "The new session could not be started."
+          }
+        },
+        "summary": "Replace a failed media connection with a new session",
         "tags": [
           "calls"
         ]

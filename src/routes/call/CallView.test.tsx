@@ -29,6 +29,7 @@ const EXPECTED_TEXT: Record<CallStateKey, string[]> = {
     COPY.handoff.recordedEs,
   ],
   human_needed: [COPY.humanNeeded.en, COPY.humanNeeded.es],
+  reconnecting: [COPY.reconnecting.en, COPY.reconnecting.es],
 }
 
 function stateFor(key: CallStateKey): CallState {
@@ -119,5 +120,45 @@ describe('CallView', () => {
     renderState({ key: 'human_needed' })
     expect(screen.getByText(/EPIC's main line/)).toBeInTheDocument()
     expect(screen.getByTestId('call-again')).toHaveFocus()
+  })
+})
+
+describe('CallView language', () => {
+  const ONE_LANGUAGE = [
+    ['ended', COPY.ended.es, COPY.ended.en],
+    ['human_needed', COPY.humanNeeded.es, COPY.humanNeeded.en],
+    ['handoff', COPY.handoff.recordedEs, COPY.handoff.recordedEn],
+    ['reconnecting', COPY.reconnecting.es, COPY.reconnecting.en],
+  ] as const
+
+  it.each(ONE_LANGUAGE)('%s in Spanish shows only Spanish', (key, es, en) => {
+    renderState({ ...stateFor(key), language: 'es' })
+    expect(screen.getByText(es)).toBeInTheDocument()
+    expect(screen.queryByText(en)).toBeNull()
+  })
+
+  it.each(ONE_LANGUAGE)('%s in English shows only English', (key, es, en) => {
+    renderState({ ...stateFor(key), language: 'en' })
+    expect(screen.getByText(en)).toBeInTheDocument()
+    expect(screen.queryByText(es)).toBeNull()
+  })
+
+  it.each(['en', 'es', null])('crisis is always EN and ES (language %s)', (language) => {
+    renderState({ key: 'crisis', language })
+    for (const text of [COPY.crisis.en, COPY.crisis.es, CRISIS.en, CRISIS.es])
+      expect(screen.getByText(text)).toBeInTheDocument()
+  })
+
+  it.each(['mic_denied', 'unavailable'] as const)('%s stays bilingual', (key) => {
+    renderState({ key, language: 'es' })
+    const copy = key === 'mic_denied' ? COPY.micDenied : COPY.unavailable
+    expect(screen.getByText(copy.en)).toBeInTheDocument()
+    expect(screen.getByText(copy.es)).toBeInTheDocument()
+  })
+
+  it('reconnecting keeps End call', () => {
+    const handlers = renderState({ key: 'reconnecting', startedAt: 0 })
+    screen.getByTestId('call-end').click()
+    expect(handlers.onEnd).toHaveBeenCalled()
   })
 })
