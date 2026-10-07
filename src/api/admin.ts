@@ -10,6 +10,8 @@ export type FollowUpItem = S['FollowUpItem']
 export type FollowUpAckResponse = S['FollowUpAckResponse']
 export type CallListResponse = S['CallListResponse']
 export type CallDetail = S['CallDetail']
+export type VoiceModeResponse = S['VoiceModeResponse']
+export type VoiceMode = VoiceModeResponse['mode']
 export type TimelineEntry = CallDetail['timeline'][number]
 export type TimelineTurn = S['TimelineTurn']
 export type TimelineAction = S['TimelineAction']
@@ -114,6 +116,7 @@ export const adminKeys = {
   callDetail: (callId: string) => ['admin', 'call-detail', callId] as const,
   audit: (params: AuditParams) => ['admin', 'audit', params] as const,
   exportsPending: () => ['admin', 'exports'] as const,
+  voiceMode: () => ['admin', 'settings', 'voice-mode'] as const,
   reports: (params: ReportsParams) => ['admin', 'reports', params] as const,
 }
 
@@ -271,6 +274,27 @@ export function useExport() {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: adminKeys.exportsPending() })
       void qc.invalidateQueries({ queryKey: ['admin', 'calls'] })
+    },
+  })
+}
+
+/** The voice mode for new calls (admin only). */
+export function useVoiceMode() {
+  const qc = useQueryClient()
+  return useQuery({
+    queryKey: adminKeys.voiceMode(),
+    queryFn: async () => handle(qc, await api.GET('/api/admin/settings/voice-mode')),
+  })
+}
+
+/** Saves the voice mode for new calls; calls in progress keep theirs. */
+export function useSetVoiceMode() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (mode: VoiceMode) =>
+      handle(qc, await api.POST('/api/admin/settings/voice-mode', { body: { mode } })),
+    onSuccess: (data) => {
+      qc.setQueryData(adminKeys.voiceMode(), data)
     },
   })
 }

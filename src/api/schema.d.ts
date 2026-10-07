@@ -294,6 +294,29 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/settings/voice-mode": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Voice Mode */
+        get: operations["get_voice_mode_api_admin_settings_voice_mode_get"];
+        put?: never;
+        /**
+         * Post Voice Mode
+         * @description Applies to calls created afterwards; live calls keep their mode. Audited as
+         *     `user_admin` (target `setting:voice_mode`, from/to only): audit row flushed, object put,
+         *     commit; a failed put rolls back, a failed commit puts the previous object back.
+         */
+        post: operations["post_voice_mode_api_admin_settings_voice_mode_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/calls": {
         parameters: {
             query?: never;
@@ -528,6 +551,12 @@ export interface components {
             status: components["schemas"]["CallStatus"];
             /** Tester Label */
             tester_label: string | null;
+            /**
+             * Voice Mode
+             * @description The call's voice mode: GPT-Live + Luna, or Realtime (no Luna, not recorded).
+             * @enum {string}
+             */
+            voice_mode: "gpt-live" | "realtime";
         };
         /** CallListItem */
         CallListItem: {
@@ -1362,6 +1391,29 @@ export interface components {
             /** Error Type */
             type: string;
         };
+        /** VoiceModeRequest */
+        VoiceModeRequest: {
+            /**
+             * Mode
+             * @enum {string}
+             */
+            mode: "gpt-live" | "realtime";
+        };
+        /** VoiceModeResponse */
+        VoiceModeResponse: {
+            /**
+             * Mode
+             * @enum {string}
+             */
+            mode: "gpt-live" | "realtime";
+            /**
+             * Stored
+             * @description False: nothing saved yet, the server default applies.
+             */
+            stored: boolean;
+            /** Updated At */
+            updated_at: string | null;
+        };
     };
     responses: never;
     parameters: never;
@@ -2098,6 +2150,77 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_voice_mode_api_admin_settings_voice_mode_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VoiceModeResponse"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+        };
+    };
+    post_voice_mode_api_admin_settings_voice_mode_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VoiceModeRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VoiceModeResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
                 };
             };
         };

@@ -504,3 +504,94 @@
 .admin-timeline__meta strong {
   color: var(--brand-text);
 }
+
+/* Settings (voice-mode): one panel with a radio group; the notice area reserves its space. */
+.admin-settings__wrap {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space-unit) * 2);
+  width: 100%;
+  max-width: calc(var(--space-unit) * 80);
+}
+
+.admin-settings__notice {
+  min-height: calc(var(--target-min) + var(--space-unit));
+}
+
+.admin-settings__group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-unit);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.admin-settings__legend {
+  padding: 0;
+  font-weight: var(--type-heading-weight);
+  font-size: calc(var(--type-base-size) * 1.125);
+}
+
+.admin-settings__hint,
+.admin-settings__meta {
+  margin: 0;
+}
+
+.admin-settings__option {
+  box-sizing: border-box;
+  display: flex;
+  align-items: flex-start;
+  gap: calc(var(--space-unit) * 1.5);
+  min-height: var(--target-min);
+  padding: var(--space-unit) calc(var(--space-unit) * 1.5);
+  border: calc(var(--space-unit) / 8) solid var(--brand-border);
+  border-radius: var(--radius-md);
+  background: var(--brand-bg);
+  cursor: pointer;
+}
+
+.admin-settings__option:has(input:checked) {
+  border-color: var(--brand-primary);
+}
+
+.admin-settings__option:has(input:focus-visible) {
+  outline: calc(var(--space-unit) / 4) solid var(--brand-focus);
+  outline-offset: calc(var(--space-unit) / 4);
+}
+
+.admin-settings__radio {
+  flex: none;
+  width: calc(var(--space-unit) * 2.5);
+  height: calc(var(--space-unit) * 2.5);
+  margin: calc(var(--space-unit) / 4) 0 0;
+  accent-color: var(--brand-primary);
+}
+
+.admin-settings__text {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space-unit) / 4);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.admin-settings__label {
+  font-weight: var(--type-heading-weight);
+}
+
+.admin-settings__current {
+  font-weight: var(--type-body-weight);
+  color: var(--brand-muted);
+}
+
+.admin-settings__skeleton {
+  width: 100%;
+  min-height: var(--target-min);
+}
+
+.admin-settings .ui-button {
+  align-self: flex-start;
+  min-height: var(--target-min);
+}
