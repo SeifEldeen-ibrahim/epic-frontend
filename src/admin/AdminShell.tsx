@@ -26,6 +26,10 @@ export function AdminShell() {
           { key: 'follow-up', to: '/admin/follow-up', label: c.followUp },
           { key: 'calls', to: '/admin/calls', label: c.calls },
           { key: 'reports', to: '/admin/reports', label: c.reports },
+          { key: 'knowledge', to: '/admin/knowledge', label: c.knowledge },
+          { key: 'agents', to: '/admin/agents', label: c.agents },
+          { key: 'forms', to: '/admin/forms', label: c.forms },
+          { key: 'versions', to: '/admin/versions', label: c.versions },
           ...(user?.role === 'admin'
             ? [
                 { key: 'exports', to: '/admin/exports', label: c.exports },

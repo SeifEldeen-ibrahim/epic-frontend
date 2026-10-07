@@ -173,4 +173,22 @@ describe('admin guards', () => {
     expect(await screen.findByTestId('login-email')).toBeInTheDocument()
     expect(POST).toHaveBeenCalledWith('/api/admin/auth/logout', expect.anything())
   })
+
+  it('admin-only create pages are forbidden for a reviewer; config pages are readable', async () => {
+    signIn(reviewer)
+    renderAt('/admin/agents/new')
+    expect(await screen.findByText("You don't have access to this page")).toBeInTheDocument()
+    cleanup()
+    signIn(reviewer)
+    renderAt('/admin/forms/new')
+    expect(await screen.findByText("You don't have access to this page")).toBeInTheDocument()
+    cleanup()
+    signIn(reviewer)
+    renderAt('/admin/knowledge')
+    expect(await screen.findByTestId('admin-knowledge')).toBeInTheDocument()
+    const nav = screen.getByTestId('admin-nav')
+    for (const key of ['knowledge', 'agents', 'forms', 'versions']) {
+      expect(within(nav).getByTestId(`admin-nav-${key}`)).toBeInTheDocument()
+    }
+  })
 })

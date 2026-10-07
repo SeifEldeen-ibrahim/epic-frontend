@@ -282,6 +282,44 @@ describe('call detail page', () => {
     expect(screen.getByTestId('field-caller_relationship')).toHaveValue('parent')
   })
 
+  it('renders an admin-built form from its definition: labels, order and typed editors', async () => {
+    const generic = {
+            schema_version: 'fixture_form@cfg-3-abc',
+            caller_relationship: null,
+            insurance_carrier_verbatim: null,
+            documents_held: null,
+            fields: { preferred_day: 'tuesday', visits: 3 },
+            definition: {
+              name: 'fixture_form',
+              title: 'Fixture request',
+              fields: [
+                { key: 'preferred_day', label: 'Preferred day', type: 'enum', required: true, values: ['monday', 'tuesday'], readback_label: '' },
+                { key: 'visits', label: 'Visits so far', type: 'number', required: false, values: [], readback_label: '' },
+              ],
+            },
+    }
+    detailReply = () => reply(200, detail({ form: generic }))
+    postHandlers[P.fields] = () => reply(200, { ...baseForm, ...generic })
+    const user = userEvent.setup()
+    renderPage()
+    const day = await screen.findByTestId('field-preferred_day')
+    expect(day.tagName).toBe('SELECT')
+    expect(day).toHaveValue('tuesday')
+    expect(screen.getByText('Visits so far')).toBeInTheDocument()
+    expect(screen.queryByTestId('field-insurance_carrier_verbatim')).toBeNull() // not in this form
+    expect(screen.getByTestId('field-callback_number')).toBeInTheDocument() // the callback block stays
+    await user.selectOptions(day, 'monday')
+    await user.click(screen.getByTestId('field-save-preferred_day'))
+    expect(POST).toHaveBeenCalledWith(
+      P.fields,
+      expect.objectContaining({ body: { field: 'preferred_day', old: 'tuesday', new: 'monday' } }),
+    )
+    await user.clear(screen.getByTestId('field-visits'))
+    await user.type(screen.getByTestId('field-visits'), '4')
+    await user.click(screen.getByTestId('field-save-visits'))
+    expect(POST).toHaveBeenCalledWith(P.fields, expect.objectContaining({ body: { field: 'visits', old: 3, new: 4 } }))
+  })
+
   it('sends typed values for the list and checkbox fields', async () => {
     postHandlers[P.fields] = () => reply(200, baseForm)
     const user = userEvent.setup()

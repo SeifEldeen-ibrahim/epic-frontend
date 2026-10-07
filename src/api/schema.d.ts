@@ -225,6 +225,304 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/config": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Config */
+        get: operations["get_config_api_admin_config_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/config/catalog": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Catalog */
+        get: operations["get_catalog_api_admin_config_catalog_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/config/draft/agents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Agents */
+        get: operations["list_agents_api_admin_config_draft_agents_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/config/draft/agents/{name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Agent */
+        get: operations["get_agent_api_admin_config_draft_agents__name__get"];
+        /**
+         * Put Agent
+         * @description Creates the agent when the name is new; `archived` toggles via the body.
+         */
+        put: operations["put_agent_api_admin_config_draft_agents__name__put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/config/draft/agents/{name}/compiled": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Compiled
+         * @description The instructions code generates for this draft agent (read-only, for debugging).
+         */
+        get: operations["get_compiled_api_admin_config_draft_agents__name__compiled_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/config/draft/diff": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Draft Diff */
+        get: operations["get_draft_diff_api_admin_config_draft_diff_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/config/draft/discard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Post Discard */
+        post: operations["post_discard_api_admin_config_draft_discard_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/config/draft/entry-agent": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Put Entry Agent */
+        put: operations["put_entry_agent_api_admin_config_draft_entry_agent_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/config/draft/forms": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Forms */
+        get: operations["list_forms_api_admin_config_draft_forms_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/config/draft/forms/{name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Form */
+        get: operations["get_form_api_admin_config_draft_forms__name__get"];
+        /** Put Form */
+        put: operations["put_form_api_admin_config_draft_forms__name__put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/config/draft/knowledge/{section}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Knowledge */
+        get: operations["get_knowledge_api_admin_config_draft_knowledge__section__get"];
+        /** Put Knowledge */
+        put: operations["put_knowledge_api_admin_config_draft_knowledge__section__put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/config/draft/load-defaults": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Post Load Defaults */
+        post: operations["post_load_defaults_api_admin_config_draft_load_defaults_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/config/publish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Post Publish */
+        post: operations["post_publish_api_admin_config_publish_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/config/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Versions */
+        get: operations["get_versions_api_admin_config_versions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/config/versions/{seq}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Version */
+        get: operations["get_version_api_admin_config_versions__seq__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/config/versions/{seq}/diff": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Version Diff */
+        get: operations["get_version_diff_api_admin_config_versions__seq__diff_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/config/versions/{seq}/rollback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Post Rollback */
+        post: operations["post_rollback_api_admin_config_versions__seq__rollback_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/exports": {
         parameters: {
             query?: never;
@@ -445,11 +743,34 @@ export interface components {
          * @enum {string}
          */
         AgentActionKind: "function_call" | "handoff" | "reconnect" | "crisis_stop" | "human_needed" | "steering" | "turn_limit" | "read_back";
-        /**
-         * AgentPackage
-         * @enum {string}
-         */
-        AgentPackage: "switchboard" | "clinic";
+        /** AgentListResponse */
+        AgentListResponse: {
+            /** Agents */
+            agents: components["schemas"]["AgentSummary"][];
+            /** Entry Agent */
+            entry_agent: string | null;
+        };
+        /** AgentSummary */
+        AgentSummary: {
+            /** Archived */
+            archived: boolean;
+            /** Entry */
+            entry: boolean;
+            /** Form */
+            form: string | null;
+            /** Name */
+            name: string;
+            /** Route Targets */
+            route_targets: string[];
+            /** Takes Calls For */
+            takes_calls_for: string[];
+            /** Title */
+            title: string;
+            /** Tools */
+            tools: string[];
+            /** Voice */
+            voice: string;
+        };
         /**
          * AuditAction
          * @enum {string}
@@ -740,12 +1061,63 @@ export interface components {
              */
             reason: "capacity" | "unavailable";
         };
+        /** CatalogResponse */
+        CatalogResponse: {
+            /** Field Types */
+            field_types: components["schemas"]["FieldTypeItem"][];
+            floor: components["schemas"]["FloorResponse"];
+            /** Knowledge Sections */
+            knowledge_sections: string[];
+            limits: components["schemas"]["LimitsResponse"];
+            /** Tools */
+            tools: components["schemas"]["ToolItem"][];
+            /** Voices */
+            voices: string[];
+        };
         /** ChangePasswordRequest */
         ChangePasswordRequest: {
             /** Current Password */
             current_password: string;
             /** New Password */
             new_password: string;
+        };
+        /** CompiledResponse */
+        CompiledResponse: {
+            /** Gpt Live Prompt */
+            gpt_live_prompt: string;
+            /** Luna Rules */
+            luna_rules: string;
+            /** Name */
+            name: string;
+            /** Realtime Prompt */
+            realtime_prompt: string;
+        };
+        /** ConfigStateResponse */
+        ConfigStateResponse: {
+            /** Active Label */
+            active_label: string;
+            /** Active Seq */
+            active_seq: number;
+            /** Can Edit */
+            can_edit: boolean;
+            /** Draft Based On Seq */
+            draft_based_on_seq: number;
+            /** Draft Changed Sections */
+            draft_changed_sections: string[];
+            /** Draft Problems */
+            draft_problems: components["schemas"]["ProblemItem"][];
+            /** Draft Updated At */
+            draft_updated_at: string | null;
+            /** Drift */
+            drift: boolean;
+            /** Entry Agent */
+            entry_agent: string;
+            /** Fallback Problems */
+            fallback_problems: components["schemas"]["ProblemItem"][] | null;
+            /** Reload Pending */
+            reload_pending: boolean;
+            /** Stale */
+            stale: boolean;
         };
         /** CreateCallRequest */
         CreateCallRequest: {
@@ -789,6 +1161,22 @@ export interface components {
             p50_ms: number;
             /** P90 Ms */
             p90_ms: number;
+        };
+        /** DiffResponse */
+        DiffResponse: {
+            /** After */
+            after: string;
+            /** Before */
+            before: string;
+            /** Sections */
+            sections: components["schemas"]["DiffSection"][];
+        };
+        /** DiffSection */
+        DiffSection: {
+            /** Diff */
+            diff: string;
+            /** Section */
+            section: string;
         };
         /** EmptyActionRequest */
         EmptyActionRequest: Record<string, never>;
@@ -907,6 +1295,15 @@ export interface components {
             /** Staff Email */
             staff_email: string | null;
         };
+        /** FieldTypeItem */
+        FieldTypeItem: {
+            /** Label */
+            label: string;
+            /** Options */
+            options: string[];
+            /** Type */
+            type: string;
+        };
         /** FlagCounts */
         FlagCounts: {
             /**
@@ -945,6 +1342,37 @@ export interface components {
          * @enum {string}
          */
         FlagStatus: "open" | "resolved" | "carried" | "acknowledged";
+        /** FloorResponse */
+        FloorResponse: {
+            /** Clinical Exclusions */
+            clinical_exclusions: string[];
+            /** Clinical Terms */
+            clinical_terms: string[];
+            /** Crisis Agency */
+            crisis_agency: {
+                [key: string]: string[];
+            };
+            /** Crisis En */
+            crisis_en: string[];
+            /** Crisis Es */
+            crisis_es: string[];
+            /** Crisis Instruction */
+            crisis_instruction: string;
+            /** Crisis Instruction Es */
+            crisis_instruction_es: string;
+            /** Crisis Numbers */
+            crisis_numbers: string[];
+            /** Denylist */
+            denylist: string[];
+            /** Denylist Case Sensitive */
+            denylist_case_sensitive: string[];
+            /** Never Collect Keys */
+            never_collect_keys: string[];
+            /** Never Collect Terms */
+            never_collect_terms: string[];
+            /** Staff Names */
+            staff_names: string[];
+        };
         /** FollowUpAckResponse */
         FollowUpAckResponse: {
             /**
@@ -987,6 +1415,18 @@ export interface components {
          * @enum {string}
          */
         FollowUpStatus: "none" | "needed" | "acknowledged";
+        /**
+         * FormDefinition
+         * @description The form as defined in the config version the call ran on (labels, types, order).
+         */
+        FormDefinition: {
+            /** Fields */
+            fields: components["schemas"]["FormFieldDef"][];
+            /** Name */
+            name: string;
+            /** Title */
+            title: string;
+        };
         /** FormDetail */
         FormDetail: {
             /** After Hours Queued */
@@ -1001,6 +1441,7 @@ export interface components {
             decided_at: string | null;
             /** Decided By Email */
             decided_by_email: string | null;
+            definition?: components["schemas"]["FormDefinition"] | null;
             /** Documents Held */
             documents_held?: unknown;
             /** Exported At */
@@ -1024,16 +1465,51 @@ export interface components {
             /** Submitted At */
             submitted_at: string | null;
         };
+        /** FormFieldDef */
+        FormFieldDef: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Readback Label */
+            readback_label: string;
+            /** Required */
+            required: boolean;
+            /** Type */
+            type: string;
+            /** Values */
+            values: string[];
+        };
         /**
          * FormFieldSource
          * @enum {string}
          */
         FormFieldSource: "luna" | "staff";
+        /** FormListResponse */
+        FormListResponse: {
+            /** Forms */
+            forms: components["schemas"]["FormSummary"][];
+        };
         /**
          * FormStatus
          * @enum {string}
          */
         FormStatus: "being_filled" | "flagged" | "read_back" | "awaiting_approval" | "approved" | "rejected" | "incomplete";
+        /** FormSummary */
+        FormSummary: {
+            /** Archived */
+            archived: boolean;
+            /** Fields */
+            fields: number;
+            /** Name */
+            name: string;
+            /** Status */
+            status: string;
+            /** Title */
+            title: string;
+            /** Used By */
+            used_by: string[];
+        };
         /** GateFindingItem */
         GateFindingItem: {
             /** Count */
@@ -1110,6 +1586,21 @@ export interface components {
             /** Turns */
             turns: number;
         };
+        /** LimitsResponse */
+        LimitsResponse: {
+            /** Form Fields Max */
+            form_fields_max: number;
+            /** Handoff Cap */
+            handoff_cap: number;
+            /** Instruction Max */
+            instruction_max: number;
+            /** Knowledge Item Max */
+            knowledge_item_max: number;
+            /** Knowledge Items Max */
+            knowledge_items_max: number;
+            /** Persona Max */
+            persona_max: number;
+        };
         /** LoginRequest */
         LoginRequest: {
             /** Email */
@@ -1129,6 +1620,31 @@ export interface components {
             /** Inquiry Category */
             inquiry_category: string | null;
             outcome: components["schemas"]["CallOutcome"] | null;
+        };
+        /** ProblemItem */
+        ProblemItem: {
+            /** Document */
+            document: string;
+            /** Message */
+            message: string;
+            /** Path */
+            path: string;
+        };
+        /** PublishRequest */
+        PublishRequest: {
+            /** Based On Seq */
+            based_on_seq: number;
+            /** Note */
+            note?: string | null;
+        };
+        /** PublishResponse */
+        PublishResponse: {
+            /** Label */
+            label: string;
+            /** Live Label */
+            live_label: string;
+            /** Seq */
+            seq: number;
         };
         /** QueueItem */
         QueueItem: {
@@ -1213,12 +1729,43 @@ export interface components {
             /** Unmet Demand */
             unmet_demand: components["schemas"]["UnmetDemandItem"][];
         };
+        /** RollbackRequest */
+        RollbackRequest: {
+            /** Note */
+            note?: string | null;
+        };
         /** RoutingMixItem */
         RoutingMixItem: {
             /** Count */
             count: number;
             /** Route Role */
             route_role: string | null;
+        };
+        /** SectionPutRequest */
+        SectionPutRequest: {
+            /** Value */
+            value: unknown;
+        };
+        /** SectionResponse */
+        SectionResponse: {
+            /**
+             * Draft Problems
+             * @default []
+             */
+            draft_problems: components["schemas"]["ProblemItem"][];
+            /** Name */
+            name: string;
+            /** Value */
+            value: unknown;
+        };
+        /** SectionSaveResponse */
+        SectionSaveResponse: {
+            /** Draft Problems */
+            draft_problems: components["schemas"]["ProblemItem"][];
+            /** Name */
+            name: string;
+            /** Value */
+            value: unknown;
         };
         /**
          * SessionEndReason
@@ -1227,7 +1774,8 @@ export interface components {
         SessionEndReason: "handoff" | "reconnect" | "hangup" | "crisis" | "human_needed" | "department_handoff" | "idle_timeout" | "max_duration" | "error";
         /** SessionItem */
         SessionItem: {
-            agent_package: components["schemas"]["AgentPackage"];
+            /** Agent Package */
+            agent_package: string;
             end_reason: components["schemas"]["SessionEndReason"] | null;
             /** Ended At */
             ended_at: string | null;
@@ -1359,6 +1907,20 @@ export interface components {
             /** Text */
             text: string;
         };
+        /** ToolItem */
+        ToolItem: {
+            /** Description */
+            description: string;
+            /**
+             * Group
+             * @enum {string}
+             */
+            group: "redirect" | "form" | "info" | "end";
+            /** Locked */
+            locked: boolean;
+            /** Name */
+            name: string;
+        };
         /** UnapprovedItem */
         UnapprovedItem: {
             /** File */
@@ -1390,6 +1952,65 @@ export interface components {
             msg: string;
             /** Error Type */
             type: string;
+        };
+        /** VersionDetail */
+        VersionDetail: {
+            /** Active */
+            active: boolean;
+            /** Bundle */
+            bundle: {
+                [key: string]: unknown;
+            };
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Created By */
+            created_by: string | null;
+            /** Label */
+            label: string;
+            /** Note */
+            note: string | null;
+            /** Rolled Back From */
+            rolled_back_from: number | null;
+            /** Seq */
+            seq: number;
+            /**
+             * Source
+             * @enum {string}
+             */
+            source: "seed" | "admin" | "rollback";
+        };
+        /** VersionItem */
+        VersionItem: {
+            /** Active */
+            active: boolean;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Created By */
+            created_by: string | null;
+            /** Label */
+            label: string;
+            /** Note */
+            note: string | null;
+            /** Rolled Back From */
+            rolled_back_from: number | null;
+            /** Seq */
+            seq: number;
+            /**
+             * Source
+             * @enum {string}
+             */
+            source: "seed" | "admin" | "rollback";
+        };
+        /** VersionListResponse */
+        VersionListResponse: {
+            /** Versions */
+            versions: components["schemas"]["VersionItem"][];
         };
         /** VoiceModeRequest */
         VoiceModeRequest: {
@@ -2018,6 +2639,964 @@ export interface operations {
             };
             /** @description Service Unavailable */
             503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+        };
+    };
+    get_config_api_admin_config_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConfigStateResponse"];
+                };
+            };
+        };
+    };
+    get_catalog_api_admin_config_catalog_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CatalogResponse"];
+                };
+            };
+        };
+    };
+    list_agents_api_admin_config_draft_agents_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgentListResponse"];
+                };
+            };
+        };
+    };
+    get_agent_api_admin_config_draft_agents__name__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SectionResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            /** @description Request Entity Too Large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+        };
+    };
+    put_agent_api_admin_config_draft_agents__name__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SectionPutRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SectionSaveResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            /** @description Request Entity Too Large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+        };
+    };
+    get_compiled_api_admin_config_draft_agents__name__compiled_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompiledResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            /** @description Request Entity Too Large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+        };
+    };
+    get_draft_diff_api_admin_config_draft_diff_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DiffResponse"];
+                };
+            };
+        };
+    };
+    post_discard_api_admin_config_draft_discard_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RollbackRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConfigStateResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            /** @description Request Entity Too Large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+        };
+    };
+    put_entry_agent_api_admin_config_draft_entry_agent_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SectionPutRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SectionSaveResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            /** @description Request Entity Too Large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+        };
+    };
+    list_forms_api_admin_config_draft_forms_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FormListResponse"];
+                };
+            };
+        };
+    };
+    get_form_api_admin_config_draft_forms__name__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SectionResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            /** @description Request Entity Too Large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+        };
+    };
+    put_form_api_admin_config_draft_forms__name__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SectionPutRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SectionSaveResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            /** @description Request Entity Too Large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+        };
+    };
+    get_knowledge_api_admin_config_draft_knowledge__section__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                section: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SectionResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            /** @description Request Entity Too Large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+        };
+    };
+    put_knowledge_api_admin_config_draft_knowledge__section__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                section: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SectionPutRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SectionSaveResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            /** @description Request Entity Too Large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+        };
+    };
+    post_load_defaults_api_admin_config_draft_load_defaults_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RollbackRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConfigStateResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            /** @description Request Entity Too Large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+        };
+    };
+    post_publish_api_admin_config_publish_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PublishRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublishResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            /** @description Request Entity Too Large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+        };
+    };
+    get_versions_api_admin_config_versions_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VersionListResponse"];
+                };
+            };
+        };
+    };
+    get_version_api_admin_config_versions__seq__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                seq: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VersionDetail"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            /** @description Request Entity Too Large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+        };
+    };
+    get_version_diff_api_admin_config_versions__seq__diff_get: {
+        parameters: {
+            query?: {
+                against?: number | null;
+            };
+            header?: never;
+            path: {
+                seq: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DiffResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            /** @description Request Entity Too Large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+        };
+    };
+    post_rollback_api_admin_config_versions__seq__rollback_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                seq: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RollbackRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublishResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            /** @description Request Entity Too Large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };
