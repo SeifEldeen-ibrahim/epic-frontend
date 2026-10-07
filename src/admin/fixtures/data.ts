@@ -11,6 +11,12 @@ import type {
   VoiceModeResponse,
 } from '../../api/admin'
 import type { StaffMe } from '../../api/auth'
+import type { Catalog, Compiled, ConfigState, DiffResponse, SectionResponse } from '../../api/config'
+import type { components } from '../../api/schema'
+
+type AgentListResponse = components['schemas']['AgentListResponse']
+type FormListResponse = components['schemas']['FormListResponse']
+type VersionListResponse = components['schemas']['VersionListResponse']
 
 /** Runtime marker; present only in the dev-only fixture chunk. */
 export const FIXTURE_MARKER = 'FIXTURE-ONLY-7f3a'
@@ -321,4 +327,197 @@ export const fxVoiceMode: VoiceModeResponse = {
   mode: 'gpt-live',
   stored: true,
   updated_at: '2026-10-07T12:00:00+00:00',
+}
+
+// --- admin-knowledge: config fixtures (fictional) -----------------------------------------------
+
+export const fxConfigState: ConfigState = {
+  active_seq: 3,
+  active_label: 'cfg-3-fx1a2b3c',
+  entry_agent: 'switchboard',
+  draft_based_on_seq: 3,
+  draft_changed_sections: ['knowledge.routing', 'agents'],
+  draft_problems: [],
+  draft_updated_at: at(10),
+  stale: false,
+  drift: false,
+  fallback_problems: null,
+  reload_pending: false,
+  can_edit: true,
+}
+export const fxConfigProblems: ConfigState = {
+  ...fxConfigState,
+  draft_problems: [
+    { document: 'agents.fixture_desk', path: 'voice', message: 'must differ from every agent that redirects here' },
+    { document: 'forms.fixture_form', path: 'fields.member_no', message: 'names something EPIC never collects' },
+  ],
+}
+export const fxConfigBanners: ConfigState = {
+  ...fxConfigState,
+  stale: true,
+  drift: true,
+  reload_pending: true,
+  fallback_problems: [{ document: 'agents.fixture_desk', path: 'voice', message: 'unknown voice' }],
+}
+export const fxConfigReviewer: ConfigState = { ...fxConfigState, can_edit: false }
+
+export const fxCatalog: Catalog = {
+  voices: ['marin', 'cedar', 'sage'],
+  tools: [
+    { name: 'route_to', description: 'Redirect: tell the caller who handles their need, or hand them to another agent.', group: 'redirect', locked: false },
+    { name: 'give_referral', description: "Referral: give the approved referral when EPIC doesn't offer something.", group: 'info', locked: false },
+    { name: 'lookup_service', description: 'Service details: answer questions about EPIC services from approved text.', group: 'info', locked: false },
+    { name: 'save_fields', description: 'Fill a form: save each detail the caller gives.', group: 'form', locked: false },
+    { name: 'confirm_callback', description: 'Fill a form: confirm the callback number and permission to phone.', group: 'form', locked: false },
+    { name: 'submit_form', description: 'Fill a form: submit the request for staff review.', group: 'form', locked: false },
+    { name: 'end_call', description: 'End the call (always on).', group: 'end', locked: true },
+  ],
+  field_types: [
+    { type: 'text', label: 'Text', options: ['max_length'] },
+    { type: 'enum', label: 'Choice', options: ['values', 'stop_values'] },
+    { type: 'bool', label: 'Yes / no', options: [] },
+    { type: 'list', label: 'List', options: ['max_items', 'max_length'] },
+    { type: 'number', label: 'Number (up to 4 digits)', options: ['minimum', 'maximum'] },
+    { type: 'date', label: 'Date', options: [] },
+  ],
+  knowledge_sections: ['routing', 'services', 'referrals', 'hours', 'crisis', 'never_spoken', 'wording', 'clinic'],
+  floor: {
+    crisis_en: ['fixture crisis phrase'],
+    crisis_es: ['frase de crisis ficticia'],
+    crisis_agency: { fixture_agency: ['FXA'] },
+    crisis_instruction: 'If you are in crisis, call the fictional crisis line.',
+    crisis_instruction_es: 'Si está en crisis, llame a la línea ficticia.',
+    crisis_numbers: ['000'],
+    staff_names: ['Fixture Staffer'],
+    denylist: ['fixture banned term'],
+    denylist_case_sensitive: ['FX'],
+    clinical_terms: ['fixture clinical term'],
+    clinical_exclusions: ['fixture not clinical'],
+    never_collect_terms: ['fixture secret'],
+    never_collect_keys: ['ssn', 'member_id'],
+  },
+  limits: { persona_max: 1500, knowledge_items_max: 40, knowledge_item_max: 500, instruction_max: 24000, form_fields_max: 30, handoff_cap: 3 },
+}
+
+export const fxRouting: SectionResponse = {
+  name: 'knowledge.routing',
+  value: {
+    status: 'UNAPPROVED',
+    entitlement_words: ['fixture benefit'],
+    roles: [
+      { role: 'fixture_dept', title: 'Fixture Department', terms: ['fixture need'], say: 'That is handled by the Fixture Department.', after_hours_say: 'That is handled by the Fixture Department, which is closed now.', handled_by: null, extension: null, department: null, source: 'fixture' },
+      { role: 'fixture_desk', title: 'Fixture Desk', terms: ['fixture desk'], say: 'Fixture Desk.', after_hours_say: 'Fixture Desk (closed).', handled_by: 'fixture_desk', extension: null, department: null, source: 'fixture' },
+    ],
+  },
+  draft_problems: [],
+}
+
+export const fxAgents: AgentListResponse = {
+  entry_agent: 'switchboard',
+  agents: [
+    { name: 'switchboard', title: 'Receptionist', voice: 'marin', tools: ['route_to', 'give_referral', 'lookup_service', 'end_call'], route_targets: ['fixture_dept', 'fixture_desk'], form: null, takes_calls_for: [], archived: false, entry: true },
+    { name: 'fixture_desk', title: 'Fixture Desk', voice: 'sage', tools: ['save_fields', 'confirm_callback', 'submit_form', 'end_call'], route_targets: [], form: 'fixture_form', takes_calls_for: ['fixture_desk'], archived: false, entry: false },
+  ],
+}
+
+export const fxAgentDesk: SectionResponse = {
+  name: 'agents.fixture_desk',
+  value: {
+    name: 'fixture_desk',
+    title: 'Fixture Desk',
+    persona: 'A fictional desk used for screenshots. Friendly and brief.',
+    knowledge: [{ topic: 'Fixture hours', text: 'The fixture desk works fictional hours.' }],
+    voice: 'sage',
+    tools: ['save_fields', 'confirm_callback', 'submit_form', 'end_call'],
+    route_targets: [],
+    form: 'fixture_form',
+    handoff: { bridge_say: 'Passing you to the Fixture Desk now.', bridge_say_es: 'Le paso con el escritorio ficticio.', greeting: 'Greet the caller and ask your first question.' },
+    archived: false,
+  },
+  draft_problems: [],
+}
+export const fxAgentSwitchboard: SectionResponse = {
+  name: 'agents.switchboard',
+  value: {
+    name: 'switchboard',
+    title: 'Receptionist',
+    persona: 'The fictional receptionist used for screenshots.',
+    knowledge: [],
+    voice: 'marin',
+    tools: ['route_to', 'give_referral', 'lookup_service', 'end_call'],
+    route_targets: ['fixture_dept', 'fixture_desk'],
+    form: null,
+    handoff: null,
+    archived: false,
+  },
+  draft_problems: [],
+}
+export const fxCompiled: Compiled = {
+  name: 'fixture_desk',
+  gpt_live_prompt: "You are EPIC's Fixture Desk on EPIC's test phone line. (fixture text)",
+  luna_rules: "You act for EPIC's Fixture Desk on EPIC's test phone line. (fixture text)",
+  realtime_prompt: 'REALTIME MODE. (fixture text)',
+}
+
+export const fxForms: FormListResponse = {
+  forms: [{ name: 'fixture_form', title: 'Fixture request', status: 'UNAPPROVED', fields: 2, used_by: ['fixture_desk'], archived: false }],
+}
+export const fxFormsEmpty: FormListResponse = { forms: [] }
+export const fxForm: SectionResponse = {
+  name: 'forms.fixture_form',
+  value: {
+    name: 'fixture_form',
+    title: 'Fixture request',
+    status: 'UNAPPROVED',
+    source: 'fixture',
+    fields: {
+      preferred_day: { type: 'enum', values: ['monday', 'tuesday'], required: true, label: 'Preferred day', help: 'the weekday the caller prefers.', readback_label: 'your preferred day' },
+      wants_brochure: { type: 'bool', required: true, label: 'Brochure', help: 'true if the caller wants a brochure.', readback_label: 'whether you want a brochure' },
+    },
+    guard_keys: [],
+    never_collect: [],
+    archived: false,
+  },
+  draft_problems: [],
+}
+
+export const fxVersions: VersionListResponse = {
+  versions: [
+    { seq: 3, label: 'cfg-3-fx1a2b3c', source: 'admin', rolled_back_from: null, note: 'Fixture desk added', created_by: 'Fixture Admin (fictional)', created_at: at(20), active: true },
+    { seq: 2, label: 'cfg-2-fx4d5e6f', source: 'rollback', rolled_back_from: 1, note: null, created_by: 'Fixture Admin (fictional)', created_at: at(15), active: false },
+    { seq: 1, label: 'cfg-1-fx7a8b9c', source: 'seed', rolled_back_from: null, note: null, created_by: null, created_at: at(1), active: false },
+  ],
+}
+export const fxVersionDiff: DiffResponse = {
+  before: 'cfg-2-fx4d5e6f',
+  after: 'cfg-3-fx1a2b3c',
+  sections: [
+    {
+      section: 'agents',
+      diff: '--- before\n+++ after\n@@ -1,3 +1,5 @@\n+fixture_desk:\n+  title: Fixture Desk\n switchboard:\n-  persona: The fictional receptionist.\n+  persona: The fictional receptionist used for screenshots, with a longer line that wraps on a phone.',
+    },
+  ],
+}
+
+export const fxDetailGenericForm: CallDetail = {
+  ...baseDetail,
+  call: { ...baseDetail.call, agent_version: 'cfg-3-fx1a2b3c' },
+  form: baseDetail.form
+    ? {
+        ...baseDetail.form,
+        schema_version: 'fixture_form@cfg-3-fx1a2b3c',
+        caller_relationship: null,
+        insurance_carrier_verbatim: null,
+        documents_held: null,
+        fields: { preferred_day: 'tuesday', wants_brochure: true },
+        definition: {
+          name: 'fixture_form',
+          title: 'Fixture request',
+          fields: [
+            { key: 'preferred_day', label: 'Preferred day', type: 'enum', required: true, values: ['monday', 'tuesday'], readback_label: 'your preferred day' },
+            { key: 'wants_brochure', label: 'Brochure', type: 'bool', required: true, values: [], readback_label: 'whether you want a brochure' },
+          ],
+        },
+      }
+    : null,
 }

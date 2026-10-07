@@ -15,13 +15,102 @@
         "title": "AgentActionKind",
         "type": "string"
       },
-      "AgentPackage": {
-        "enum": [
-          "switchboard",
-          "clinic"
+      "AgentListResponse": {
+        "properties": {
+          "agents": {
+            "items": {
+              "$ref": "#/components/schemas/AgentSummary"
+            },
+            "title": "Agents",
+            "type": "array"
+          },
+          "entry_agent": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entry Agent"
+          }
+        },
+        "required": [
+          "agents",
+          "entry_agent"
         ],
-        "title": "AgentPackage",
-        "type": "string"
+        "title": "AgentListResponse",
+        "type": "object"
+      },
+      "AgentSummary": {
+        "properties": {
+          "archived": {
+            "title": "Archived",
+            "type": "boolean"
+          },
+          "entry": {
+            "title": "Entry",
+            "type": "boolean"
+          },
+          "form": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Form"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "route_targets": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Route Targets",
+            "type": "array"
+          },
+          "takes_calls_for": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Takes Calls For",
+            "type": "array"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "tools": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Tools",
+            "type": "array"
+          },
+          "voice": {
+            "title": "Voice",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "title",
+          "voice",
+          "tools",
+          "route_targets",
+          "form",
+          "takes_calls_for",
+          "archived",
+          "entry"
+        ],
+        "title": "AgentSummary",
+        "type": "object"
       },
       "AuditAction": {
         "enum": [
@@ -883,6 +972,54 @@
         "title": "CallUnavailable",
         "type": "object"
       },
+      "CatalogResponse": {
+        "properties": {
+          "field_types": {
+            "items": {
+              "$ref": "#/components/schemas/FieldTypeItem"
+            },
+            "title": "Field Types",
+            "type": "array"
+          },
+          "floor": {
+            "$ref": "#/components/schemas/FloorResponse"
+          },
+          "knowledge_sections": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Knowledge Sections",
+            "type": "array"
+          },
+          "limits": {
+            "$ref": "#/components/schemas/LimitsResponse"
+          },
+          "tools": {
+            "items": {
+              "$ref": "#/components/schemas/ToolItem"
+            },
+            "title": "Tools",
+            "type": "array"
+          },
+          "voices": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Voices",
+            "type": "array"
+          }
+        },
+        "required": [
+          "voices",
+          "tools",
+          "field_types",
+          "knowledge_sections",
+          "floor",
+          "limits"
+        ],
+        "title": "CatalogResponse",
+        "type": "object"
+      },
       "ChangePasswordRequest": {
         "additionalProperties": false,
         "properties": {
@@ -900,6 +1037,126 @@
           "new_password"
         ],
         "title": "ChangePasswordRequest",
+        "type": "object"
+      },
+      "CompiledResponse": {
+        "properties": {
+          "gpt_live_prompt": {
+            "title": "Gpt Live Prompt",
+            "type": "string"
+          },
+          "luna_rules": {
+            "title": "Luna Rules",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "realtime_prompt": {
+            "title": "Realtime Prompt",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "gpt_live_prompt",
+          "luna_rules",
+          "realtime_prompt"
+        ],
+        "title": "CompiledResponse",
+        "type": "object"
+      },
+      "ConfigStateResponse": {
+        "properties": {
+          "active_label": {
+            "title": "Active Label",
+            "type": "string"
+          },
+          "active_seq": {
+            "title": "Active Seq",
+            "type": "integer"
+          },
+          "can_edit": {
+            "title": "Can Edit",
+            "type": "boolean"
+          },
+          "draft_based_on_seq": {
+            "title": "Draft Based On Seq",
+            "type": "integer"
+          },
+          "draft_changed_sections": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Draft Changed Sections",
+            "type": "array"
+          },
+          "draft_problems": {
+            "items": {
+              "$ref": "#/components/schemas/ProblemItem"
+            },
+            "title": "Draft Problems",
+            "type": "array"
+          },
+          "draft_updated_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Draft Updated At"
+          },
+          "drift": {
+            "title": "Drift",
+            "type": "boolean"
+          },
+          "entry_agent": {
+            "title": "Entry Agent",
+            "type": "string"
+          },
+          "fallback_problems": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ProblemItem"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fallback Problems"
+          },
+          "reload_pending": {
+            "title": "Reload Pending",
+            "type": "boolean"
+          },
+          "stale": {
+            "title": "Stale",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "active_seq",
+          "active_label",
+          "entry_agent",
+          "draft_based_on_seq",
+          "draft_changed_sections",
+          "draft_problems",
+          "draft_updated_at",
+          "stale",
+          "drift",
+          "fallback_problems",
+          "reload_pending",
+          "can_edit"
+        ],
+        "title": "ConfigStateResponse",
         "type": "object"
       },
       "CreateCallRequest": {
@@ -997,6 +1254,50 @@
           "p90_ms"
         ],
         "title": "DelegationItem",
+        "type": "object"
+      },
+      "DiffResponse": {
+        "properties": {
+          "after": {
+            "title": "After",
+            "type": "string"
+          },
+          "before": {
+            "title": "Before",
+            "type": "string"
+          },
+          "sections": {
+            "items": {
+              "$ref": "#/components/schemas/DiffSection"
+            },
+            "title": "Sections",
+            "type": "array"
+          }
+        },
+        "required": [
+          "before",
+          "after",
+          "sections"
+        ],
+        "title": "DiffResponse",
+        "type": "object"
+      },
+      "DiffSection": {
+        "properties": {
+          "diff": {
+            "title": "Diff",
+            "type": "string"
+          },
+          "section": {
+            "title": "Section",
+            "type": "string"
+          }
+        },
+        "required": [
+          "section",
+          "diff"
+        ],
+        "title": "DiffSection",
         "type": "object"
       },
       "EmptyActionRequest": {
@@ -1358,6 +1659,32 @@
         "title": "FieldHistoryItem",
         "type": "object"
       },
+      "FieldTypeItem": {
+        "properties": {
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "options": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Options",
+            "type": "array"
+          },
+          "type": {
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "label",
+          "options"
+        ],
+        "title": "FieldTypeItem",
+        "type": "object"
+      },
       "FlagCounts": {
         "properties": {
           "acknowledged": {
@@ -1412,6 +1739,115 @@
         ],
         "title": "FlagStatus",
         "type": "string"
+      },
+      "FloorResponse": {
+        "properties": {
+          "clinical_exclusions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Clinical Exclusions",
+            "type": "array"
+          },
+          "clinical_terms": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Clinical Terms",
+            "type": "array"
+          },
+          "crisis_agency": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "title": "Crisis Agency",
+            "type": "object"
+          },
+          "crisis_en": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Crisis En",
+            "type": "array"
+          },
+          "crisis_es": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Crisis Es",
+            "type": "array"
+          },
+          "crisis_instruction": {
+            "title": "Crisis Instruction",
+            "type": "string"
+          },
+          "crisis_instruction_es": {
+            "title": "Crisis Instruction Es",
+            "type": "string"
+          },
+          "crisis_numbers": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Crisis Numbers",
+            "type": "array"
+          },
+          "denylist": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Denylist",
+            "type": "array"
+          },
+          "denylist_case_sensitive": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Denylist Case Sensitive",
+            "type": "array"
+          },
+          "never_collect_keys": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Never Collect Keys",
+            "type": "array"
+          },
+          "never_collect_terms": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Never Collect Terms",
+            "type": "array"
+          },
+          "staff_names": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Staff Names",
+            "type": "array"
+          }
+        },
+        "required": [
+          "crisis_en",
+          "crisis_es",
+          "crisis_agency",
+          "crisis_instruction",
+          "crisis_instruction_es",
+          "crisis_numbers",
+          "staff_names",
+          "denylist",
+          "denylist_case_sensitive",
+          "clinical_terms",
+          "clinical_exclusions",
+          "never_collect_terms",
+          "never_collect_keys"
+        ],
+        "title": "FloorResponse",
+        "type": "object"
       },
       "FollowUpAckResponse": {
         "properties": {
@@ -1547,6 +1983,33 @@
         "title": "FollowUpStatus",
         "type": "string"
       },
+      "FormDefinition": {
+        "description": "The form as defined in the config version the call ran on (labels, types, order).",
+        "properties": {
+          "fields": {
+            "items": {
+              "$ref": "#/components/schemas/FormFieldDef"
+            },
+            "title": "Fields",
+            "type": "array"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "title",
+          "fields"
+        ],
+        "title": "FormDefinition",
+        "type": "object"
+      },
       "FormDetail": {
         "properties": {
           "after_hours_queued": {
@@ -1608,6 +2071,16 @@
               }
             ],
             "title": "Decided By Email"
+          },
+          "definition": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FormDefinition"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "documents_held": {
             "title": "Documents Held"
@@ -1695,6 +2168,47 @@
         "title": "FormDetail",
         "type": "object"
       },
+      "FormFieldDef": {
+        "properties": {
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "readback_label": {
+            "title": "Readback Label",
+            "type": "string"
+          },
+          "required": {
+            "title": "Required",
+            "type": "boolean"
+          },
+          "type": {
+            "title": "Type",
+            "type": "string"
+          },
+          "values": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Values",
+            "type": "array"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "type",
+          "required",
+          "values",
+          "readback_label"
+        ],
+        "title": "FormFieldDef",
+        "type": "object"
+      },
       "FormFieldSource": {
         "enum": [
           "luna",
@@ -1702,6 +2216,22 @@
         ],
         "title": "FormFieldSource",
         "type": "string"
+      },
+      "FormListResponse": {
+        "properties": {
+          "forms": {
+            "items": {
+              "$ref": "#/components/schemas/FormSummary"
+            },
+            "title": "Forms",
+            "type": "array"
+          }
+        },
+        "required": [
+          "forms"
+        ],
+        "title": "FormListResponse",
+        "type": "object"
       },
       "FormStatus": {
         "enum": [
@@ -1715,6 +2245,47 @@
         ],
         "title": "FormStatus",
         "type": "string"
+      },
+      "FormSummary": {
+        "properties": {
+          "archived": {
+            "title": "Archived",
+            "type": "boolean"
+          },
+          "fields": {
+            "title": "Fields",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "used_by": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Used By",
+            "type": "array"
+          }
+        },
+        "required": [
+          "name",
+          "title",
+          "status",
+          "fields",
+          "used_by",
+          "archived"
+        ],
+        "title": "FormSummary",
+        "type": "object"
       },
       "GateFindingItem": {
         "properties": {
@@ -1953,6 +2524,44 @@
         "title": "LatencyItem",
         "type": "object"
       },
+      "LimitsResponse": {
+        "properties": {
+          "form_fields_max": {
+            "title": "Form Fields Max",
+            "type": "integer"
+          },
+          "handoff_cap": {
+            "title": "Handoff Cap",
+            "type": "integer"
+          },
+          "instruction_max": {
+            "title": "Instruction Max",
+            "type": "integer"
+          },
+          "knowledge_item_max": {
+            "title": "Knowledge Item Max",
+            "type": "integer"
+          },
+          "knowledge_items_max": {
+            "title": "Knowledge Items Max",
+            "type": "integer"
+          },
+          "persona_max": {
+            "title": "Persona Max",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "persona_max",
+          "knowledge_items_max",
+          "knowledge_item_max",
+          "instruction_max",
+          "form_fields_max",
+          "handoff_cap"
+        ],
+        "title": "LimitsResponse",
+        "type": "object"
+      },
       "LoginRequest": {
         "additionalProperties": false,
         "properties": {
@@ -2019,6 +2628,79 @@
           "count"
         ],
         "title": "OutcomeItem",
+        "type": "object"
+      },
+      "ProblemItem": {
+        "properties": {
+          "document": {
+            "title": "Document",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "path": {
+            "title": "Path",
+            "type": "string"
+          }
+        },
+        "required": [
+          "document",
+          "path",
+          "message"
+        ],
+        "title": "ProblemItem",
+        "type": "object"
+      },
+      "PublishRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "based_on_seq": {
+            "minimum": 0,
+            "title": "Based On Seq",
+            "type": "integer"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "required": [
+          "based_on_seq"
+        ],
+        "title": "PublishRequest",
+        "type": "object"
+      },
+      "PublishResponse": {
+        "properties": {
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "live_label": {
+            "title": "Live Label",
+            "type": "string"
+          },
+          "seq": {
+            "title": "Seq",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "seq",
+          "label",
+          "live_label"
+        ],
+        "title": "PublishResponse",
         "type": "object"
       },
       "QueueItem": {
@@ -2273,6 +2955,25 @@
         "title": "ReportsResponse",
         "type": "object"
       },
+      "RollbackRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "note": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "title": "RollbackRequest",
+        "type": "object"
+      },
       "RoutingMixItem": {
         "properties": {
           "count": {
@@ -2298,6 +2999,69 @@
         "title": "RoutingMixItem",
         "type": "object"
       },
+      "SectionPutRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "value": {
+            "title": "Value"
+          }
+        },
+        "required": [
+          "value"
+        ],
+        "title": "SectionPutRequest",
+        "type": "object"
+      },
+      "SectionResponse": {
+        "properties": {
+          "draft_problems": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/ProblemItem"
+            },
+            "title": "Draft Problems",
+            "type": "array"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value"
+          }
+        },
+        "required": [
+          "name",
+          "value"
+        ],
+        "title": "SectionResponse",
+        "type": "object"
+      },
+      "SectionSaveResponse": {
+        "properties": {
+          "draft_problems": {
+            "items": {
+              "$ref": "#/components/schemas/ProblemItem"
+            },
+            "title": "Draft Problems",
+            "type": "array"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value"
+          }
+        },
+        "required": [
+          "name",
+          "value",
+          "draft_problems"
+        ],
+        "title": "SectionSaveResponse",
+        "type": "object"
+      },
       "SessionEndReason": {
         "enum": [
           "handoff",
@@ -2316,7 +3080,8 @@
       "SessionItem": {
         "properties": {
           "agent_package": {
-            "$ref": "#/components/schemas/AgentPackage"
+            "title": "Agent Package",
+            "type": "string"
           },
           "end_reason": {
             "anyOf": [
@@ -2645,6 +3410,40 @@
         "title": "TimelineTurn",
         "type": "object"
       },
+      "ToolItem": {
+        "properties": {
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "group": {
+            "enum": [
+              "redirect",
+              "form",
+              "info",
+              "end"
+            ],
+            "title": "Group",
+            "type": "string"
+          },
+          "locked": {
+            "title": "Locked",
+            "type": "boolean"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "description",
+          "group",
+          "locked"
+        ],
+        "title": "ToolItem",
+        "type": "object"
+      },
       "UnapprovedItem": {
         "properties": {
           "file": {
@@ -2732,6 +3531,178 @@
           "type"
         ],
         "title": "ValidationError",
+        "type": "object"
+      },
+      "VersionDetail": {
+        "properties": {
+          "active": {
+            "title": "Active",
+            "type": "boolean"
+          },
+          "bundle": {
+            "additionalProperties": true,
+            "title": "Bundle",
+            "type": "object"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "created_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created By"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "rolled_back_from": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rolled Back From"
+          },
+          "seq": {
+            "title": "Seq",
+            "type": "integer"
+          },
+          "source": {
+            "enum": [
+              "seed",
+              "admin",
+              "rollback"
+            ],
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "seq",
+          "label",
+          "source",
+          "rolled_back_from",
+          "note",
+          "created_by",
+          "created_at",
+          "active",
+          "bundle"
+        ],
+        "title": "VersionDetail",
+        "type": "object"
+      },
+      "VersionItem": {
+        "properties": {
+          "active": {
+            "title": "Active",
+            "type": "boolean"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "created_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created By"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "rolled_back_from": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rolled Back From"
+          },
+          "seq": {
+            "title": "Seq",
+            "type": "integer"
+          },
+          "source": {
+            "enum": [
+              "seed",
+              "admin",
+              "rollback"
+            ],
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "seq",
+          "label",
+          "source",
+          "rolled_back_from",
+          "note",
+          "created_by",
+          "created_at",
+          "active"
+        ],
+        "title": "VersionItem",
+        "type": "object"
+      },
+      "VersionListResponse": {
+        "properties": {
+          "versions": {
+            "items": {
+              "$ref": "#/components/schemas/VersionItem"
+            },
+            "title": "Versions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "versions"
+        ],
+        "title": "VersionListResponse",
         "type": "object"
       },
       "VoiceModeRequest": {
@@ -3754,6 +4725,1188 @@
         "summary": "Get Recording",
         "tags": [
           "admin-recording"
+        ]
+      }
+    },
+    "/api/admin/config": {
+      "get": {
+        "operationId": "get_config_api_admin_config_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConfigStateResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Config",
+        "tags": [
+          "admin-config"
+        ]
+      }
+    },
+    "/api/admin/config/catalog": {
+      "get": {
+        "operationId": "get_catalog_api_admin_config_catalog_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Catalog",
+        "tags": [
+          "admin-config"
+        ]
+      }
+    },
+    "/api/admin/config/draft/agents": {
+      "get": {
+        "operationId": "list_agents_api_admin_config_draft_agents_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Agents",
+        "tags": [
+          "admin-config"
+        ]
+      }
+    },
+    "/api/admin/config/draft/agents/{name}": {
+      "get": {
+        "operationId": "get_agent_api_admin_config_draft_agents__name__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "title": "Name",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SectionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Get Agent",
+        "tags": [
+          "admin-config"
+        ]
+      },
+      "put": {
+        "description": "Creates the agent when the name is new; `archived` toggles via the body.",
+        "operationId": "put_agent_api_admin_config_draft_agents__name__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "title": "Name",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SectionPutRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SectionSaveResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Put Agent",
+        "tags": [
+          "admin-config"
+        ]
+      }
+    },
+    "/api/admin/config/draft/agents/{name}/compiled": {
+      "get": {
+        "description": "The instructions code generates for this draft agent (read-only, for debugging).",
+        "operationId": "get_compiled_api_admin_config_draft_agents__name__compiled_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "title": "Name",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompiledResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Get Compiled",
+        "tags": [
+          "admin-config"
+        ]
+      }
+    },
+    "/api/admin/config/draft/diff": {
+      "get": {
+        "operationId": "get_draft_diff_api_admin_config_draft_diff_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DiffResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Draft Diff",
+        "tags": [
+          "admin-config"
+        ]
+      }
+    },
+    "/api/admin/config/draft/discard": {
+      "post": {
+        "operationId": "post_discard_api_admin_config_draft_discard_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RollbackRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConfigStateResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Post Discard",
+        "tags": [
+          "admin-config"
+        ]
+      }
+    },
+    "/api/admin/config/draft/entry-agent": {
+      "put": {
+        "operationId": "put_entry_agent_api_admin_config_draft_entry_agent_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SectionPutRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SectionSaveResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Put Entry Agent",
+        "tags": [
+          "admin-config"
+        ]
+      }
+    },
+    "/api/admin/config/draft/forms": {
+      "get": {
+        "operationId": "list_forms_api_admin_config_draft_forms_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Forms",
+        "tags": [
+          "admin-config"
+        ]
+      }
+    },
+    "/api/admin/config/draft/forms/{name}": {
+      "get": {
+        "operationId": "get_form_api_admin_config_draft_forms__name__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "title": "Name",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SectionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Get Form",
+        "tags": [
+          "admin-config"
+        ]
+      },
+      "put": {
+        "operationId": "put_form_api_admin_config_draft_forms__name__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "title": "Name",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SectionPutRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SectionSaveResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Put Form",
+        "tags": [
+          "admin-config"
+        ]
+      }
+    },
+    "/api/admin/config/draft/knowledge/{section}": {
+      "get": {
+        "operationId": "get_knowledge_api_admin_config_draft_knowledge__section__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "section",
+            "required": true,
+            "schema": {
+              "title": "Section",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SectionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Get Knowledge",
+        "tags": [
+          "admin-config"
+        ]
+      },
+      "put": {
+        "operationId": "put_knowledge_api_admin_config_draft_knowledge__section__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "section",
+            "required": true,
+            "schema": {
+              "title": "Section",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SectionPutRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SectionSaveResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Put Knowledge",
+        "tags": [
+          "admin-config"
+        ]
+      }
+    },
+    "/api/admin/config/draft/load-defaults": {
+      "post": {
+        "operationId": "post_load_defaults_api_admin_config_draft_load_defaults_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RollbackRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConfigStateResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Post Load Defaults",
+        "tags": [
+          "admin-config"
+        ]
+      }
+    },
+    "/api/admin/config/publish": {
+      "post": {
+        "operationId": "post_publish_api_admin_config_publish_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublishRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublishResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Post Publish",
+        "tags": [
+          "admin-config"
+        ]
+      }
+    },
+    "/api/admin/config/versions": {
+      "get": {
+        "operationId": "get_versions_api_admin_config_versions_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VersionListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Versions",
+        "tags": [
+          "admin-config"
+        ]
+      }
+    },
+    "/api/admin/config/versions/{seq}": {
+      "get": {
+        "operationId": "get_version_api_admin_config_versions__seq__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "seq",
+            "required": true,
+            "schema": {
+              "title": "Seq",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VersionDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Get Version",
+        "tags": [
+          "admin-config"
+        ]
+      }
+    },
+    "/api/admin/config/versions/{seq}/diff": {
+      "get": {
+        "operationId": "get_version_diff_api_admin_config_versions__seq__diff_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "seq",
+            "required": true,
+            "schema": {
+              "title": "Seq",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "against",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Against"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DiffResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Get Version Diff",
+        "tags": [
+          "admin-config"
+        ]
+      }
+    },
+    "/api/admin/config/versions/{seq}/rollback": {
+      "post": {
+        "operationId": "post_rollback_api_admin_config_versions__seq__rollback_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "seq",
+            "required": true,
+            "schema": {
+              "title": "Seq",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RollbackRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublishResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Post Rollback",
+        "tags": [
+          "admin-config"
         ]
       }
     },
