@@ -22,6 +22,7 @@ import {
   fxReports,
   fxReportsEmpty,
   fxReviewer,
+  fxVoiceMode,
 } from './data'
 
 type Reply = (n: number) => Response | Promise<Response>
@@ -78,6 +79,7 @@ const PAGES: Record<string, [string, unknown]> = {
   reports: ['GET /api/admin/reports', fxReports],
   exports: ['GET /api/admin/exports', fxExports],
   audit: ['GET /api/admin/audit', fxAudit],
+  settings: ['GET /api/admin/settings/voice-mode', fxVoiceMode],
 }
 
 const DETAIL = `/admin/calls/${FX_CALL_ID}`
@@ -129,6 +131,35 @@ Object.assign(VIEWS, {
     path: DETAIL,
     me: fxAdmin,
     replies: { [DETAIL_GET]: ok(fxDetail.recordingUnavailable) },
+  },
+  'detail-realtime': { path: DETAIL, me: fxAdmin, replies: { [DETAIL_GET]: ok(fxDetail.realtime) } },
+  'settings-default': {
+    path: '/admin/settings',
+    me: fxAdmin,
+    replies: { 'GET /api/admin/settings/voice-mode': ok({ mode: 'gpt-live', stored: false, updated_at: null }) },
+  },
+  'settings-save-error': {
+    path: '/admin/settings',
+    me: fxAdmin,
+    replies: {
+      'GET /api/admin/settings/voice-mode': ok(fxVoiceMode),
+      'POST /api/admin/settings/voice-mode': fail(503, 'unavailable'),
+    },
+    after: () =>
+      drive(
+        () => {
+          const input = document.querySelector('[data-testid=settings-mode-realtime] input')
+          if (!(input instanceof HTMLInputElement)) return false
+          input.click()
+          return true
+        },
+        () => click('settings-save'),
+      ),
+  },
+  'settings-forbidden': {
+    path: '/admin/settings',
+    me: fxReviewer,
+    replies: { 'GET /api/admin/settings/voice-mode': ok(fxVoiceMode) },
   },
   'detail-loading': { path: DETAIL, me: fxAdmin, replies: { [DETAIL_GET]: hang } },
   'detail-not-found': { path: DETAIL, me: fxAdmin, replies: { [DETAIL_GET]: fail(404, 'not_found') } },

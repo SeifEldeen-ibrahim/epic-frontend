@@ -13,6 +13,8 @@ import {
   useExport,
   useQueue,
   useReject,
+  useSetVoiceMode,
+  useVoiceMode,
   type CallDetail,
 } from './admin'
 import { fetchSession, sessionQueryKey, useLogout, useSession, type Session } from './auth'
@@ -195,5 +197,28 @@ describe('lists', () => {
     await expect(result.current.mutateAsync()).resolves.toEqual(batch)
     expect(POST).toHaveBeenCalledWith('/api/admin/exports', { body: {} })
     expect(qc.getQueryState(adminKeys.exportsPending())?.isInvalidated).toBe(true)
+  })
+})
+
+describe('voice mode', () => {
+  it('reads the setting and writes the saved one into the cache', async () => {
+    GET.mockResolvedValue(reply(200, { mode: 'gpt-live', stored: false, updated_at: null }))
+    const read = renderHook(() => useVoiceMode(), { wrapper })
+    await waitFor(() => expect(read.result.current.data?.mode).toBe('gpt-live'))
+    expect(GET).toHaveBeenCalledWith('/api/admin/settings/voice-mode')
+    const saved = { mode: 'realtime', stored: true, updated_at: 'now' }
+    POST.mockResolvedValue(reply(200, saved))
+    const { result } = renderHook(() => useSetVoiceMode(), { wrapper })
+    await expect(result.current.mutateAsync('realtime')).resolves.toEqual(saved)
+    expect(POST).toHaveBeenCalledWith('/api/admin/settings/voice-mode', { body: { mode: 'realtime' } })
+    expect(qc.getQueryData(adminKeys.voiceMode())).toEqual(saved)
+  })
+
+  it('a failed save throws a typed error and leaves the cache alone', async () => {
+    qc.setQueryData(adminKeys.voiceMode(), { mode: 'gpt-live', stored: true, updated_at: 'x' })
+    POST.mockResolvedValue(reply(503, { detail: 'unavailable' }))
+    const { result } = renderHook(() => useSetVoiceMode(), { wrapper })
+    await expect(result.current.mutateAsync('realtime')).rejects.toBeInstanceOf(AdminApiError)
+    expect(qc.getQueryData(adminKeys.voiceMode())).toEqual({ mode: 'gpt-live', stored: true, updated_at: 'x' })
   })
 })
