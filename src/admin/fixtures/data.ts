@@ -8,6 +8,7 @@ import type {
   QueueResponse,
   ReportsResponse,
   TimelineEntry,
+  VoiceModeResponse,
 } from '../../api/admin'
 import type { StaffMe } from '../../api/auth'
 
@@ -256,6 +257,7 @@ const baseDetail: CallDetail = {
     id: FX_CALL_ID,
     after_hours: false,
     agent_version: 'fixture-v1',
+    voice_mode: 'gpt-live',
     channel: 'web',
     clarify_turns: 1,
     started_at: at(0),
@@ -304,8 +306,19 @@ export const fxDetail = {
     call: { ...baseDetail.call, status: 'live', ended_at: null, outcome: null },
     form: baseDetail.form ? { ...baseDetail.form, status: 'being_filled', submitted_at: null } : null,
   } satisfies CallDetail,
+  realtime: {
+    ...baseDetail,
+    call: { ...baseDetail.call, agent_version: 'fixture-v1+rt-abc123', voice_mode: 'realtime' },
+    recording: { available: false, missing: 0, reason: null, segments: 0, total_bytes: 0 },
+  } satisfies CallDetail,
   recordingUnavailable: {
     ...baseDetail,
     recording: { available: false, missing: 3, reason: 'fixture: no segments stored', segments: 0, total_bytes: 0 },
   } satisfies CallDetail,
+}
+
+export const fxVoiceMode: VoiceModeResponse = {
+  mode: 'gpt-live',
+  stored: true,
+  updated_at: '2026-10-07T12:00:00+00:00',
 }

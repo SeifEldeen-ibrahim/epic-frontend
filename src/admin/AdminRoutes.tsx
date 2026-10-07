@@ -8,6 +8,7 @@ import { FollowUpPage } from '../routes/admin/FollowUpPage'
 import { LoginPage } from '../routes/admin/LoginPage'
 import { QueuePage } from '../routes/admin/QueuePage'
 import { ReportsPage } from '../routes/admin/ReportsPage'
+import { SettingsPage } from '../routes/admin/SettingsPage'
 import { NotFound } from '../routes/NotFound'
 import './admin.css'
 import { AdminShell } from './AdminShell'
@@ -45,6 +46,14 @@ export function AdminRoutes() {
           element={
             <RequireRole allow={['admin']}>
               <AuditPage />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="settings"
+          element={
+            <RequireRole allow={['admin']}>
+              <SettingsPage />
             </RequireRole>
           }
         />

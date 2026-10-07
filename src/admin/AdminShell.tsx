@@ -30,6 +30,7 @@ export function AdminShell() {
             ? [
                 { key: 'exports', to: '/admin/exports', label: c.exports },
                 { key: 'audit', to: '/admin/audit', label: c.audit },
+                { key: 'settings', to: '/admin/settings', label: c.settings },
               ]
             : []),
           account,
