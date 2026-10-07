@@ -53,7 +53,7 @@ describe('streamCallEvents', () => {
     const seen: CallEvent[] = []
     const end = await streamCallEvents('c/1', 's3cret', (e) => seen.push(e), new AbortController().signal)
     expect(end).toBe('ended')
-    expect(seen.map((e) => e.status)).toEqual(['live', 'ended'])
+    expect(seen.map((e) => (e.type === 'session_swap' ? e.type : e.status))).toEqual(['live', 'ended'])
     const [url, options] = fetchMock.mock.calls[0]
     expect(url).toBe('/api/calls/c%2F1/events')
     expect(options.headers).toEqual({ 'X-Call-Secret': 's3cret', Accept: 'text/event-stream' })
@@ -97,5 +97,16 @@ describe('streamCallEvents', () => {
     await new Promise((r) => setTimeout(r, 10))
     controller.abort()
     expect(await pending).toBe('aborted')
+  })
+})
+
+describe('streamCallEvents session swap', () => {
+  it('passes a session_swap to onEvent without ending the stream', async () => {
+    const SWAP = { type: 'session_swap', session_seq: 2 }
+    stubFetch(streamOf([msg(SWAP), msg(LIVE)]))
+    const events: CallEvent[] = []
+    const end = await streamCallEvents('c1', 's', (e) => events.push(e), new AbortController().signal)
+    expect(events).toEqual([SWAP, LIVE])
+    expect(end).toBe('dropped')
   })
 })
