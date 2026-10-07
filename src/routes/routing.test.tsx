@@ -59,9 +59,11 @@ describe('routing', () => {
     expect(screen.getByRole('link', { name: /call page/i })).toHaveAttribute('href', '/call')
   })
 
-  it('renders the login placeholder without inputs', async () => {
+  it('renders the real staff login form from the lazy admin chunk', async () => {
     renderAt('/admin/login')
-    expect(await screen.findByTestId('login-placeholder')).toBeInTheDocument()
-    expect(screen.queryByRole('textbox')).toBeNull()
+    expect(await screen.findByTestId('login-email')).toBeInTheDocument()
+    expect(screen.getByTestId('login-password')).toBeInTheDocument()
+    expect(screen.getByTestId('login-submit')).toBeInTheDocument()
+    expect(screen.queryByTestId('admin-shell')).toBeNull()
   })
 })

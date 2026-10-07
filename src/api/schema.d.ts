@@ -4,6 +4,296 @@
  */
 
 export interface paths {
+    "/api/admin/audit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Audit */
+        get: operations["get_audit_api_admin_audit_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/auth/change-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Change Password */
+        post: operations["change_password_api_admin_auth_change_password_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/auth/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Login */
+        post: operations["login_api_admin_auth_login_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/auth/logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Logout */
+        post: operations["logout_api_admin_auth_logout_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/auth/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Me */
+        get: operations["me_api_admin_auth_me_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/calls": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Calls */
+        get: operations["get_calls_api_admin_calls_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/calls/{call_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Call Detail */
+        get: operations["get_call_detail_api_admin_calls__call_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/calls/{call_id}/flags/{flag_id}/acknowledge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Post Acknowledge Flag */
+        post: operations["post_acknowledge_flag_api_admin_calls__call_id__flags__flag_id__acknowledge_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/calls/{call_id}/follow-up/acknowledge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Post Acknowledge Follow Up */
+        post: operations["post_acknowledge_follow_up_api_admin_calls__call_id__follow_up_acknowledge_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/calls/{call_id}/form/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Post Approve */
+        post: operations["post_approve_api_admin_calls__call_id__form_approve_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/calls/{call_id}/form/fields": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Post Edit Field */
+        post: operations["post_edit_field_api_admin_calls__call_id__form_fields_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/calls/{call_id}/form/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Post Reject */
+        post: operations["post_reject_api_admin_calls__call_id__form_reject_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/calls/{call_id}/recording": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Recording */
+        get: operations["get_recording_api_admin_calls__call_id__recording_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/exports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Exports */
+        get: operations["get_exports_api_admin_exports_get"];
+        put?: never;
+        /** Post Exports */
+        post: operations["post_exports_api_admin_exports_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/follow-up": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Follow Up */
+        get: operations["get_follow_up_api_admin_follow_up_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/queue": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Queue */
+        get: operations["get_queue_api_admin_queue_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Reports */
+        get: operations["get_reports_api_admin_reports_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/calls": {
         parameters: {
             query?: never;
@@ -94,6 +384,68 @@ export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
         /**
+         * AgentActionKind
+         * @enum {string}
+         */
+        AgentActionKind: "function_call" | "handoff" | "reconnect" | "crisis_stop" | "human_needed" | "steering" | "turn_limit" | "read_back";
+        /**
+         * AgentPackage
+         * @enum {string}
+         */
+        AgentPackage: "switchboard" | "clinic";
+        /**
+         * AuditAction
+         * @enum {string}
+         */
+        AuditAction: "login" | "login_failed" | "logout" | "change_password" | "view_call" | "play_recording" | "edit_field" | "approve" | "reject" | "export" | "resolve_flag" | "acknowledge_follow_up" | "user_admin" | "soft_delete" | "restore";
+        /**
+         * AuditActor
+         * @enum {string}
+         */
+        AuditActor: "staff" | "cli";
+        /** AuditItem */
+        AuditItem: {
+            action: components["schemas"]["AuditAction"];
+            actor: components["schemas"]["AuditActor"];
+            /**
+             * At
+             * Format: date-time
+             */
+            at: string;
+            /** Detail */
+            detail?: unknown;
+            /** Id */
+            id: number;
+            /** Staff Email */
+            staff_email: string | null;
+            /** Target */
+            target: string | null;
+        };
+        /** AuditListResponse */
+        AuditListResponse: {
+            /** Items */
+            items: components["schemas"]["AuditItem"][];
+            /** Next Cursor */
+            next_cursor: string | null;
+        };
+        /**
+         * CallChannel
+         * @enum {string}
+         */
+        CallChannel: "web" | "sip";
+        /** CallDetail */
+        CallDetail: {
+            call: components["schemas"]["CallHeader"];
+            /** Field History */
+            field_history: components["schemas"]["FieldHistoryItem"][];
+            form: components["schemas"]["FormDetail"] | null;
+            recording: components["schemas"]["RecordingSummary"];
+            /** Sessions */
+            sessions: components["schemas"]["SessionItem"][];
+            /** Timeline */
+            timeline: (components["schemas"]["TimelineTurn"] | components["schemas"]["TimelineAction"] | components["schemas"]["TimelineFlag"])[];
+        };
+        /**
          * CallEvent
          * @description One `event: call` message on the call-state stream.
          */
@@ -115,6 +467,91 @@ export interface components {
              */
             type: "state";
         };
+        /** CallHeader */
+        CallHeader: {
+            /** After Hours */
+            after_hours: boolean;
+            /** Agent Version */
+            agent_version: string;
+            channel: components["schemas"]["CallChannel"];
+            /** Clarify Turns */
+            clarify_turns: number;
+            /** Ended At */
+            ended_at: string | null;
+            follow_up_status: components["schemas"]["FollowUpStatus"];
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Inquiry Category */
+            inquiry_category: string | null;
+            /** Language */
+            language: string | null;
+            outcome: components["schemas"]["CallOutcome"] | null;
+            /** Route Role */
+            route_role: string | null;
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /** Stated Name */
+            stated_name: string | null;
+            /** Stated Reason */
+            stated_reason: string | null;
+            status: components["schemas"]["CallStatus"];
+            /** Tester Label */
+            tester_label: string | null;
+        };
+        /** CallListItem */
+        CallListItem: {
+            /** Agent Version */
+            agent_version: string;
+            /** Ended At */
+            ended_at: string | null;
+            follow_up_status: components["schemas"]["FollowUpStatus"];
+            form_status: components["schemas"]["FormStatus"] | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Inquiry Category */
+            inquiry_category: string | null;
+            /** Language */
+            language: string | null;
+            /** Open Flags */
+            open_flags: number;
+            outcome: components["schemas"]["CallOutcome"] | null;
+            /** Route Role */
+            route_role: string | null;
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            status: components["schemas"]["CallStatus"];
+            /** Tester Label */
+            tester_label: string | null;
+        };
+        /** CallListResponse */
+        CallListResponse: {
+            /** Items */
+            items: components["schemas"]["CallListItem"][];
+            /** Next Cursor */
+            next_cursor: string | null;
+        };
+        /**
+         * CallOutcome
+         * @enum {string}
+         */
+        CallOutcome: "routed" | "referred" | "clinic_form" | "human_needed" | "crisis" | "department_handoff" | "current_client_handoff" | "abandoned" | "error";
+        /**
+         * CallStatus
+         * @enum {string}
+         */
+        CallStatus: "live" | "ended";
         /** CallStatusResponse */
         CallStatusResponse: {
             /** End Reason */
@@ -136,6 +573,13 @@ export interface components {
              * @enum {string}
              */
             reason: "capacity" | "unavailable";
+        };
+        /** ChangePasswordRequest */
+        ChangePasswordRequest: {
+            /** Current Password */
+            current_password: string;
+            /** New Password */
+            new_password: string;
         };
         /** CreateCallRequest */
         CreateCallRequest: {
@@ -167,6 +611,261 @@ export interface components {
             /** Sdp Answer */
             sdp_answer: string;
         };
+        /** DelegationItem */
+        DelegationItem: {
+            /** Actions */
+            actions: number;
+            /** Agent Version */
+            agent_version: string;
+            /** P50 Ms */
+            p50_ms: number;
+            /** P90 Ms */
+            p90_ms: number;
+        };
+        /** EmptyActionRequest */
+        EmptyActionRequest: Record<string, never>;
+        /** ErrorDetail */
+        ErrorDetail: {
+            /** Detail */
+            detail: string;
+        };
+        /** ExportPendingItem */
+        ExportPendingItem: {
+            /**
+             * Call Id
+             * Format: uuid
+             */
+            call_id: string;
+            /** Caller Relationship */
+            caller_relationship: string | null;
+            /** Decided At */
+            decided_at: string | null;
+            /**
+             * Form Id
+             * Format: uuid
+             */
+            form_id: string;
+            /** Inquiry Category */
+            inquiry_category: string | null;
+            /** Language */
+            language: string | null;
+            /** Submitted At */
+            submitted_at: string | null;
+        };
+        /** ExportPendingResponse */
+        ExportPendingResponse: {
+            /** Items */
+            items: components["schemas"]["ExportPendingItem"][];
+        };
+        /** ExportResponse */
+        ExportResponse: {
+            /** Count */
+            count: number;
+            /** Csv */
+            csv: string;
+            /**
+             * Exported At
+             * Format: date-time
+             */
+            exported_at: string;
+            /** Rows */
+            rows: components["schemas"]["ExportRow"][];
+        };
+        /** ExportRow */
+        ExportRow: {
+            /** After Hours Queued */
+            after_hours_queued: boolean;
+            /**
+             * Call Id
+             * Format: uuid
+             */
+            call_id: string;
+            /** Callback Consent */
+            callback_consent: boolean | null;
+            /** Callback Number */
+            callback_number: string | null;
+            /** Caller Relationship */
+            caller_relationship: string | null;
+            /** Decided At */
+            decided_at: string | null;
+            /** Decided By Email */
+            decided_by_email: string | null;
+            /** Documents Held */
+            documents_held?: unknown;
+            /** Fields */
+            fields: {
+                [key: string]: unknown;
+            };
+            /**
+             * Form Id
+             * Format: uuid
+             */
+            form_id: string;
+            /** Inquiry Category */
+            inquiry_category: string | null;
+            /** Insurance Carrier Verbatim */
+            insurance_carrier_verbatim: string | null;
+            /** Language */
+            language: string | null;
+            /** Submitted At */
+            submitted_at: string | null;
+        };
+        /**
+         * FieldEditRequest
+         * @description Edit one form field; `old` is the value the reviewer saw (optimistic check).
+         */
+        FieldEditRequest: {
+            /** Field */
+            field: string;
+            /** New */
+            new: unknown;
+            /** Old */
+            old: unknown;
+        };
+        /** FieldHistoryItem */
+        FieldHistoryItem: {
+            /**
+             * At
+             * Format: date-time
+             */
+            at: string;
+            /** Field */
+            field: string;
+            /** New */
+            new?: unknown;
+            /** Old */
+            old?: unknown;
+            source: components["schemas"]["FormFieldSource"];
+            /** Staff Email */
+            staff_email: string | null;
+        };
+        /** FlagCounts */
+        FlagCounts: {
+            /**
+             * Acknowledged
+             * @default 0
+             */
+            acknowledged: number;
+            /**
+             * Carried
+             * @default 0
+             */
+            carried: number;
+            /**
+             * Open
+             * @default 0
+             */
+            open: number;
+            /**
+             * Resolved
+             * @default 0
+             */
+            resolved: number;
+        };
+        /**
+         * FlagKind
+         * @enum {string}
+         */
+        FlagKind: "typo" | "missing_field" | "wrong_route" | "crisis" | "other";
+        /**
+         * FlagResolvedBy
+         * @enum {string}
+         */
+        FlagResolvedBy: "auto" | "staff";
+        /**
+         * FlagStatus
+         * @enum {string}
+         */
+        FlagStatus: "open" | "resolved" | "carried" | "acknowledged";
+        /** FollowUpAckResponse */
+        FollowUpAckResponse: {
+            /**
+             * Call Id
+             * Format: uuid
+             */
+            call_id: string;
+            follow_up_status: components["schemas"]["FollowUpStatus"];
+        };
+        /** FollowUpItem */
+        FollowUpItem: {
+            /**
+             * Call Id
+             * Format: uuid
+             */
+            call_id: string;
+            /** Ended At */
+            ended_at: string | null;
+            form_status: components["schemas"]["FormStatus"] | null;
+            /** Language */
+            language: string | null;
+            outcome: components["schemas"]["CallOutcome"] | null;
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /** Stated Name */
+            stated_name: string | null;
+            /** Stated Reason */
+            stated_reason: string | null;
+        };
+        /** FollowUpResponse */
+        FollowUpResponse: {
+            /** Items */
+            items: components["schemas"]["FollowUpItem"][];
+        };
+        /**
+         * FollowUpStatus
+         * @enum {string}
+         */
+        FollowUpStatus: "none" | "needed" | "acknowledged";
+        /** FormDetail */
+        FormDetail: {
+            /** After Hours Queued */
+            after_hours_queued: boolean;
+            /** Callback Consent */
+            callback_consent: boolean | null;
+            /** Callback Number */
+            callback_number: string | null;
+            /** Caller Relationship */
+            caller_relationship: string | null;
+            /** Decided At */
+            decided_at: string | null;
+            /** Decided By Email */
+            decided_by_email: string | null;
+            /** Documents Held */
+            documents_held?: unknown;
+            /** Exported At */
+            exported_at: string | null;
+            /** Fields */
+            fields: {
+                [key: string]: unknown;
+            };
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Insurance Carrier Verbatim */
+            insurance_carrier_verbatim: string | null;
+            /** Reject Reason */
+            reject_reason: string | null;
+            /** Schema Version */
+            schema_version: string;
+            status: components["schemas"]["FormStatus"];
+            /** Submitted At */
+            submitted_at: string | null;
+        };
+        /**
+         * FormFieldSource
+         * @enum {string}
+         */
+        FormFieldSource: "luna" | "staff";
+        /**
+         * FormStatus
+         * @enum {string}
+         */
+        FormStatus: "being_filled" | "flagged" | "read_back" | "awaiting_approval" | "approved" | "rejected" | "incomplete";
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -190,10 +889,275 @@ export interface components {
              */
             storage: "ok" | "error";
         };
+        /** LatencyItem */
+        LatencyItem: {
+            /** Agent Version */
+            agent_version: string;
+            /** P50 Ms */
+            p50_ms: number;
+            /** P90 Ms */
+            p90_ms: number;
+            /** Turns */
+            turns: number;
+        };
+        /** LoginRequest */
+        LoginRequest: {
+            /** Email */
+            email: string;
+            /** Password */
+            password: string;
+        };
         /** NotFoundResponse */
         NotFoundResponse: {
             /** Detail */
             detail: string;
+        };
+        /** OutcomeItem */
+        OutcomeItem: {
+            /** Count */
+            count: number;
+            /** Inquiry Category */
+            inquiry_category: string | null;
+            outcome: components["schemas"]["CallOutcome"] | null;
+        };
+        /** QueueItem */
+        QueueItem: {
+            /** After Hours Queued */
+            after_hours_queued: boolean;
+            /**
+             * Call Id
+             * Format: uuid
+             */
+            call_id: string;
+            flag_counts: components["schemas"]["FlagCounts"];
+            /**
+             * Form Id
+             * Format: uuid
+             */
+            form_id: string;
+            /** Inquiry Category */
+            inquiry_category: string | null;
+            /** Language */
+            language: string | null;
+            /** Route Role */
+            route_role: string | null;
+            /** Submitted At */
+            submitted_at: string | null;
+        };
+        /** QueueResponse */
+        QueueResponse: {
+            /** Items */
+            items: components["schemas"]["QueueItem"][];
+        };
+        /** RecordingSummary */
+        RecordingSummary: {
+            /** Available */
+            available: boolean;
+            /** Missing */
+            missing: number;
+            /** Reason */
+            reason: string | null;
+            /** Segments */
+            segments: number;
+            /** Total Bytes */
+            total_bytes: number;
+        };
+        /** RejectRequest */
+        RejectRequest: {
+            /** Reason */
+            reason: string;
+        };
+        /** ReportsResponse */
+        ReportsResponse: {
+            /** Agent Version */
+            agent_version: string | null;
+            /**
+             * Date From
+             * Format: date-time
+             */
+            date_from: string;
+            /**
+             * Date To
+             * Format: date-time
+             */
+            date_to: string;
+            /** Delegation */
+            delegation: components["schemas"]["DelegationItem"][];
+            /** Gate Results */
+            gate_results: unknown[];
+            /** Latency */
+            latency: components["schemas"]["LatencyItem"][];
+            /** Outcomes */
+            outcomes: components["schemas"]["OutcomeItem"][];
+            /**
+             * Period
+             * @enum {string}
+             */
+            period: "day" | "week";
+            /** Routing Mix */
+            routing_mix: components["schemas"]["RoutingMixItem"][];
+            /** Total Calls */
+            total_calls: number;
+            /** Unmet Demand */
+            unmet_demand: components["schemas"]["UnmetDemandItem"][];
+        };
+        /** RoutingMixItem */
+        RoutingMixItem: {
+            /** Count */
+            count: number;
+            /** Route Role */
+            route_role: string | null;
+        };
+        /**
+         * SessionEndReason
+         * @enum {string}
+         */
+        SessionEndReason: "handoff" | "reconnect" | "hangup" | "crisis" | "human_needed" | "department_handoff" | "idle_timeout" | "max_duration" | "error";
+        /** SessionItem */
+        SessionItem: {
+            agent_package: components["schemas"]["AgentPackage"];
+            end_reason: components["schemas"]["SessionEndReason"] | null;
+            /** Ended At */
+            ended_at: string | null;
+            /** Seq */
+            seq: number;
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /** Voice */
+            voice: string;
+        };
+        /**
+         * Speaker
+         * @enum {string}
+         */
+        Speaker: "caller" | "agent";
+        /** StaffMe */
+        StaffMe: {
+            /** Display Name */
+            display_name: string;
+            /** Email */
+            email: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Must Change Password */
+            must_change_password: boolean;
+            role: components["schemas"]["StaffRole"];
+        };
+        /**
+         * StaffRole
+         * @enum {string}
+         */
+        StaffRole: "reviewer" | "admin";
+        /** TimelineAction */
+        TimelineAction: {
+            /** Args */
+            args?: unknown;
+            /**
+             * At
+             * Format: date-time
+             */
+            at: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Delegation Ms */
+            delegation_ms: number | null;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            entry_type: "action";
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            kind: components["schemas"]["AgentActionKind"];
+            /** Name */
+            name: string | null;
+            /** Result */
+            result?: unknown;
+        };
+        /** TimelineFlag */
+        TimelineFlag: {
+            /**
+             * At
+             * Format: date-time
+             */
+            at: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Detail */
+            detail: string | null;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            entry_type: "flag";
+            /** Form Field */
+            form_field: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            kind: components["schemas"]["FlagKind"];
+            /** Resolved At */
+            resolved_at: string | null;
+            resolved_by: components["schemas"]["FlagResolvedBy"] | null;
+            status: components["schemas"]["FlagStatus"];
+        };
+        /** TimelineTurn */
+        TimelineTurn: {
+            /**
+             * At
+             * Format: date-time
+             */
+            at: string;
+            /** Ended At */
+            ended_at: string | null;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            entry_type: "turn";
+            /** Language */
+            language: string | null;
+            /** Latency Ms */
+            latency_ms: number | null;
+            /** Seq */
+            seq: number;
+            speaker: components["schemas"]["Speaker"];
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /** Text */
+            text: string;
+        };
+        /** UnmetDemandItem */
+        UnmetDemandItem: {
+            /** Category */
+            category: string | null;
+            /** Count */
+            count: number;
+            /**
+             * Period Start
+             * Format: date
+             */
+            period_start: string;
         };
         /** ValidationError */
         ValidationError: {
@@ -217,6 +1181,737 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    get_audit_api_admin_audit_get: {
+        parameters: {
+            query?: {
+                action?: components["schemas"]["AuditAction"] | null;
+                before?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuditListResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+        };
+    };
+    change_password_api_admin_auth_change_password_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangePasswordRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffMe"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+        };
+    };
+    login_api_admin_auth_login_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LoginRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffMe"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    logout_api_admin_auth_logout_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    me_api_admin_auth_me_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffMe"];
+                };
+            };
+        };
+    };
+    get_calls_api_admin_calls_get: {
+        parameters: {
+            query?: {
+                date_from?: string | null;
+                date_to?: string | null;
+                outcome?: components["schemas"]["CallOutcome"] | null;
+                route_role?: string | null;
+                form_status?: components["schemas"]["FormStatus"] | null;
+                language?: string | null;
+                has_open_flags?: boolean | null;
+                tester?: string | null;
+                agent_version?: string | null;
+                cursor?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CallListResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+        };
+    };
+    get_call_detail_api_admin_calls__call_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                call_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CallDetail"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    post_acknowledge_flag_api_admin_calls__call_id__flags__flag_id__acknowledge_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                call_id: string;
+                flag_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EmptyActionRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TimelineFlag"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+        };
+    };
+    post_acknowledge_follow_up_api_admin_calls__call_id__follow_up_acknowledge_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                call_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EmptyActionRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FollowUpAckResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+        };
+    };
+    post_approve_api_admin_calls__call_id__form_approve_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                call_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EmptyActionRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FormDetail"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+        };
+    };
+    post_edit_field_api_admin_calls__call_id__form_fields_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                call_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FieldEditRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FormDetail"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+        };
+    };
+    post_reject_api_admin_calls__call_id__form_reject_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                call_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RejectRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FormDetail"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+        };
+    };
+    get_recording_api_admin_calls__call_id__recording_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                call_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Whole recording as WAV */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "audio/wav": string;
+                };
+            };
+            /** @description Requested byte range of the WAV */
+            206: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "audio/wav": string;
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            /** @description Request Entity Too Large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            /** @description Requested Range Not Satisfiable */
+            416: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Bad Gateway */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+        };
+    };
+    get_exports_api_admin_exports_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExportPendingResponse"];
+                };
+            };
+        };
+    };
+    post_exports_api_admin_exports_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EmptyActionRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExportResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_follow_up_api_admin_follow_up_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FollowUpResponse"];
+                };
+            };
+        };
+    };
+    get_queue_api_admin_queue_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QueueResponse"];
+                };
+            };
+        };
+    };
+    get_reports_api_admin_reports_get: {
+        parameters: {
+            query?: {
+                date_from?: string | null;
+                date_to?: string | null;
+                agent_version?: string | null;
+                period?: "day" | "week";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReportsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     createCall: {
         parameters: {
             query?: never;
