@@ -4,7 +4,16 @@ import { StrictMode } from 'react'
 import { MemoryRouter } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { streamCallEvents, type CallEvent as CallEventMsg, type StreamEnd } from '../../api/callEvents'
-import { answerSession, createCall, endCall, endCallOnUnload, getCall } from '../../api/calls'
+import {
+  answerSession,
+  createCall,
+  endCall,
+  endCallOnUnload,
+  getCall,
+  reconnectCall,
+  type ReconnectResult,
+} from '../../api/calls'
+import { COPY } from './copy'
 import { CallPage } from './CallPage'
 import { MAX_STREAM_FAILURES, RECONNECT_MS, STATUS_POLL_MS, SWAP_DEADLINE_MS } from './useCall'
 
@@ -14,6 +23,7 @@ vi.mock('../../api/calls', () => ({
   endCall: vi.fn(),
   getCall: vi.fn(),
   endCallOnUnload: vi.fn(),
+  reconnectCall: vi.fn(),
 }))
 
 vi.mock('../../api/callEvents', () => ({ streamCallEvents: vi.fn() }))
@@ -31,6 +41,7 @@ const endCallMock = vi.mocked(endCall)
 const getCallMock = vi.mocked(getCall)
 const unloadMock = vi.mocked(endCallOnUnload)
 const answerMock = vi.mocked(answerSession)
+const reconnectMock = vi.mocked(reconnectCall)
 
 class FakePC {
   static instances: FakePC[] = []
@@ -108,6 +119,7 @@ beforeEach(() => {
     .mockReset()
     .mockResolvedValue({ status: 'live', outcome: null, end_reason: null, language: null })
   unloadMock.mockReset()
+  reconnectMock.mockReset().mockResolvedValue({ ok: false, status: 409, reason: 'limit' })
   streams = []
   streamMock.mockReset().mockImplementation(
     (_callId, _secret, onEvent, signal) =>
@@ -609,5 +621,185 @@ describe('CallPage clinic session swap', () => {
     second.fire('connected')
     expect(screen.queryByTestId('call-audio-unlock')).toBeNull()
     play.mockRestore()
+  })
+})
+
+describe('CallPage voice reconnect (T-FE-CALL)', () => {
+  const LIVE_S = { status: 'live' as const, outcome: null, end_reason: null, language: null }
+  afterEach(() => {
+    vi.useRealTimers()
+    vi.unstubAllEnvs()
+  })
+
+  async function failPastGrace() {
+    FakePC.instances[0].fire('failed')
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(3_100)
+    })
+  }
+
+  it('a failed peer on a live call reconnects on a new peer with the same mic track', async () => {
+    reconnectMock.mockResolvedValue({ ok: true, sdp_answer: 'v=0 again', session_seq: 2 })
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    await startCall()
+    const first = FakePC.instances[0]
+    await failPastGrace()
+    await waitFor(() => expect(FakePC.instances).toHaveLength(2))
+    const second = FakePC.instances[1]
+    expect(reconnectMock).toHaveBeenCalledWith('c1', 's3cret', 'v=0 offer', expect.anything())
+    expect(second.addTrack).toHaveBeenCalledWith(track, stream)
+    await waitFor(() =>
+      expect(second.setRemoteDescription).toHaveBeenCalledWith({ type: 'answer', sdp: 'v=0 again' }),
+    )
+    await waitFor(() => expect(first.close).toHaveBeenCalled())
+    expect(await screen.findByTestId('call-state-on_call')).toBeInTheDocument()
+    expect(getUserMedia).toHaveBeenCalledTimes(1)
+    expect(track.stop).not.toHaveBeenCalled()
+    expect(second.close).not.toHaveBeenCalled()
+    expect(endCallMock).not.toHaveBeenCalled()
+  })
+
+  it('shows Reconnecting with End call while the reconnect is pending', async () => {
+    reconnectMock.mockImplementation(() => new Promise<never>(() => undefined))
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    await startCall()
+    await failPastGrace()
+    expect(await screen.findByTestId('call-state-reconnecting')).toBeInTheDocument()
+    expect(screen.getByTestId('call-end')).toBeInTheDocument()
+  })
+
+  it('a refused reconnect takes the end path', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    await startCall()
+    await failPastGrace()
+    expect(await screen.findByTestId('call-state-ended')).toBeInTheDocument()
+    expect(reconnectMock).toHaveBeenCalledTimes(1)
+    expect(FakePC.instances[1].close).toHaveBeenCalled()
+    expect(endCallMock).toHaveBeenCalledWith('c1', 's3cret')
+  })
+
+  it('a pending session swap is swapped, never reconnected', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    await startCall()
+    getCallMock.mockResolvedValue({ ...LIVE_S, pending_session_seq: 2 })
+    await failPastGrace()
+    await waitFor(() => expect(answerMock).toHaveBeenCalled())
+    expect(reconnectMock).not.toHaveBeenCalled()
+  })
+
+  it('a crisis during reconnecting shows the crisis screen (EN+ES) and ignores the answer', async () => {
+    let answer: (r: ReconnectResult) => void = () => undefined
+    reconnectMock.mockImplementation(() => new Promise((resolve) => (answer = resolve)))
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    await startCall()
+    await failPastGrace()
+    await screen.findByTestId('call-state-reconnecting')
+    const second = FakePC.instances[1]
+    act(() =>
+      streams[0].onEvent({
+        type: 'state',
+        status: 'ended',
+        outcome: 'crisis',
+        end_reason: 'crisis',
+        language: 'es',
+      } as CallEventMsg),
+    )
+    expect(screen.getByTestId('call-state-crisis')).toBeInTheDocument()
+    await act(async () => answer({ ok: true, sdp_answer: 'v=0 late', session_seq: 2 }))
+    expect(second.setRemoteDescription).not.toHaveBeenCalled()
+    expect(second.close).toHaveBeenCalled()
+    expect(screen.getByTestId('call-state-crisis')).toBeInTheDocument()
+    expect(screen.getByText(COPY.crisis.en)).toBeInTheDocument()
+    expect(screen.getByText(COPY.crisis.es)).toBeInTheDocument()
+  })
+
+  it('crisis from on_call after a language change stays EN+ES', async () => {
+    await startCall()
+    act(() => streams[0].onEvent({ type: 'state', ...LIVE_S, language: 'en' } as CallEventMsg))
+    act(() =>
+      streams[0].onEvent({ type: 'state', ...LIVE_S, outcome: 'crisis', language: 'es' } as CallEventMsg),
+    )
+    expect(screen.getByText(COPY.crisis.en)).toBeInTheDocument()
+    expect(screen.getByText(COPY.crisis.es)).toBeInTheDocument()
+  })
+
+  it('stores the language from the stream: Spanish end shows only Spanish', async () => {
+    await startCall()
+    act(() => streams[0].onEvent({ type: 'state', ...LIVE_S, language: 'es' } as CallEventMsg))
+    act(() => {
+      streams[0].onEvent({ type: 'state', ...ENDED, language: 'es' } as CallEventMsg)
+      streams[0].resolve('ended')
+    })
+    expect(await screen.findByText(COPY.ended.es)).toBeInTheDocument()
+    expect(screen.queryByText(COPY.ended.en)).toBeNull()
+  })
+
+  it('unavailable before the language is known stays bilingual', async () => {
+    createCallMock.mockResolvedValue({ ok: false, reason: 'unavailable' })
+    const user = userEvent.setup()
+    renderPage()
+    await user.click(screen.getByTestId('call-button'))
+    expect(await screen.findByText(COPY.unavailable.en)).toBeInTheDocument()
+    expect(screen.getByText(COPY.unavailable.es)).toBeInTheDocument()
+  })
+
+  it('a swap request with no HTTP answer is retried once for the same seq', async () => {
+    answerMock.mockResolvedValue({ kind: 'unavailable', network: true })
+    await startCall()
+    getCallMock.mockResolvedValue({ ...LIVE_S, pending_session_seq: 2 })
+    act(() => streams[0].onEvent({ type: 'session_swap', session_seq: 2 }))
+    await waitFor(() => expect(answerMock).toHaveBeenCalledTimes(2))
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 20))
+    })
+    expect(answerMock).toHaveBeenCalledTimes(2)
+    expect(answerMock.mock.calls.map((c) => c[3])).toEqual([2, 2])
+    expect(screen.getByTestId('call-state-on_call')).toBeInTheDocument()
+  })
+
+  it.each([[{ kind: 'conflict' as const }], [{ kind: 'unavailable' as const }]])(
+    'a swap answered %o is not retried',
+    async (result) => {
+      answerMock.mockResolvedValue(result)
+      await startCall()
+      getCallMock.mockResolvedValue({ ...LIVE_S, pending_session_seq: 2 })
+      act(() => streams[0].onEvent({ type: 'session_swap', session_seq: 2 }))
+      await waitFor(() => expect(getCallMock).toHaveBeenCalled())
+      await act(async () => {
+        await new Promise((r) => setTimeout(r, 20))
+      })
+      expect(answerMock).toHaveBeenCalledTimes(1)
+    },
+  )
+
+  it('dropVoice closes only the current peer; the hook is removed on unmount', async () => {
+    await startCall()
+    const w = window as Window & { __epicTest?: { dropVoice: () => void } }
+    expect(w.__epicTest).toBeDefined()
+    act(() => w.__epicTest?.dropVoice())
+    expect(FakePC.instances[0].close).toHaveBeenCalledTimes(1)
+    expect(FakePC.instances).toHaveLength(1)
+    cleanup()
+    expect(w.__epicTest).toBeUndefined()
+  })
+
+  it('has no test hook when the flag is off', () => {
+    vi.stubEnv('DEV', false)
+    vi.stubEnv('VITE_EPIC_TEST_HOOKS', '')
+    renderPage()
+    expect((window as Window & { __epicTest?: unknown }).__epicTest).toBeUndefined()
+  })
+
+  it.each([
+    ['/call?test=after_hours', { after_hours: true }],
+    ['/call?test=turn_limit:2', { turn_limit: 2 }],
+  ])('forwards %s to the start', async (url, test) => {
+    await startCall(url)
+    expect(createCallMock).toHaveBeenCalledWith('v=0 offer', undefined, test)
+  })
+
+  it('does not forward an unknown test value', async () => {
+    await startCall('/call?test=bogus')
+    expect(createCallMock).toHaveBeenCalledWith('v=0 offer', undefined)
   })
 })

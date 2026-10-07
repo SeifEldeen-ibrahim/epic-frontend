@@ -28,6 +28,8 @@ export const COPY = {
   requestingMic: 'Allow the microphone to talk to EPIC.',
   connecting: 'Connecting…',
   onCall: 'On call',
+  /** Spanish UNAPPROVED. */
+  reconnecting: { en: 'Reconnecting…', es: 'Reconectando…' },
   end: 'End call',
   audioBlocked: 'Tap to hear the agent',
   ended: { en: 'Call ended.', es: 'Llamada terminada.' },

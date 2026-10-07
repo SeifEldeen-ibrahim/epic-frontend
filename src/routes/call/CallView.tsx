@@ -44,6 +44,25 @@ function Bilingual({ en, es }: { en: string; es: string }) {
   )
 }
 
+type Lang = 'en' | 'es' | null
+
+function langOf(language: string | null | undefined): Lang {
+  const value = language?.toLowerCase() ?? ''
+  return value.startsWith('es') ? 'es' : value.startsWith('en') ? 'en' : null
+}
+
+/** One language once the call's language is known; both until then. */
+function Localized({ en, es, lang }: { en: string; es: string; lang: Lang }) {
+  if (lang === 'es')
+    return (
+      <p className="call-status" lang="es">
+        {es}
+      </p>
+    )
+  if (lang === 'en') return <p className="call-status">{en}</p>
+  return <Bilingual en={en} es={es} />
+}
+
 function MainLine() {
   return EPIC_MAIN_NUMBER.tel ? (
     <a className="ui-link" href={`tel:${EPIC_MAIN_NUMBER.tel}`}>
@@ -97,6 +116,8 @@ export function CallView(props: CallViewProps) {
 }
 
 function renderState({ state, elapsedSeconds, onCall, onEnd, onReset, onUnlockAudio }: CallViewProps) {
+  // Crisis and pre-call errors stay bilingual whatever the language.
+  const lang = langOf(state.language)
   switch (state.key) {
     case 'idle':
       return (
@@ -160,10 +181,21 @@ function renderState({ state, elapsedSeconds, onCall, onEnd, onReset, onUnlockAu
           </div>
         </Panel>
       )
+    case 'reconnecting':
+      return (
+        <Panel stateKey="reconnecting">
+          <Localized {...COPY.reconnecting} lang={lang} />
+          <div className="call-actions">
+            <Button data-testid="call-end" onClick={onEnd}>
+              {COPY.end}
+            </Button>
+          </div>
+        </Panel>
+      )
     case 'ended':
       return (
         <Panel stateKey="ended">
-          <Bilingual {...COPY.ended} />
+          <Localized {...COPY.ended} lang={lang} />
           <div className="call-actions">
             <Button data-testid="call-again" onClick={onReset}>
               {COPY.callAgain}
@@ -201,8 +233,8 @@ function renderState({ state, elapsedSeconds, onCall, onEnd, onReset, onUnlockAu
       const title = state.handoffTitle ?? ''
       return (
         <Panel stateKey="handoff">
-          <Bilingual en={COPY.handoff.en(title)} es={COPY.handoff.es(title)} />
-          <Bilingual en={COPY.handoff.recordedEn} es={COPY.handoff.recordedEs} />
+          <Localized en={COPY.handoff.en(title)} es={COPY.handoff.es(title)} lang={lang} />
+          <Localized en={COPY.handoff.recordedEn} es={COPY.handoff.recordedEs} lang={lang} />
           <div className="call-actions">
             <Button data-testid="call-again" onClick={onReset}>
               {COPY.callAgain}
@@ -214,7 +246,7 @@ function renderState({ state, elapsedSeconds, onCall, onEnd, onReset, onUnlockAu
     case 'human_needed':
       return (
         <Panel stateKey="human_needed">
-          <Bilingual {...COPY.humanNeeded} />
+          <Localized {...COPY.humanNeeded} lang={lang} />
           <MainLine />
           <div className="call-actions">
             <Button data-testid="call-again" onClick={onReset}>
