@@ -1,7 +1,10 @@
 import type { components } from './schema'
 
-/** One `event: call` message of `GET /api/calls/{id}/events`. */
+/** One `event: call` message of `GET /api/calls/{id}/events`: a call-state change or a
+ * session swap (the browser must renegotiate; it never ends the stream). */
 export type CallEvent = components['schemas']['CallEvent']
+export type CallStateEvent = components['schemas']['CallStateEvent']
+export type CallSessionSwapEvent = components['schemas']['CallSessionSwapEvent']
 
 /** How one stream connection ended. */
 export type StreamEnd = 'ended' | 'dropped' | 'aborted'
@@ -89,7 +92,7 @@ export async function streamCallEvents(
           continue
         }
         onEvent(event)
-        if (event.status === 'ended') {
+        if (event.type !== 'session_swap' && event.status === 'ended') {
           void reader.cancel().catch(() => undefined)
           return 'ended'
         }

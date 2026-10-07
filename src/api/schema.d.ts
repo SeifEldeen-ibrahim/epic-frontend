@@ -362,6 +362,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/calls/{call_id}/sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Answer a session swap with a new SDP offer */
+        post: operations["answerCallSession"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/health": {
         parameters: {
             query?: never;
@@ -433,6 +450,14 @@ export interface components {
          * @enum {string}
          */
         CallChannel: "web" | "sip";
+        /** CallConflict */
+        CallConflict: {
+            /**
+             * Reason
+             * @constant
+             */
+            reason: "no_pending_session";
+        };
         /** CallDetail */
         CallDetail: {
             call: components["schemas"]["CallHeader"];
@@ -449,29 +474,7 @@ export interface components {
          * CallEvent
          * @description One `event: call` message on the call-state stream.
          */
-        CallEvent: {
-            /** End Reason */
-            end_reason: string | null;
-            /**
-             * Handoff Title
-             * @description Department title (never a name or extension) for a handoff outcome.
-             */
-            handoff_title?: string | null;
-            /** Language */
-            language: string | null;
-            /** Outcome */
-            outcome: string | null;
-            /**
-             * Status
-             * @enum {string}
-             */
-            status: "live" | "ended";
-            /**
-             * Type
-             * @constant
-             */
-            type: "state";
-        };
+        CallEvent: components["schemas"]["CallStateEvent"] | components["schemas"]["CallSessionSwapEvent"];
         /** CallHeader */
         CallHeader: {
             /** After Hours */
@@ -552,6 +555,69 @@ export interface components {
          * @enum {string}
          */
         CallOutcome: "routed" | "referred" | "clinic_form" | "human_needed" | "crisis" | "department_handoff" | "current_client_handoff" | "abandoned" | "error";
+        /** CallSessionRequest */
+        CallSessionRequest: {
+            /**
+             * Sdp
+             * @description The browser's WebRTC SDP offer.
+             */
+            sdp: string;
+            /**
+             * Session Seq
+             * @description The session_seq from the session_swap event.
+             */
+            session_seq: number;
+        };
+        /** CallSessionResponse */
+        CallSessionResponse: {
+            /** Sdp Answer */
+            sdp_answer: string;
+            /** Session Seq */
+            session_seq: number;
+        };
+        /**
+         * CallSessionSwapEvent
+         * @description The call moves to a new voice session; the browser must renegotiate.
+         */
+        CallSessionSwapEvent: {
+            /**
+             * Session Seq
+             * @description Send a new SDP offer for this session to POST /api/calls/{call_id}/sessions
+             */
+            session_seq: number;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "session_swap";
+        };
+        /**
+         * CallStateEvent
+         * @description A call-state message on the call-state stream.
+         */
+        CallStateEvent: {
+            /** End Reason */
+            end_reason: string | null;
+            /**
+             * Handoff Title
+             * @description Department title (never a name or extension) for a handoff outcome.
+             */
+            handoff_title?: string | null;
+            /** Language */
+            language: string | null;
+            /** Outcome */
+            outcome: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "live" | "ended";
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "state";
+        };
         /**
          * CallStatus
          * @enum {string}
@@ -570,6 +636,11 @@ export interface components {
             language: string | null;
             /** Outcome */
             outcome: string | null;
+            /**
+             * Pending Session Seq
+             * @description Set while the call waits for a new SDP offer for this session (POST /api/calls/{call_id}/sessions); null otherwise.
+             */
+            pending_session_seq?: number | null;
             /**
              * Status
              * @enum {string}
@@ -2087,6 +2158,70 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    answerCallSession: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Call-Secret"?: string | null;
+            };
+            path: {
+                call_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CallSessionRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CallSessionResponse"];
+                };
+            };
+            /** @description No such call. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotFoundResponse"];
+                };
+            };
+            /** @description No pending session swap with that session_seq (none, already answered, timed out, or the call has ended). */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CallConflict"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description The new session could not be started. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CallUnavailable"];
                 };
             };
         };

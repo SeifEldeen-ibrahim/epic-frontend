@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { createCall, endCall, endCallOnUnload, getCall } from './calls'
+import { answerSession, createCall, endCall, endCallOnUnload, getCall } from './calls'
 import { api } from './client'
 
 vi.mock('./client', () => ({ api: { GET: vi.fn(), POST: vi.fn() } }))
@@ -72,5 +72,43 @@ describe('call API wrappers', () => {
       keepalive: true,
       headers: { 'X-Call-Secret': 's3cret' },
     })
+  })
+})
+
+describe('answerSession', () => {
+  beforeEach(() => {
+    POST.mockReset()
+  })
+
+  it('maps 200 to the answer and posts offer, seq, secret and signal', async () => {
+    POST.mockResolvedValue(reply(200, { sdp_answer: 'v=0 clinic', session_seq: 2 }))
+    const signal = new AbortController().signal
+    expect(await answerSession('c1', 's3cret', 'v=0 offer', 2, signal)).toEqual({
+      kind: 'ok',
+      sdp: 'v=0 clinic',
+      seq: 2,
+    })
+    expect(POST).toHaveBeenCalledWith('/api/calls/{call_id}/sessions', {
+      params: { path: { call_id: 'c1' } },
+      headers: { 'X-Call-Secret': 's3cret' },
+      body: { sdp: 'v=0 offer', session_seq: 2 },
+      signal,
+    })
+  })
+
+  it.each([
+    [404, 'gone'],
+    [409, 'conflict'],
+    [503, 'unavailable'],
+    [422, 'unavailable'],
+    [500, 'unavailable'],
+  ])('maps HTTP %i to %s', async (status, kind) => {
+    POST.mockResolvedValue(reply(status, {}))
+    expect(await answerSession('c1', 's', 'o', 2)).toEqual({ kind })
+  })
+
+  it('maps a network failure or abort to unavailable', async () => {
+    POST.mockRejectedValue(new TypeError('Failed to fetch'))
+    expect(await answerSession('c1', 's', 'o', 2)).toEqual({ kind: 'unavailable' })
   })
 })
