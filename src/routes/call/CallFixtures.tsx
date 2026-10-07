@@ -13,6 +13,9 @@ const FIXTURE_STATES: Record<string, CallState> = {
   on_call: { key: 'on_call', startedAt: 0 },
   ended: { key: 'ended' },
   unavailable: { key: 'unavailable' },
+  crisis: { key: 'crisis' },
+  handoff: { key: 'handoff', handoffTitle: 'Residential & Day Programs' },
+  human_needed: { key: 'human_needed' },
 }
 
 const noop = () => undefined

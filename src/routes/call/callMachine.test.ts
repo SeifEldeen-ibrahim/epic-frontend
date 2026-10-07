@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   CALL_STATES,
   callReducer,
+  classifySignal,
   detectUnsupported,
   formatElapsed,
   INITIAL_CALL_STATE,
@@ -21,6 +22,9 @@ const EVENTS: CallEvent[] = [
   { type: 'UNAVAILABLE' },
   { type: 'ENDED' },
   { type: 'RESET' },
+  { type: 'CRISIS' },
+  { type: 'HANDOFF', title: 'Residential & Day Programs' },
+  { type: 'HUMAN_NEEDED' },
 ]
 
 // Every legal transition: [from, event type] -> to. Everything else must be ignored.
@@ -39,13 +43,27 @@ const LEGAL: Record<string, CallStateKey> = {
   'on_call:AUDIO_UNBLOCKED': 'on_call',
   'ended:RESET': 'idle',
   'unavailable:RESET': 'idle',
+  // switchboard stop states: crisis always wins once a call exists and is final
+  'connecting:CRISIS': 'crisis',
+  'on_call:CRISIS': 'crisis',
+  'ended:CRISIS': 'crisis',
+  'unavailable:CRISIS': 'crisis',
+  'handoff:CRISIS': 'crisis',
+  'human_needed:CRISIS': 'crisis',
+  'on_call:HANDOFF': 'handoff',
+  'on_call:HUMAN_NEEDED': 'human_needed',
+  'ended:HANDOFF': 'handoff',
+  'ended:HUMAN_NEEDED': 'human_needed',
+  'handoff:RESET': 'idle',
+  'human_needed:RESET': 'idle',
 }
 
 describe('callReducer', () => {
-  it('has exactly the 8 talking-demo states', () => {
+  it('has the 8 talking-demo states plus the 3 switchboard stop states', () => {
     expect(CALL_STATES).toEqual([
       'idle', 'requesting_mic', 'mic_denied', 'unsupported',
       'connecting', 'on_call', 'ended', 'unavailable',
+      'crisis', 'handoff', 'human_needed',
     ])
     expect(INITIAL_CALL_STATE).toEqual({ key: 'idle' })
   })
@@ -100,5 +118,38 @@ describe('formatElapsed', () => {
     expect(formatElapsed(0)).toBe('00:00')
     expect(formatElapsed(83.9)).toBe('01:23')
     expect(formatElapsed(-4)).toBe('00:00')
+  })
+})
+
+describe('callReducer stop states', () => {
+  it('a handoff keeps the server title', () => {
+    const next = callReducer({ key: 'on_call', startedAt: 1 }, {
+      type: 'HANDOFF',
+      title: 'Residential & Day Programs',
+    })
+    expect(next).toEqual({ key: 'handoff', handoffTitle: 'Residential & Day Programs' })
+  })
+
+  it('crisis is final: no RESET, no START', () => {
+    const crisis: CallState = { key: 'crisis' }
+    expect(callReducer(crisis, { type: 'RESET' })).toBe(crisis)
+    expect(callReducer(crisis, { type: 'START' })).toBe(crisis)
+  })
+})
+
+describe('classifySignal', () => {
+  it('maps outcomes to screens', () => {
+    expect(classifySignal({ status: 'live', outcome: 'crisis', end_reason: 'crisis' })).toBe('CRISIS')
+    expect(classifySignal({ status: 'ended', outcome: null, end_reason: 'crisis' })).toBe('CRISIS')
+    expect(classifySignal({ status: 'ended', outcome: 'human_needed' })).toBe('HUMAN_NEEDED')
+    for (const outcome of ['department_handoff', 'current_client_handoff', 'routed']) {
+      expect(classifySignal({ status: 'ended', outcome, handoff_title: 'Clinic Intake' })).toEqual({
+        type: 'HANDOFF',
+        title: 'Clinic Intake',
+      })
+    }
+    expect(classifySignal({ status: 'ended', outcome: 'department_handoff' })).toBe('ENDED')
+    expect(classifySignal({ status: 'ended', outcome: 'referred' })).toBe('ENDED')
+    expect(classifySignal({ status: 'live', outcome: null })).toBeNull()
   })
 })

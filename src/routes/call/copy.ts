@@ -11,9 +11,9 @@ export const EPIC_MAIN_NUMBER = {
 }
 
 export const CRISIS = {
-  en: 'If you are in crisis: call 911, go to the nearest emergency room, or call the Nassau County Mobile Crisis Team.',
+  en: 'If you are in crisis: call 911, go to the nearest emergency room, or call the Nassau County Mobile Crisis Team at 516-227-8255.',
   /** UNAPPROVED translation. */
-  es: 'Si está en crisis: llame al 911, vaya a la sala de emergencias más cercana o llame al Equipo Móvil de Crisis del Condado de Nassau.',
+  es: 'Si está en crisis: llame al 911, vaya a la sala de emergencias más cercana o llame al Equipo Móvil de Crisis del Condado de Nassau al 516-227-8255.',
   numbers: [
     { label: '911', tel: '911' },
     { label: '516-227-8255', tel: '5162278255' },
@@ -49,4 +49,22 @@ export const COPY = {
     es: 'No podemos atender llamadas en este momento.',
   },
   tryAgain: 'Try again',
+  /** Crisis stop. Spanish UNAPPROVED. */
+  crisis: {
+    en: 'This call has been stopped. Please get help now.',
+    es: 'Esta llamada se ha detenido. Busque ayuda ahora.',
+  },
+  /** Department / current-client handoff: title only, never a name or extension. Spanish
+   * UNAPPROVED. Honest wording: this line cannot transfer calls (BR-22). */
+  handoff: {
+    en: (title: string) => `Your request is for ${title}.`,
+    es: (title: string) => `Su solicitud es para ${title}.`,
+    recordedEn: 'Your request has been recorded for EPIC staff. Call ended.',
+    recordedEs: 'Su solicitud quedó registrada para el personal de EPIC. Llamada terminada.',
+  },
+  /** Human needed. Spanish UNAPPROVED. */
+  humanNeeded: {
+    en: 'A member of EPIC staff needs to help with this.',
+    es: 'Un miembro del personal de EPIC necesita ayudarle con esto.',
+  },
 }

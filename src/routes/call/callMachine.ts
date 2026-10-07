@@ -1,4 +1,4 @@
-/** The caller page's state machine (talking-demo scope: 8 states). Pure, no side effects. */
+/** The caller page's state machine (talking-demo 8 states + switchboard stop states). Pure. */
 
 export const CALL_STATES = [
   'idle',
@@ -9,6 +9,9 @@ export const CALL_STATES = [
   'on_call',
   'ended',
   'unavailable',
+  'crisis',
+  'handoff',
+  'human_needed',
 ] as const
 
 export type CallStateKey = (typeof CALL_STATES)[number]
@@ -21,6 +24,8 @@ export interface CallState {
   startedAt?: number
   /** The browser refused to autoplay the agent's audio; show "Tap to hear the agent". */
   audioBlocked?: boolean
+  /** Department title the caller's request is for (handoff only; title, never a name). */
+  handoffTitle?: string
 }
 
 export type CallEvent =
@@ -34,6 +39,9 @@ export type CallEvent =
   | { type: 'UNAVAILABLE' }
   | { type: 'ENDED' }
   | { type: 'RESET' }
+  | { type: 'CRISIS' }
+  | { type: 'HANDOFF'; title: string }
+  | { type: 'HUMAN_NEEDED' }
 
 export const INITIAL_CALL_STATE: CallState = { key: 'idle' }
 
@@ -43,6 +51,13 @@ export function isCallStateKey(value: string | undefined): value is CallStateKey
 
 /** Illegal events leave the state unchanged (same object). */
 export function callReducer(state: CallState, event: CallEvent): CallState {
+  // A crisis always wins once a call exists, even after the page already showed an end.
+  if (
+    event.type === 'CRISIS' &&
+    ['connecting', 'on_call', 'ended', 'unavailable', 'handoff', 'human_needed'].includes(state.key)
+  ) {
+    return { key: 'crisis' }
+  }
   switch (state.key) {
     case 'idle':
       if (event.type === 'START') return { key: 'requesting_mic' }
@@ -63,15 +78,47 @@ export function callReducer(state: CallState, event: CallEvent): CallState {
       if (event.type === 'UNAVAILABLE') return { key: 'unavailable' }
       if (event.type === 'AUDIO_BLOCKED') return { ...state, audioBlocked: true }
       if (event.type === 'AUDIO_UNBLOCKED') return { ...state, audioBlocked: false }
+      if (event.type === 'HANDOFF') return { key: 'handoff', handoffTitle: event.title }
+      if (event.type === 'HUMAN_NEEDED') return { key: 'human_needed' }
       return state
     case 'ended':
-    case 'unavailable':
+      // A late status can still say what the end was.
+      if (event.type === 'HANDOFF') return { key: 'handoff', handoffTitle: event.title }
+      if (event.type === 'HUMAN_NEEDED') return { key: 'human_needed' }
       if (event.type === 'RESET') return { key: 'idle' }
       return state
+    case 'unavailable':
+    case 'handoff':
+    case 'human_needed':
+      if (event.type === 'RESET') return { key: 'idle' }
+      return state
+    case 'crisis':
     case 'mic_denied':
     case 'unsupported':
       return state
   }
+}
+
+/** What a call status / event means for the page. Title only ever comes from the server. */
+export interface CallSignal {
+  status: string
+  outcome?: string | null
+  end_reason?: string | null
+  handoff_title?: string | null
+}
+
+const HANDOFF_OUTCOMES = ['department_handoff', 'current_client_handoff', 'routed']
+
+export function classifySignal(
+  signal: CallSignal,
+): 'CRISIS' | 'HUMAN_NEEDED' | { type: 'HANDOFF'; title: string } | 'ENDED' | null {
+  if (signal.outcome === 'crisis' || signal.end_reason === 'crisis') return 'CRISIS'
+  if (signal.status !== 'ended') return null
+  if (signal.outcome === 'human_needed') return 'HUMAN_NEEDED'
+  if (signal.outcome && HANDOFF_OUTCOMES.includes(signal.outcome) && signal.handoff_title) {
+    return { type: 'HANDOFF', title: signal.handoff_title }
+  }
+  return 'ENDED'
 }
 
 /** Support check done once at start: no WebRTC, or not a secure context (mic needs HTTPS). */
