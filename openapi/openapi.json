@@ -364,6 +364,15 @@
               }
             ],
             "title": "Tester Label"
+          },
+          "voice_mode": {
+            "description": "The call's voice mode: GPT-Live + Luna, or Realtime (no Luna, not recorded).",
+            "enum": [
+              "gpt-live",
+              "realtime"
+            ],
+            "title": "Voice Mode",
+            "type": "string"
           }
         },
         "required": [
@@ -379,6 +388,7 @@
           "after_hours",
           "clarify_turns",
           "agent_version",
+          "voice_mode",
           "tester_label",
           "follow_up_status",
           "stated_name",
@@ -2723,6 +2733,59 @@
         ],
         "title": "ValidationError",
         "type": "object"
+      },
+      "VoiceModeRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "mode": {
+            "enum": [
+              "gpt-live",
+              "realtime"
+            ],
+            "title": "Mode",
+            "type": "string"
+          }
+        },
+        "required": [
+          "mode"
+        ],
+        "title": "VoiceModeRequest",
+        "type": "object"
+      },
+      "VoiceModeResponse": {
+        "properties": {
+          "mode": {
+            "enum": [
+              "gpt-live",
+              "realtime"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "stored": {
+            "description": "False: nothing saved yet, the server default applies.",
+            "title": "Stored",
+            "type": "boolean"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          }
+        },
+        "required": [
+          "mode",
+          "stored",
+          "updated_at"
+        ],
+        "title": "VoiceModeResponse",
+        "type": "object"
       }
     }
   },
@@ -3890,6 +3953,87 @@
         "summary": "Get Reports",
         "tags": [
           "admin-data"
+        ]
+      }
+    },
+    "/api/admin/settings/voice-mode": {
+      "get": {
+        "operationId": "get_voice_mode_api_admin_settings_voice_mode_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VoiceModeResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Get Voice Mode",
+        "tags": [
+          "admin-settings"
+        ]
+      },
+      "post": {
+        "description": "Applies to calls created afterwards; live calls keep their mode. Audited as\n`user_admin` (target `setting:voice_mode`, from/to only): audit row flushed, object put,\ncommit; a failed put rolls back, a failed commit puts the previous object back.",
+        "operationId": "post_voice_mode_api_admin_settings_voice_mode_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VoiceModeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VoiceModeResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Post Voice Mode",
+        "tags": [
+          "admin-settings"
         ]
       }
     },

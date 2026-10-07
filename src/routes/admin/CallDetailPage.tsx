@@ -162,6 +162,9 @@ function CallDetailBody({
             <Fact term={adminCopy.cols.route}>{label(call.route_role)}</Fact>
             <Fact term={adminCopy.cols.category}>{label(call.inquiry_category)}</Fact>
             <Fact term={adminCopy.cols.agentVersion}>{call.agent_version}</Fact>
+            <Fact term={adminCopy.cols.voiceMode}>
+              <span data-testid="call-voice-mode">{adminCopy.voiceModes[call.voice_mode] ?? adminCopy.voiceModes['gpt-live']}</span>
+            </Fact>
             <Fact term={adminCopy.cols.tester}>{orDash(call.tester_label)}</Fact>
             <Fact term={adminCopy.cols.afterHours}>{yesNo(call.after_hours)}</Fact>
             {call.stated_name ? <Fact term={c.statedName}>{call.stated_name}</Fact> : null}
@@ -186,7 +189,9 @@ function CallDetailBody({
           data-testid="detail-recording"
         >
           <h2 id={recordingId}>{c.recording}</h2>
-          {recording.available && !live ? (
+          {call.voice_mode === 'realtime' ? (
+            <p data-testid="call-no-recording-realtime">{c.noRecordingRealtime}</p>
+          ) : recording.available && !live ? (
             <audio
               className="admin-audio"
               controls

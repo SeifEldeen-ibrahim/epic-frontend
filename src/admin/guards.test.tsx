@@ -95,7 +95,7 @@ describe('admin guards', () => {
     expect(screen.getByTestId('admin-logout')).toBeInTheDocument()
   })
 
-  it.each(['/admin/exports', '/admin/audit'])('shows a reviewer the 403 page on %s', async (path) => {
+  it.each(['/admin/exports', '/admin/audit', '/admin/settings'])('shows a reviewer the 403 page on %s', async (path) => {
     signIn(reviewer)
     renderAt(path)
     const forbidden = await screen.findByTestId('forbidden')
@@ -104,19 +104,22 @@ describe('admin guards', () => {
     const nav = screen.getByTestId('admin-nav')
     expect(within(nav).queryByRole('link', { name: 'Exports' })).toBeNull()
     expect(within(nav).queryByRole('link', { name: 'Audit' })).toBeNull()
+    expect(within(nav).queryByRole('link', { name: 'Settings' })).toBeNull()
     expect(within(nav).getByRole('link', { name: 'Queue' })).toBeInTheDocument()
   })
 
   it.each([
     ['/admin/exports', 'admin-exports'],
     ['/admin/audit', 'admin-audit'],
-  ])('lets an admin open %s and see both nav links', async (path, testId) => {
+    ['/admin/settings', 'admin-settings'],
+  ])('lets an admin open %s and see the admin nav links', async (path, testId) => {
     signIn(admin)
     renderAt(path)
     expect(await screen.findByTestId(testId)).toBeInTheDocument()
     const nav = screen.getByTestId('admin-nav')
     expect(within(nav).getByRole('link', { name: 'Exports' })).toBeInTheDocument()
     expect(within(nav).getByRole('link', { name: 'Audit' })).toBeInTheDocument()
+    expect(within(nav).getByRole('link', { name: 'Settings' })).toBeInTheDocument()
   })
 
   it('redirects /admin to /admin/queue and marks the current nav link', async () => {
