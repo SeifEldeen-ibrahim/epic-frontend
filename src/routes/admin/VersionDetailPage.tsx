@@ -1,24 +1,29 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router'
-import { ConfigProblemsError, useConfigState, useRollback, useVersionDiff } from '../../api/config'
+import { ConfigProblemsError, useConfigState, useRollback, useVersionDiff, useVersions } from '../../api/config'
+import { ChangeList } from '../../admin/ChangeList'
+import { useToolNames, versionHeading } from '../../admin/changeLabels'
 import { ConfirmDialog } from '../../admin/ConfirmDialog'
 import { AdminPage, ResultNotice } from '../../admin/DataTable'
-import { DiffView } from '../../admin/DiffView'
-import { adminCopy } from '../../admin/copy'
-import { Button, EmptyState, ErrorState, TextField } from '../../ui'
+import { adminCopy, formatTime } from '../../admin/copy'
+import { Button, EmptyState, ErrorState, StatusBadge, TextField } from '../../ui'
 
 const c = adminCopy.versions
 
-/** /admin/versions/:seq: what changed in this version, and roll back to it (admins). */
+/** /admin/versions/:seq: what changed in this version, in plain words, and go back to it (admins). */
 export function VersionDetailPage() {
   const seq = Number(useParams().seq)
   const q = useVersionDiff(seq)
+  const list = useVersions()
   const state = useConfigState()
   const rollback = useRollback()
+  const tools = useToolNames()
   const [confirming, setConfirming] = useState(false)
   const [note, setNote] = useState('')
   const [result, setResult] = useState<{ ok: boolean; text: string; n: number } | null>(null)
 
+  const all = list.data?.versions ?? []
+  const item = all.find((x) => x.seq === seq)
   let body
   if (!Number.isInteger(seq) || seq < 1 || (q.isError && !q.data)) {
     body = q.isError && !(q.error && 'isNotFound' in q.error && q.error.isNotFound) ? (
@@ -29,28 +34,50 @@ export function VersionDetailPage() {
   } else if (q.isPending) {
     body = (
       <div className="admin-panel admin-section" aria-busy="true" data-testid="version-loading">
+        <span className="admin-sr-only">{adminCopy.loading}</span>
         <span className="admin-skeleton" />
         <span className="admin-skeleton" />
       </div>
     )
   } else {
     const d = q.data
+    const base = d.compared_with ? all.find((x) => x.seq === d.compared_with) : undefined
     body = (
       <div className="admin-section" data-testid="version-detail">
-        <p>
-          <code>{d.before}</code> → <code data-testid="version-label">{d.after}</code>
-        </p>
-        <h2>{c.diffTitle}</h2>
-        {d.sections.length === 0 ? (
-          <EmptyState title={c.noDiff} data-testid="version-nodiff" />
-        ) : (
-          d.sections.map((s) => (
-            <div key={s.section} className="admin-section">
-              <h3>{s.section}</h3>
-              <DiffView diff={s.diff} testId={`version-diff-${s.section}`} />
+        {item ? (
+          <div className="admin-panel admin-version" data-testid="version-meta">
+            <div className="admin-version__head">
+              <p className="admin-version__heading">{versionHeading(item, all)}</p>
+              {item.active ? (
+                <span data-testid="version-live">
+            <StatusBadge tone="ok">{c.live}</StatusBadge>
+          </span>
+              ) : null}
             </div>
-          ))
+            {item.note ? (
+              <p className="admin-version__note">
+                <span className="admin-muted">{c.noteLabel} </span>
+                {item.note}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
+        <h2>{c.whatChanged}</h2>
+        <p className="admin-muted" data-testid="version-compared">
+          {d.compared_with === null || d.compared_with === undefined ? c.firstVersion : base ? c.comparedWith(formatTime(base.created_at)) : null}
+        </p>
+        {d.changes.length === 0 ? (
+          <EmptyState title={c.noChanges} data-testid="version-nochanges" />
+        ) : (
+          <ChangeList changes={d.changes} names={d.names} tools={tools} testId="version-changes" />
         )}
+        <details className="admin-details admin-disclosure admin-section" data-testid="version-advanced">
+          <summary>{c.advanced}</summary>
+          <p>
+            <span className="admin-muted">{c.reference}: </span>
+            <code data-testid="version-label">{d.after}</code>
+          </p>
+        </details>
       </div>
     )
   }
@@ -88,9 +115,9 @@ export function VersionDetailPage() {
           rollback.mutate(
             { seq, note: note.trim() || null },
             {
-              onSuccess: (r) => {
+              onSuccess: () => {
                 setConfirming(false)
-                setResult((p) => ({ ok: true, text: c.rolledBack(r.live_label), n: (p?.n ?? 0) + 1 }))
+                setResult((p) => ({ ok: true, text: c.rolledBack, n: (p?.n ?? 0) + 1 }))
               },
               onError: (e) => {
                 setConfirming(false)

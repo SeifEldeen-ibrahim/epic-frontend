@@ -1109,12 +1109,77 @@ export interface components {
             /** Voices */
             voices: string[];
         };
+        /**
+         * ChangeItem
+         * @description One field-level change (History): the page area, the item and a path inside it.
+         */
+        ChangeItem: {
+            /** After */
+            after?: unknown;
+            /**
+             * Area
+             * @enum {string}
+             */
+            area: "answering" | "knowledge" | "departments" | "forms" | "agents";
+            /** Before */
+            before?: unknown;
+            /** Field */
+            field: string[];
+            /** Item */
+            item: string | null;
+            /** Item Title */
+            item_title: string | null;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "added" | "removed" | "changed";
+            /** Section */
+            section: string | null;
+        };
+        /**
+         * ChangeNames
+         * @description Titles for references shown in changes (agents, forms, departments by id).
+         */
+        ChangeNames: {
+            /** Agents */
+            agents: {
+                [key: string]: string;
+            };
+            /** Departments */
+            departments: {
+                [key: string]: string;
+            };
+            /** Forms */
+            forms: {
+                [key: string]: string;
+            };
+        };
         /** ChangePasswordRequest */
         ChangePasswordRequest: {
             /** Current Password */
             current_password: string;
             /** New Password */
             new_password: string;
+        };
+        /** ChangeSummaryItem */
+        ChangeSummaryItem: {
+            /**
+             * Area
+             * @enum {string}
+             */
+            area: "answering" | "knowledge" | "departments" | "forms" | "agents";
+            /** Count */
+            count: number;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "added" | "removed" | "changed";
+            /** Section */
+            section: string | null;
+            /** Titles */
+            titles: string[];
         };
         /** CompiledResponse */
         CompiledResponse: {
@@ -1203,6 +1268,21 @@ export interface components {
             after: string;
             /** Before */
             before: string;
+            /**
+             * Changes
+             * @default []
+             */
+            changes: components["schemas"]["ChangeItem"][];
+            /** Compared With */
+            compared_with?: number | null;
+            /**
+             * @default {
+             *       "agents": {},
+             *       "departments": {},
+             *       "forms": {}
+             *     }
+             */
+            names: components["schemas"]["ChangeNames"];
             /** Sections */
             sections: components["schemas"]["DiffSection"][];
         };
@@ -2049,6 +2129,11 @@ export interface components {
              * @enum {string}
              */
             source: "seed" | "admin" | "rollback";
+            /**
+             * Summary
+             * @default []
+             */
+            summary: components["schemas"]["ChangeSummaryItem"][];
         };
         /** VersionItem */
         VersionItem: {
@@ -2074,6 +2159,11 @@ export interface components {
              * @enum {string}
              */
             source: "seed" | "admin" | "rollback";
+            /**
+             * Summary
+             * @default []
+             */
+            summary: components["schemas"]["ChangeSummaryItem"][];
         };
         /** VersionListResponse */
         VersionListResponse: {

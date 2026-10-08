@@ -87,15 +87,17 @@ const CLINIC_LINES = {
   custody: 'Line for a custody or records concern',
 } as const
 
-/** Field labels of a section, for plain-word problems. */
-function sectionLabels(section: KnowledgeSection): Record<string, string> {
+/** Field labels of a section, for plain-word problems and the History change list. */
+export function sectionLabels(section: KnowledgeSection): Record<string, string> {
   const rows = ROWS[section]
   const out: Record<string, string> = {}
   if (rows) for (const f of rows.fields([])) out[f.key] = f.label
   if (section === 'routing') out.entitlement_words = 'Benefit words'
   if (section === 'hours') Object.assign(out, { timezone: 'Time zone', weekly: 'Opening hours', closures: 'Closure days', date: 'Date', reason: 'Reason' }, DAY_LABEL)
   if (section === 'wording') Object.assign(out, WORDING_LABELS)
-  if (section === 'clinic') Object.assign(out, CLINIC_LINES)
+  if (section === 'clinic') Object.assign(out, CLINIC_LINES, { clinical_terms: 'Clinical terms', clinical_exclusions: 'Not clinical (exceptions)', never_collect_terms: 'Words never stored in a form' })
+  if (section === 'crisis') Object.assign(out, { keywords: 'Crisis phrases', 'keywords.en': 'Crisis phrases (English)', 'keywords.es': 'Crisis phrases (Spanish)', agency_keywords: 'Agency words' })
+  if (section === 'never_spoken') Object.assign(out, { staff_names: 'Staff names', denylist: 'Terms', denylist_case_sensitive: 'Terms (exact case)' })
   out.source = cf.note
   out.status = c.status
   return out
@@ -521,7 +523,7 @@ const WORDING_LABELS: Record<string, string> = {
   reconnect_greeting: 'Reconnect instruction (to the agent)',
 }
 
-function wordingLabel(k: string): string {
+export function wordingLabel(k: string): string {
   return WORDING_LABELS[k] ?? (k.endsWith('_es') ? `${WORDING_LABELS[k.slice(0, -3)] ?? k} (Spanish)` : k)
 }
 

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { adminCopy } from './copy'
 
 /** Words a non-technical clinic admin should never meet (T-COPY). */
-export const BANNED = /\b(draft|drafts|seq|bundle|compiled|publish|published|publishing|routing|realtime|p50|p90|luna|gpt-live)\b|cfg-|entry agent/i
+export const BANNED = /\b(diff|draft|drafts|seq|bundle|json|yaml|compiled|publish|published|publishing|routing|realtime|p50|p90|luna|gpt-live)\b|cfg-|entry agent/i
 
 function strings(value: unknown, path: string, out: [string, string][]): [string, string][] {
   if (typeof value === 'string') out.push([path, value])

@@ -519,21 +519,76 @@ export const fxForm: SectionResponse = {
 
 export const fxVersions: VersionListResponse = {
   versions: [
-    { seq: 3, label: 'cfg-3-fx1a2b3c', source: 'admin', rolled_back_from: null, note: 'Fixture desk added', created_by: 'Fixture Admin (fictional)', created_at: at(20), active: true },
-    { seq: 2, label: 'cfg-2-fx4d5e6f', source: 'rollback', rolled_back_from: 1, note: null, created_by: 'Fixture Admin (fictional)', created_at: at(15), active: false },
-    { seq: 1, label: 'cfg-1-fx7a8b9c', source: 'seed', rolled_back_from: null, note: null, created_by: null, created_at: at(1), active: false },
+    {
+      seq: 3,
+      label: 'cfg-3-fx1a2b3c',
+      source: 'admin',
+      rolled_back_from: null,
+      note: 'Fixture desk added',
+      created_by: 'Fixture Admin (fictional)',
+      created_at: at(20),
+      active: true,
+      summary: [
+        { area: 'knowledge', section: 'services', kind: 'added', count: 3, titles: ['Autism evaluation', 'Speech therapy', 'Hearing check'] },
+        { area: 'departments', section: 'routing', kind: 'changed', count: 1, titles: ['Fixture Intake'] },
+        { area: 'agents', section: null, kind: 'changed', count: 1, titles: ['Fixture Receptionist'] },
+      ],
+    },
+    {
+      seq: 2,
+      label: 'cfg-2-fx4d5e6f',
+      source: 'rollback',
+      rolled_back_from: 1,
+      note: null,
+      created_by: 'Fixture Admin (fictional)',
+      created_at: at(15),
+      active: false,
+      summary: [{ area: 'agents', section: null, kind: 'removed', count: 1, titles: ['Fixture Desk'] }],
+    },
+    { seq: 1, label: 'cfg-1-fx7a8b9c', source: 'seed', rolled_back_from: null, note: null, created_by: null, created_at: at(1), active: false, summary: [] },
   ],
 }
+export const fxVersionsEmpty: VersionListResponse = { versions: [] }
 export const fxVersionDiff: DiffResponse = {
   before: 'cfg-2-fx4d5e6f',
   after: 'cfg-3-fx1a2b3c',
-  sections: [
+  sections: [{ section: 'agents', diff: '' }],
+  compared_with: 2,
+  names: {
+    agents: { fixture_desk: 'Fixture Receptionist', fixture_intake: 'Fixture Intake', fixture_old: 'Fixture Front Desk' },
+    forms: { fixture_form: 'Fixture request' },
+    departments: { intake: 'Fixture Intake' },
+  },
+  changes: [
+    { area: 'answering', section: null, item: null, item_title: null, kind: 'changed', field: [], before: 'fixture_old', after: 'fixture_desk' },
     {
-      section: 'agents',
-      diff: '--- before\n+++ after\n@@ -1,3 +1,5 @@\n+fixture_desk:\n+  title: Fixture Desk\n switchboard:\n-  persona: The fictional receptionist.\n+  persona: The fictional receptionist used for screenshots, with a longer line that wraps on a phone.',
+      area: 'knowledge',
+      section: 'services',
+      item: 'autism',
+      item_title: 'Autism evaluation',
+      kind: 'added',
+      field: [],
+      before: null,
+      after: { key: 'autism', name: 'Autism evaluation', description: 'A full developmental evaluation for children, done over two visits.', wait_time: 'About 6 weeks' },
+    },
+    { area: 'knowledge', section: 'hours', item: null, item_title: null, kind: 'changed', field: ['weekly', 'sat'], before: null, after: ['09:00', '13:00'] },
+    { area: 'departments', section: 'routing', item: 'intake', item_title: 'Fixture Intake', kind: 'changed', field: ['handled_by'], before: null, after: 'fixture_intake' },
+    { area: 'departments', section: 'routing', item: 'intake', item_title: 'Fixture Intake', kind: 'changed', field: ['terms'], before: ['evaluation'], after: ['evaluation', 'autism'] },
+    { area: 'forms', section: null, item: 'fixture_form', item_title: 'Fixture request', kind: 'added', field: ['fields', 'preferred_day'], before: null, after: { type: 'text', label: 'Preferred day', required: false } },
+    { area: 'agents', section: null, item: 'fixture_desk', item_title: 'Fixture Receptionist', kind: 'changed', field: ['voice'], before: 'marin', after: 'cedar' },
+    {
+      area: 'agents',
+      section: null,
+      item: 'fixture_desk',
+      item_title: 'Fixture Receptionist',
+      kind: 'changed',
+      field: ['persona'],
+      before: 'The fictional receptionist.',
+      after: 'The fictional receptionist used for screenshots, with a longer line that wraps on a phone and keeps going so it shows as two blocks.',
     },
   ],
 }
+export const fxVersionDiffEmpty: DiffResponse = { ...fxVersionDiff, changes: [] }
 
 export const fxDetailGenericForm: CallDetail = {
   ...baseDetail,
