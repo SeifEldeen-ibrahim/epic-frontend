@@ -16,6 +16,9 @@ export type PublishResponse = S['PublishResponse']
 export type VersionItem = S['VersionItem']
 export type VersionDetail = S['VersionDetail']
 export type DiffResponse = S['DiffResponse']
+export type ChangeItem = S['ChangeItem']
+export type ChangeNames = S['ChangeNames']
+export type ChangeSummaryItem = S['ChangeSummaryItem']
 
 /** Knowledge sections the editor knows (the API refuses any other). */
 export const KNOWLEDGE_SECTIONS = [

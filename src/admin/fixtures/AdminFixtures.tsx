@@ -37,6 +37,7 @@ import {
   fxConfigProblems,
   fxConfigReviewer,
   fxConfigState,
+  fxVersionsEmpty,
   fxDetailGenericForm,
   fxForm,
   fxForms,
@@ -275,9 +276,27 @@ Object.assign(VIEWS, {
   },
   versions: { path: '/admin/versions', me: fxAdmin, replies: { ...CFG(), 'GET /api/admin/config/versions': ok(fxVersions) } },
   'version-diff': {
+    path: '/admin/versions/3',
+    me: fxAdmin,
+    replies: { ...CFG(), 'GET /api/admin/config/versions': ok(fxVersions), 'GET /api/admin/config/versions/{seq}/diff': ok(fxVersionDiff) },
+  },
+  'version-older': {
     path: '/admin/versions/2',
     me: fxAdmin,
-    replies: { ...CFG(), 'GET /api/admin/config/versions/{seq}/diff': ok(fxVersionDiff) },
+    replies: { ...CFG(), 'GET /api/admin/config/versions': ok(fxVersions), 'GET /api/admin/config/versions/{seq}/diff': ok(fxVersionDiff) },
+  },
+  'versions-empty': { path: '/admin/versions', me: fxAdmin, replies: { ...CFG(fxConfigClean), 'GET /api/admin/config/versions': ok(fxVersionsEmpty) } },
+  'versions-pending-open': {
+    path: '/admin/versions',
+    me: fxAdmin,
+    replies: { ...CFG(), 'GET /api/admin/config/versions': ok(fxVersions) },
+    after: () =>
+      drive(() => {
+        const d = document.querySelector('[data-testid=pending-toggle]')
+        if (!(d instanceof HTMLDetailsElement)) return false
+        d.open = true
+        return true
+      }),
   },
   'queue-generic-form': { path: DETAIL, me: fxAdmin, replies: { [DETAIL_GET]: ok(fxDetailGenericForm) } },
 } satisfies Record<string, ViewSpec>)
