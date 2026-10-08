@@ -146,13 +146,14 @@ describe('T-FE: agents', () => {
     expect(screen.queryByTestId('agent-form')).toBeNull()
   })
 
-  it('with no assistants, explains what to do and offers the example setup', async () => {
+  it('with no assistants, offers only to create the first one (the example setup lives on Home)', async () => {
     replies['/api/admin/config/draft/agents'] = () => reply(200, { agents: [], entry_agent: null })
     renderAt('/admin/agents')
     const empty = await screen.findByTestId('agents-empty')
     expect(empty).toHaveTextContent('Create your first assistant')
-    expect(within(empty).getByTestId('agents-empty-new')).toBeInTheDocument()
-    expect(within(empty).getByTestId('load-example')).toBeInTheDocument()
+    expect(within(empty).getByTestId('agents-empty-new')).toHaveTextContent('Create your first agent')
+    expect(within(empty).queryByTestId('load-example')).toBeNull()
+    expect(screen.queryByTestId('load-example')).toBeNull()
   })
 
   it('can set nobody to answer calls', async () => {
@@ -203,6 +204,47 @@ describe('T-FE: form builder', () => {
     const body = PUT.mock.calls[0][1].body.value
     expect(Object.keys(body.fields)).toEqual(['wants_brochure', 'preferred_day', 'member_no'])
     expect(body.fields.member_no.type).toBe('text')
+  })
+
+  it('xxadminformsfixxx: new agent and form need their required fields; names follow the title', async () => {
+    renderAt('/admin/agents/new')
+    const title = await screen.findByTestId('agent-title')
+    await waitFor(() => expect(title).toBeEnabled())
+    expect(title).toHaveAttribute('aria-required', 'true')
+    expect(screen.getByTestId('agent-persona')).toHaveAttribute('aria-required', 'true')
+    expect(screen.getByTestId('agent-bridge').closest('.ui-field')).toHaveTextContent('(optional)')
+    await userEvent.type(title, 'Front Desk')
+    expect(screen.getByTestId('agent-name')).toHaveValue('front_desk')
+    expect(screen.getByTestId('agent-save')).toBeDisabled()
+    expect(screen.getByTestId('agent-missing')).toHaveTextContent('Fill in before saving: Persona')
+    await userEvent.type(screen.getByTestId('agent-persona'), 'Kind and brief.')
+    expect(screen.getByTestId('agent-save')).toBeEnabled()
+    expect(screen.queryByTestId('agent-missing')).toBeNull()
+    cleanup()
+    renderAt('/admin/forms/new')
+    const formTitle = await screen.findByTestId('form-title')
+    await waitFor(() => expect(formTitle).toBeEnabled())
+    await userEvent.type(formTitle, 'Callback Request')
+    expect(screen.getByTestId('form-name')).toHaveValue('callback_request')
+    expect(screen.getByTestId('form-save')).toBeDisabled()
+    expect(screen.getByTestId('form-missing')).toHaveTextContent('at least one field')
+    await userEvent.click(screen.getByTestId('form-add-field'))
+    await userEvent.type(screen.getByTestId('form-field-0-label'), 'Best day')
+    expect(screen.getByTestId('form-field-0-key')).toHaveValue('best_day')
+    expect(screen.getByTestId('form-save')).toBeEnabled()
+  }, 20_000)
+
+  it('xxadminformsfixxx: a refused agent save names the field in plain words', async () => {
+    renderAt('/admin/agents/fixture_desk')
+    const persona = await screen.findByTestId('agent-persona')
+    await userEvent.type(persona, ' More.')
+    PUT.mockResolvedValue(
+      reply(422, { detail: { code: 'invalid', problems: [{ document: 'agents.fixture_desk', path: 'knowledge.0.topic', message: 'string_too_short' }] } }),
+    )
+    await userEvent.click(screen.getByTestId('agent-save'))
+    const list = await screen.findByTestId('agent-problems')
+    expect(list).toHaveTextContent('Fact 1: Topic cannot be empty')
+    expect(list).not.toHaveTextContent('knowledge.0.topic')
   })
 
   it('type options follow the field type', async () => {

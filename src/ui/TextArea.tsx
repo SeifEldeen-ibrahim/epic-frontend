@@ -1,17 +1,19 @@
 import { useId, type TextareaHTMLAttributes } from 'react'
+import { NeedMark, type FieldNeed } from './TextField'
 
 export interface TextAreaProps
   extends Omit<TextareaHTMLAttributes<HTMLTextAreaElement>, 'aria-describedby' | 'aria-invalid'> {
   label: string
   error?: string | null
   hint?: string
+  need?: FieldNeed
   /** Shows "n / max" under the field when set (and caps the input). */
   max?: number
   'data-testid'?: string
 }
 
 /** Multi-line text field with label, hint, error and an optional character counter. */
-export function TextArea({ label, error, hint, max, id, className, value, 'data-testid': testId, ...rest }: TextAreaProps) {
+export function TextArea({ label, error, hint, need, max, id, className, value, 'data-testid': testId, ...rest }: TextAreaProps) {
   const autoId = useId()
   const inputId = id ?? autoId
   const hintId = `${inputId}-hint`
@@ -24,6 +26,7 @@ export function TextArea({ label, error, hint, max, id, className, value, 'data-
     <div className={['ui-field', className].filter(Boolean).join(' ')}>
       <label className="ui-field__label" htmlFor={inputId}>
         {label}
+        <NeedMark need={need} />
       </label>
       {hint ? (
         <p className="ui-field__hint" id={hintId}>
@@ -36,6 +39,7 @@ export function TextArea({ label, error, hint, max, id, className, value, 'data-
         value={value}
         maxLength={max}
         className="ui-input ui-textarea"
+        aria-required={need === 'required' ? true : undefined}
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy}
         data-testid={testId}

@@ -5,10 +5,12 @@ import { problemsFor, useCatalog, useConfigState, useForm, useSaveForm, type Pro
 import { AdminPage, ResultNotice } from '../../admin/DataTable'
 import { CheckboxInput, ListTextField, SelectInput } from '../../admin/EditDialog'
 import { adminCopy } from '../../admin/copy'
+import { describeProblem, fieldErrors, isBlank, plainMessage, slugify } from '../../admin/problems'
 import { UNSAVED_MESSAGE, useUnsavedGuard } from '../../admin/useUnsavedGuard'
 import { Button, EmptyState, ErrorState, TextField } from '../../ui'
 
 const c = adminCopy.forms
+const cf = adminCopy.fields
 const NAME = /^[a-z][a-z0-9_]{2,31}$/
 const KEY = /^[a-z][a-z0-9_]*$/
 type Spec = Record<string, unknown> & { type: string }
@@ -17,6 +19,8 @@ interface Row {
   uid: number
   key: string
   spec: Spec
+  /** The key was typed by the admin (or came from the server): it no longer follows the label. */
+  keyFixed?: boolean
 }
 
 let nextUid = 0
@@ -56,7 +60,7 @@ function fromServer(v: unknown): FormValue {
     title: String(r.title ?? ''),
     status: String(r.status ?? 'UNAPPROVED'),
     source: (r.source as string | null) ?? null,
-    rows: Object.entries(fields).map(([key, spec]) => ({ uid: uid(), key, spec })),
+    rows: Object.entries(fields).map(([key, spec]) => ({ uid: uid(), key, spec, keyFixed: true })),
     guard_keys: (r.guard_keys as string[]) ?? [],
     never_collect: (r.never_collect as string[]) ?? [],
     archived: r.archived === true,
@@ -103,6 +107,8 @@ export function FormBuilderPage() {
   // Unsaved edits; null = show the draft as stored (or a blank new form).
   const [edits, setEdits] = useState<FormValue | null>(null)
   const [saved, setSaved] = useState<{ ok: boolean; n: number; problems: Problem[] } | null>(null)
+  // While creating, the form name follows the title until the admin edits it.
+  const [nameEdited, setNameEdited] = useState(false)
   const stored = useMemo(() => (creating || !q.data ? BLANK : fromServer(q.data.value)), [creating, q.data])
   const value: FormValue = edits ?? stored
   const dirty = edits !== null
@@ -125,6 +131,22 @@ export function FormBuilderPage() {
   const problems = saved?.problems.length ? saved.problems : problemsFor(state.data?.draft_problems, `forms.${formName}`)
   const fieldProblems = (key: string) => problems.filter((p) => p.path.startsWith(`fields.${key}`))
   const nameError = creating && value.name !== '' && (!NAME.test(value.name) || value.name === 'new') ? c.name : null
+  const topErrors = fieldErrors(problems)
+  const describe = (p: Problem) =>
+    describeProblem(p, {
+      list: 'fields',
+      rowLabel: (key) => {
+        const i = value.rows.findIndex((r) => r.key === key)
+        return i < 0 ? key : `${cf.fieldN(i + 1)} (${key})`
+      },
+      fieldLabel: (k) => ({ name: c.name, title: c.title, label: c.label, help: c.help, readback_label: c.readback, values: c.values, stop_values: c.stopValues, fields: c.fields } as Record<string, string>)[k],
+    })
+  const missing = [
+    ...(isBlank(value.title) ? [c.title] : []),
+    ...(creating && isBlank(value.name) ? [c.name.split(' (')[0]] : []),
+    ...(value.rows.length === 0 ? [cf.atLeastOneField] : []),
+    ...value.rows.flatMap((r, i) => (isBlank(r.key) ? [`${cf.fieldN(i + 1)}: ${c.key.split(' (')[0]}`] : [])),
+  ]
   const types = catalog.data?.field_types ?? []
 
   const onSave = () => {
@@ -184,9 +206,7 @@ export function FormBuilderPage() {
           <h2>{c.problems}</h2>
           <ul className="admin-problems">
             {problems.map((p, i) => (
-              <li key={i}>
-                <code>{p.path}</code>: {p.message}
-              </li>
+              <li key={i}>{describe(p)}</li>
             ))}
           </ul>
         </div>
@@ -199,15 +219,39 @@ export function FormBuilderPage() {
           onSave()
         }}
       >
+        <TextField
+          label={c.title}
+          need="required"
+          value={value.title}
+          maxLength={120}
+          error={topErrors.title ? `${c.title} ${topErrors.title}` : null}
+          disabled={locked}
+          onChange={(e) => set({ title: e.target.value, ...(creating && !nameEdited ? { name: slugify(e.target.value, 32) } : {}) })}
+          data-testid="form-title"
+        />
         {creating ? (
-          <TextField label={c.name} value={value.name} error={nameError} disabled={locked} onChange={(e) => set({ name: e.target.value.trim() })} data-testid="form-name" />
+          <details className="admin-details" open={nameError !== null || undefined} data-testid="form-advanced">
+            <summary>{cf.advanced}</summary>
+            <TextField
+              label={c.name}
+              need="required"
+              hint={cf.keyHint}
+              value={value.name}
+              error={nameError}
+              disabled={locked}
+              onChange={(e) => {
+                setNameEdited(true)
+                set({ name: e.target.value.trim() })
+              }}
+              data-testid="form-name"
+            />
+          </details>
         ) : (
           <p>
             <span className="admin-muted">{adminCopy.agents.name}: </span>
             <code>{name}</code>
           </p>
         )}
-        <TextField label={c.title} value={value.title} maxLength={120} disabled={locked} onChange={(e) => set({ title: e.target.value })} data-testid="form-title" />
         <SelectInput label={adminCopy.config.status} value={value.status} options={adminCopy.config.statusOptions} disabled={locked} onChange={(v) => set({ status: v })} testId="form-status" />
         <h2>{c.fields}</h2>
         <p className="admin-muted">{c.fieldsHint}</p>
@@ -220,8 +264,18 @@ export function FormBuilderPage() {
             return (
               <li key={row.uid} className="admin-fieldcard" data-testid={`form-field-${i}`}>
                 <div className="admin-fieldcard__grid">
-                  <TextField label={c.key} value={row.key} error={row.key && !KEY.test(row.key) ? c.key : null} disabled={locked} onChange={(e) => setRow(i, { ...row, key: e.target.value.trim() })} data-testid={`form-field-${i}-key`} />
-                  <TextField label={c.label} value={String(row.spec.label ?? '')} maxLength={80} disabled={locked} onChange={(e) => sp({ label: e.target.value })} data-testid={`form-field-${i}-label`} />
+                  <TextField
+                    label={c.label}
+                    need="optional"
+                    value={String(row.spec.label ?? '')}
+                    maxLength={80}
+                    disabled={locked}
+                    onChange={(e) =>
+                      setRow(i, { ...row, spec: { ...row.spec, label: e.target.value }, ...(row.keyFixed ? {} : { key: slugify(e.target.value) }) })
+                    }
+                    data-testid={`form-field-${i}-label`}
+                  />
+                  <TextField label={c.key} need="required" hint={row.keyFixed ? undefined : cf.keyHint} value={row.key} error={row.key && !KEY.test(row.key) ? c.key : null} disabled={locked} onChange={(e) => setRow(i, { ...row, key: e.target.value.trim(), keyFixed: true })} data-testid={`form-field-${i}-key`} />
                   <SelectInput
                     label={c.type}
                     value={t}
@@ -230,8 +284,8 @@ export function FormBuilderPage() {
                     onChange={(v) => setRow(i, { ...row, spec: { ...row.spec, type: v, ...(DEFAULTS[v] ?? {}) } })}
                     testId={`form-field-${i}-type`}
                   />
-                  <TextField label={c.help} value={String(row.spec.help ?? '')} maxLength={300} disabled={locked} onChange={(e) => sp({ help: e.target.value })} data-testid={`form-field-${i}-help`} />
-                  <TextField label={c.readback} value={String(row.spec.readback_label ?? '')} maxLength={80} disabled={locked} onChange={(e) => sp({ readback_label: e.target.value })} data-testid={`form-field-${i}-readback`} />
+                  <TextField label={c.help} need="optional" value={String(row.spec.help ?? '')} maxLength={300} disabled={locked} onChange={(e) => sp({ help: e.target.value })} data-testid={`form-field-${i}-help`} />
+                  <TextField label={c.readback} need="optional" value={String(row.spec.readback_label ?? '')} maxLength={80} disabled={locked} onChange={(e) => sp({ readback_label: e.target.value })} data-testid={`form-field-${i}-readback`} />
                   {props.includes('values') ? (
                     <ListTextField label={c.values} value={row.spec.values} disabled={locked} onChange={(v) => sp({ values: v })} testId={`form-field-${i}-values`} />
                   ) : null}
@@ -255,7 +309,7 @@ export function FormBuilderPage() {
                 {rowProblems.length ? (
                   <ul className="admin-problems" data-testid={`form-field-${i}-problems`}>
                     {rowProblems.map((p, k) => (
-                      <li key={k}>{p.message}</li>
+                      <li key={k}>{p.path.split('.').length > 2 ? describe(p).split(': ').slice(1).join(': ') : plainMessage(p.message)}</li>
                     ))}
                   </ul>
                 ) : null}
@@ -299,9 +353,14 @@ export function FormBuilderPage() {
         ) : null}
         {canEdit ? (
           <div className="admin-actions admin-sticky-actions">
-            <Button type="submit" disabled={!dirty || save.isPending || (creating && (!value.name || nameError !== null))} data-testid="form-save">
+            <Button type="submit" disabled={!dirty || save.isPending || missing.length > 0 || (creating && nameError !== null)} data-testid="form-save">
               {save.isPending ? adminCopy.config.saving : adminCopy.config.save}
             </Button>
+            {missing.length > 0 && dirty ? (
+              <span className="admin-muted" data-testid="form-missing">
+                {cf.fillIn(missing.join(', '))}
+              </span>
+            ) : null}
           </div>
         ) : null}
       </form>

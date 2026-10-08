@@ -1,6 +1,9 @@
 import { useId, useState, type ReactNode } from 'react'
 import { Button, TextArea, TextField } from '../ui'
+import { NeedMark, type FieldNeed } from '../ui/TextField'
 import { ConfirmDialog } from './ConfirmDialog'
+import { adminCopy } from './copy'
+import { blankRecord, missingRequired, slugify } from './problems'
 
 /** One editable property of a record (a routing row, a service, a referral, …). */
 export interface FieldDef {
@@ -13,6 +16,17 @@ export interface FieldDef {
   max?: number
   /** Read-only once created (e.g. a row's key). */
   fixedAfterCreate?: boolean
+  /** Must be filled before saving (marked "*"); otherwise marked "(optional)". */
+  required?: boolean
+  /** While creating, this key follows the named field as a slug until it is edited. */
+  slugFrom?: string
+  /** Shown inside the "Advanced" disclosure. */
+  advanced?: boolean
+}
+
+function needOf(f: FieldDef): FieldNeed | undefined {
+  if (f.kind === 'checkbox') return undefined
+  return f.required ? 'required' : 'optional'
 }
 
 export type Rec = Record<string, unknown>
@@ -36,6 +50,7 @@ export function RecordFields({
   testPrefix,
   creating = false,
   disabled = false,
+  errors = {},
 }: {
   fields: readonly FieldDef[]
   value: Rec
@@ -43,18 +58,22 @@ export function RecordFields({
   testPrefix: string
   creating?: boolean
   disabled?: boolean
+  /** Plain-word problems keyed by field key, shown under that field. */
+  errors?: Record<string, string>
 }) {
   const set = (key: string, v: unknown) => onChange({ ...value, [key]: v })
-  return (
-    <div className="admin-record">
-      {fields.map((f) => {
+  const render = (f: FieldDef) => {
         const testId = `${testPrefix}-${f.key}`
         const locked = disabled || (!!f.fixedAfterCreate && !creating)
+        const need = needOf(f)
+        const error = errors[f.key] ? `${f.label.split(' (')[0]} ${errors[f.key]}` : null
         if (f.kind === 'textarea') {
           return (
             <TextArea
               key={f.key}
               label={f.label}
+              need={need}
+              error={error}
               hint={f.hint}
               max={f.max}
               rows={3}
@@ -70,6 +89,8 @@ export function RecordFields({
             <ListTextField
               key={f.key}
               label={f.label}
+              need={need}
+              error={error}
               hint={f.hint ?? 'Separate entries with commas.'}
               value={value[f.key]}
               disabled={locked}
@@ -83,6 +104,8 @@ export function RecordFields({
             <SelectInput
               key={f.key}
               label={f.label}
+              need={f.required ? 'required' : undefined}
+              error={error}
               value={value[f.key] == null ? '' : String(value[f.key])}
               options={f.options ?? []}
               disabled={locked}
@@ -108,6 +131,8 @@ export function RecordFields({
             <TextField
               key={f.key}
               label={f.label}
+              need={need}
+              error={error}
               hint={f.hint}
               inputMode="numeric"
               value={value[f.key] == null ? '' : String(value[f.key])}
@@ -124,6 +149,8 @@ export function RecordFields({
           <TextField
             key={f.key}
             label={f.label}
+            need={need}
+            error={error}
             hint={f.hint}
             maxLength={f.max}
             value={String(value[f.key] ?? '')}
@@ -132,7 +159,19 @@ export function RecordFields({
             data-testid={testId}
           />
         )
-      })}
+  }
+  const basic = fields.filter((f) => !f.advanced)
+  const advanced = fields.filter((f) => f.advanced)
+  const advancedError = advanced.some((f) => errors[f.key])
+  return (
+    <div className="admin-record">
+      {basic.map(render)}
+      {advanced.length ? (
+        <details className="admin-details admin-record__advanced" open={advancedError || undefined} data-testid={`${testPrefix}-advanced`}>
+          <summary>{adminCopy.fields.advanced}</summary>
+          <div className="admin-record">{advanced.map(render)}</div>
+        </details>
+      ) : null}
     </div>
   )
 }
@@ -141,6 +180,8 @@ export function RecordFields({
 export function ListTextField({
   label,
   hint,
+  need,
+  error,
   value,
   onChange,
   disabled,
@@ -148,6 +189,8 @@ export function ListTextField({
 }: {
   label: string
   hint?: string
+  need?: FieldNeed
+  error?: string | null
   value: unknown
   onChange: (v: string[]) => void
   disabled?: boolean
@@ -159,6 +202,8 @@ export function ListTextField({
     <TextField
       label={label}
       hint={hint}
+      need={need}
+      error={error}
       value={text}
       disabled={disabled}
       onChange={(e) => {
@@ -178,6 +223,8 @@ export function SelectInput({
   disabled,
   testId,
   hint,
+  need,
+  error,
 }: {
   label: string
   value: string
@@ -186,18 +233,24 @@ export function SelectInput({
   disabled?: boolean
   testId: string
   hint?: string
+  need?: FieldNeed
+  error?: string | null
 }) {
   const id = useId()
   return (
     <div className="ui-field">
       <label className="ui-field__label" htmlFor={id}>
         {label}
+        <NeedMark need={need} />
       </label>
       {hint ? <p className="ui-field__hint">{hint}</p> : null}
       <select
         id={id}
         className="ui-input"
         value={value}
+        aria-required={need === 'required' ? true : undefined}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? `${id}-error` : undefined}
         disabled={disabled}
         onChange={(e) => onChange(e.target.value)}
         data-testid={testId}
@@ -208,6 +261,11 @@ export function SelectInput({
           </option>
         ))}
       </select>
+      {error ? (
+        <p className="ui-field__error" id={`${id}-error`}>
+          {error}
+        </p>
+      ) : null}
     </div>
   )
 }
@@ -337,6 +395,7 @@ export function EditDialog({
   creating,
   saving,
   error,
+  errors,
   onSave,
   onCancel,
   testId,
@@ -348,11 +407,30 @@ export function EditDialog({
   creating: boolean
   saving: boolean
   error?: string | null
+  /** Plain-word problems for this record, keyed by field. */
+  errors?: Record<string, string>
   onSave: (value: Rec) => void
   onCancel: () => void
   testId: string
 }) {
-  const [value, setValue] = useState<Rec>(initial)
+  // A new record starts with every field present, so blank optional fields still save.
+  const [value, setValue] = useState<Rec>(() => (creating ? blankRecord(fields, initial) : initial))
+  const [keyEdited, setKeyEdited] = useState<Set<string>>(() => new Set())
+  const onChange = (next: Rec) => {
+    const out = { ...next }
+    const edited = new Set(keyEdited)
+    for (const f of fields) {
+      if (!f.slugFrom) continue
+      if (next[f.key] !== value[f.key]) edited.add(f.key)
+      else if (creating && !edited.has(f.key) && next[f.slugFrom] !== value[f.slugFrom]) {
+        out[f.key] = slugify(String(next[f.slugFrom] ?? ''))
+      }
+    }
+    if (edited.size !== keyEdited.size) setKeyEdited(edited)
+    setValue(out)
+  }
+  // Advanced fields (the key) last: they fill themselves from the name.
+  const missing = missingRequired([...fields.filter((f) => !f.advanced), ...fields.filter((f) => f.advanced)], value)
   return (
     <ConfirmDialog
       open={open}
@@ -360,11 +438,17 @@ export function EditDialog({
       confirmLabel={saving ? 'Saving…' : 'Save to draft'}
       cancelLabel="Cancel"
       busy={saving}
+      confirmDisabled={missing.length > 0}
       onConfirm={() => onSave(value)}
       onCancel={onCancel}
       testId={testId}
     >
-      <RecordFields fields={fields} value={value} onChange={setValue} testPrefix={testId} creating={creating} />
+      <RecordFields fields={fields} value={value} onChange={onChange} testPrefix={testId} creating={creating} errors={errors} />
+      {missing.length ? (
+        <p className="admin-muted" data-testid={`${testId}-missing`}>
+          {adminCopy.fields.fillIn(missing.join(', '))}
+        </p>
+      ) : null}
       {error ? (
         <p className="ui-field__error" role="alert">
           {error}
