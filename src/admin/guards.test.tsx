@@ -108,10 +108,12 @@ describe('admin guards', () => {
     expect(forbidden).toHaveTextContent("You don't have access to this page")
     expect(within(forbidden).getByRole('link')).toHaveAttribute('href', '/admin')
     const nav = screen.getByTestId('admin-nav')
-    expect(within(nav).queryByRole('link', { name: 'Exports' })).toBeNull()
-    expect(within(nav).queryByRole('link', { name: 'Audit' })).toBeNull()
-    expect(within(nav).queryByRole('link', { name: 'Voice settings' })).toBeNull()
-    expect(within(nav).getByRole('link', { name: 'Approval queue' })).toBeInTheDocument()
+    // Menus start closed: query the links inside them too (hidden: true).
+    expect(within(nav).queryByRole('link', { name: 'Exports', hidden: true })).toBeNull()
+    expect(within(nav).queryByRole('link', { name: 'Audit log', hidden: true })).toBeNull()
+    expect(within(nav).queryByRole('link', { name: 'Voice settings', hidden: true })).toBeNull()
+    expect(within(nav).getByRole('link', { name: 'Approval queue', hidden: true })).toBeInTheDocument()
+    expect(within(nav).getByRole('link', { name: 'Account', hidden: true })).toBeInTheDocument()
   })
 
   it.each([
@@ -123,9 +125,10 @@ describe('admin guards', () => {
     renderAt(path)
     expect(await screen.findByTestId(testId)).toBeInTheDocument()
     const nav = screen.getByTestId('admin-nav')
-    expect(within(nav).getByRole('link', { name: 'Exports' })).toBeInTheDocument()
-    expect(within(nav).getByRole('link', { name: 'Audit' })).toBeInTheDocument()
-    expect(within(nav).getByRole('link', { name: 'Voice settings' })).toBeInTheDocument()
+    expect(within(nav).getByRole('link', { name: 'Exports', hidden: true })).toBeInTheDocument()
+    expect(within(nav).getByRole('link', { name: 'Audit log', hidden: true })).toBeInTheDocument()
+    expect(within(nav).getByRole('link', { name: 'Voice settings', hidden: true })).toBeInTheDocument()
+    expect(screen.getByTestId('admin-nav-group-more')).toHaveAttribute('data-active', 'true')
   })
 
   it('opens Home at /admin and marks only the Home nav link', async () => {
@@ -134,18 +137,26 @@ describe('admin guards', () => {
     expect(await screen.findByTestId('admin-home')).toBeInTheDocument()
     expect(where()).toBe('/admin')
     expect(screen.getByRole('link', { name: 'Home' })).toHaveAttribute('aria-current', 'page')
-    expect(screen.getByRole('link', { name: 'Approval queue' })).not.toHaveAttribute('aria-current')
+    expect(screen.getByRole('link', { name: 'Approval queue', hidden: true })).not.toHaveAttribute('aria-current')
   })
 
-  it('groups the menu: Daily work, then Setup in setup order, then More (admins)', async () => {
+  it('groups the menu into 4 items: Home, then Daily work, Setup and More as dropdowns', async () => {
     signIn(admin)
     renderAt('/admin')
     expect(await screen.findByTestId('admin-home')).toBeInTheDocument()
+    const nav = screen.getByTestId('admin-nav')
+    // Closed: only Home is a visible link; the three groups are buttons.
+    expect(within(nav).getAllByRole('link').map((a) => a.textContent)).toEqual(['Home'])
+    expect(
+      within(nav)
+        .getAllByRole('button', { expanded: false })
+        .map((b) => b.textContent?.replace('▾', '').trim()),
+    ).toEqual(['Menu', 'Daily work', 'Setup', 'More'])
     const links = (group: string) =>
-      within(screen.getByTestId(`admin-nav-group-${group}`)).getAllByRole('link').map((a) => a.textContent)
+      within(screen.getByTestId(`admin-nav-group-${group}`)).getAllByRole('link', { hidden: true }).map((a) => a.textContent)
     expect(links('daily')).toEqual(['Approval queue', 'Follow-up', 'Calls', 'Reports'])
     expect(links('setup')).toEqual(['Knowledge', 'Departments', 'Forms', 'Agents', 'History'])
-    expect(links('more')).toEqual(['Voice settings', 'Exports', 'Audit'])
+    expect(links('more')).toEqual(['Voice settings', 'Exports', 'Audit log', 'Account'])
   })
 
   it('sends a signed-in user away from the login page to Home', async () => {

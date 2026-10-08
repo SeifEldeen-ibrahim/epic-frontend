@@ -15,10 +15,33 @@ import {
 import { AdminPage, ResultNotice } from '../../admin/DataTable'
 import { CheckboxInput, SelectInput } from '../../admin/EditDialog'
 import { adminCopy } from '../../admin/copy'
+import { describeProblem, fieldErrors, isBlank, slugify } from '../../admin/problems'
 import { UNSAVED_MESSAGE, useUnsavedGuard } from '../../admin/useUnsavedGuard'
 import { Button, EmptyState, ErrorState, TextArea, TextField } from '../../ui'
 
 const c = adminCopy.agents
+const cf = adminCopy.fields
+const LABELS: Record<string, string> = {
+  name: c.nameField,
+  title: c.title,
+  persona: c.persona,
+  knowledge: c.knowledge,
+  topic: c.topic,
+  text: c.text,
+  voice: c.voice,
+  tools: c.tools,
+  route_targets: 'Where it can send callers',
+  form: c.formPick,
+  handoff: c.handoff,
+  bridge_say: c.bridgeSay,
+  bridge_say_es: c.bridgeSayEs,
+  greeting: c.greeting,
+  archived: 'Archived',
+}
+
+function describe(p: Problem): string {
+  return describeProblem(p, { list: 'knowledge', rowLabel: (seg) => (/^\d+$/.test(seg) ? cf.item(Number(seg) + 1) : seg), fieldLabel: (k) => LABELS[k] })
+}
 const FORM_TOOLS = ['save_fields', 'confirm_callback', 'submit_form']
 const NAME = /^[a-z][a-z0-9_]{2,31}$/
 
@@ -69,9 +92,7 @@ function ProblemList({ problems }: { problems: Problem[] }) {
       <h2>{c.problems}</h2>
       <ul className="admin-problems">
         {problems.map((p, i) => (
-          <li key={i}>
-            <code>{p.path}</code>: {p.message}
-          </li>
+          <li key={i}>{describe(p)}</li>
         ))}
       </ul>
     </div>
@@ -93,6 +114,8 @@ export function AgentEditorPage() {
   const [edits, setEdits] = useState<AgentValue | null>(null)
   const [saved, setSaved] = useState<{ ok: boolean; n: number; problems: Problem[] } | null>(null)
   const [showCompiled, setShowCompiled] = useState(false)
+  // While creating, the agent name follows the title until the admin edits it.
+  const [nameEdited, setNameEdited] = useState(false)
   const stored = useMemo(() => (creating || !q.data ? BLANK : fromServer(q.data.value)), [creating, q.data])
   const value: AgentValue = edits ?? stored
   const dirty = edits !== null
@@ -114,6 +137,22 @@ export function AgentEditorPage() {
     ...problemsFor(state.data?.draft_problems, `agents.${creating ? value.name : name}`),
   ]
   const nameError = creating && value.name !== '' && (!NAME.test(value.name) || value.name === 'new') ? c.nameHint : null
+  const shown = saved?.problems.length ? saved.problems : problems
+  const errs = fieldErrors(shown)
+  const errorFor = (key: string) => (errs[key] ? `${LABELS[key].split(' (')[0]} ${errs[key]}` : null)
+  const itemError = (i: number, key: 'topic' | 'text') => {
+    const p = shown.find((x) => x.path === `knowledge.${i}.${key}`)
+    return p ? describe(p).split(': ').slice(1).join(': ') : null
+  }
+  const missing = [
+    ...(isBlank(value.title) ? [c.title] : []),
+    ...(creating && isBlank(value.name) ? [c.name] : []),
+    ...(isBlank(value.persona) ? [c.persona] : []),
+    ...value.knowledge.flatMap((k, i) => [
+      ...(isBlank(k.topic) ? [`${cf.item(i + 1)}: ${c.topic}`] : []),
+      ...(isBlank(k.text) ? [`${cf.item(i + 1)}: ${c.text}`] : []),
+    ]),
+  ]
 
   const toggleTool = (tool: string, on: boolean) => {
     const rest = value.tools.filter((t) => t !== tool)
@@ -182,7 +221,7 @@ export function AgentEditorPage() {
         </Button>
       }
     >
-      <ProblemList problems={saved?.problems.length ? saved.problems : problems} />
+      <ProblemList problems={shown} />
       <form
         className="admin-panel admin-section admin-editor"
         data-testid="agent-editor"
@@ -192,23 +231,48 @@ export function AgentEditorPage() {
         }}
       >
         <p className="admin-muted">{c.sameEditor}</p>
+        <TextField
+          label={c.title}
+          need="required"
+          hint={c.titleHint}
+          value={value.title}
+          maxLength={60}
+          error={errorFor('title')}
+          disabled={locked}
+          onChange={(e) => set({ title: e.target.value, ...(creating && !nameEdited ? { name: slugify(e.target.value, 32) } : {}) })}
+          data-testid="agent-title"
+        />
         {creating ? (
-          <TextField label={c.nameField} hint={c.nameHint} value={value.name} error={nameError} disabled={locked} onChange={(e) => set({ name: e.target.value.trim() })} data-testid="agent-name" />
+          <details className="admin-details" open={nameError !== null || undefined} data-testid="agent-advanced">
+            <summary>{cf.advanced}</summary>
+            <TextField
+              label={c.nameField}
+              need="required"
+              hint={c.nameHint}
+              value={value.name}
+              error={nameError}
+              disabled={locked}
+              onChange={(e) => {
+                setNameEdited(true)
+                set({ name: e.target.value.trim() })
+              }}
+              data-testid="agent-name"
+            />
+          </details>
         ) : (
           <p>
             <span className="admin-muted">{c.name}: </span>
             <code data-testid="agent-name-fixed">{name}</code>
           </p>
         )}
-        <TextField label={c.title} hint={c.titleHint} value={value.title} maxLength={60} disabled={locked} onChange={(e) => set({ title: e.target.value })} data-testid="agent-title" />
-        <TextArea label={c.persona} hint={c.personaHint} value={value.persona} max={catalog.data?.limits.persona_max ?? 1500} rows={5} disabled={locked} onChange={(e) => set({ persona: e.target.value })} data-testid="agent-persona" />
+        <TextArea label={c.persona} need="required" error={errorFor('persona')} hint={c.personaHint} value={value.persona} max={catalog.data?.limits.persona_max ?? 1500} rows={5} disabled={locked} onChange={(e) => set({ persona: e.target.value })} data-testid="agent-persona" />
         <fieldset className="admin-fieldset" data-testid="agent-knowledge">
           <legend>{c.knowledge}</legend>
           <p className="admin-muted">{c.knowledgeHint}</p>
           {value.knowledge.map((item, i) => (
             <div key={i} className="admin-kitem">
-              <TextField label={c.topic} value={item.topic} maxLength={80} disabled={locked} onChange={(e) => set({ knowledge: value.knowledge.map((x, j) => (j === i ? { ...x, topic: e.target.value } : x)) })} data-testid={`agent-knowledge-${i}-topic`} />
-              <TextArea label={c.text} value={item.text} max={catalog.data?.limits.knowledge_item_max ?? 500} rows={2} disabled={locked} onChange={(e) => set({ knowledge: value.knowledge.map((x, j) => (j === i ? { ...x, text: e.target.value } : x)) })} data-testid={`agent-knowledge-${i}-text`} />
+              <TextField label={c.topic} need="required" error={itemError(i, 'topic')} value={item.topic} maxLength={80} disabled={locked} onChange={(e) => set({ knowledge: value.knowledge.map((x, j) => (j === i ? { ...x, topic: e.target.value } : x)) })} data-testid={`agent-knowledge-${i}-topic`} />
+              <TextArea label={c.text} need="required" error={itemError(i, 'text')} value={item.text} max={catalog.data?.limits.knowledge_item_max ?? 500} rows={2} disabled={locked} onChange={(e) => set({ knowledge: value.knowledge.map((x, j) => (j === i ? { ...x, text: e.target.value } : x)) })} data-testid={`agent-knowledge-${i}-text`} />
               {!locked ? (
                 <Button variant="secondary" onClick={() => set({ knowledge: value.knowledge.filter((_, j) => j !== i) })} data-testid={`agent-knowledge-${i}-remove`}>
                   {c.removeItem}
@@ -281,9 +345,9 @@ export function AgentEditorPage() {
         </fieldset>
         <fieldset className="admin-fieldset" data-testid="agent-handoff">
           <legend>{c.handoff}</legend>
-          <TextField label={c.bridgeSay} value={value.handoff?.bridge_say ?? ''} maxLength={300} disabled={locked} onChange={(e) => set({ handoff: { ...(value.handoff ?? { bridge_say: '', bridge_say_es: '', greeting: '' }), bridge_say: e.target.value } })} data-testid="agent-bridge" />
-          <TextField label={c.bridgeSayEs} value={value.handoff?.bridge_say_es ?? ''} maxLength={300} disabled={locked} onChange={(e) => set({ handoff: { ...(value.handoff ?? { bridge_say: '', bridge_say_es: '', greeting: '' }), bridge_say_es: e.target.value } })} data-testid="agent-bridge-es" />
-          <TextField label={c.greeting} hint={c.greetingHint} value={value.handoff?.greeting ?? ''} maxLength={300} disabled={locked} onChange={(e) => set({ handoff: { ...(value.handoff ?? { bridge_say: '', bridge_say_es: '', greeting: '' }), greeting: e.target.value } })} data-testid="agent-greeting" />
+          <TextField label={c.bridgeSay} need="optional" value={value.handoff?.bridge_say ?? ''} maxLength={300} disabled={locked} onChange={(e) => set({ handoff: { ...(value.handoff ?? { bridge_say: '', bridge_say_es: '', greeting: '' }), bridge_say: e.target.value } })} data-testid="agent-bridge" />
+          <TextField label={c.bridgeSayEs} need="optional" value={value.handoff?.bridge_say_es ?? ''} maxLength={300} disabled={locked} onChange={(e) => set({ handoff: { ...(value.handoff ?? { bridge_say: '', bridge_say_es: '', greeting: '' }), bridge_say_es: e.target.value } })} data-testid="agent-bridge-es" />
+          <TextField label={c.greeting} need="optional" hint={c.greetingHint} value={value.handoff?.greeting ?? ''} maxLength={300} disabled={locked} onChange={(e) => set({ handoff: { ...(value.handoff ?? { bridge_say: '', bridge_say_es: '', greeting: '' }), greeting: e.target.value } })} data-testid="agent-greeting" />
         </fieldset>
         <CheckboxInput label={c.archivedLabel} checked={value.archived} disabled={locked} onChange={(on) => set({ archived: on })} testId="agent-archived" />
         {saved ? (
@@ -293,9 +357,14 @@ export function AgentEditorPage() {
         ) : null}
         {canEdit ? (
           <div className="admin-actions admin-sticky-actions">
-            <Button type="submit" disabled={!dirty || save.isPending || (creating && (!value.name || nameError !== null))} data-testid="agent-save">
+            <Button type="submit" disabled={!dirty || save.isPending || missing.length > 0 || (creating && nameError !== null)} data-testid="agent-save">
               {save.isPending ? adminCopy.config.saving : adminCopy.config.save}
             </Button>
+            {missing.length > 0 && dirty ? (
+              <span className="admin-muted" data-testid="agent-missing">
+                {cf.fillIn(missing.join(', '))}
+              </span>
+            ) : null}
           </div>
         ) : null}
       </form>
