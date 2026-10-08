@@ -12,11 +12,13 @@ import {
   useSaveAgent,
   type Problem,
 } from '../../api/config'
+import { useVoiceSample } from '../../api/voiceSample'
 import { AdminPage, ResultNotice } from '../../admin/DataTable'
 import { CheckboxInput, SelectInput } from '../../admin/EditDialog'
 import { adminCopy } from '../../admin/copy'
 import { describeProblem, fieldErrors, isBlank, slugify } from '../../admin/problems'
 import { UNSAVED_MESSAGE, useUnsavedGuard } from '../../admin/useUnsavedGuard'
+import { VoiceSampleButton } from '../../admin/VoiceSampleButton'
 import { Button, EmptyState, ErrorState, TextArea, TextField } from '../../ui'
 
 const c = adminCopy.agents
@@ -123,6 +125,7 @@ export function AgentEditorPage() {
   const compiled = useCompiled(name, showCompiled && !creating)
   const navigate = useNavigate()
   useUnsavedGuard(dirty)
+  const sample = useVoiceSample()
 
   const canEdit = state.data?.can_edit ?? false
   const set = (patch: Partial<AgentValue>) => setEdits({ ...value, ...patch })
@@ -286,7 +289,22 @@ export function AgentEditorPage() {
             </Button>
           ) : null}
         </fieldset>
-        <SelectInput label={c.voice} value={value.voice} options={(catalog.data?.voices ?? [value.voice]).map((v) => ({ value: v, label: v }))} disabled={locked} onChange={(v) => set({ voice: v })} testId="agent-voice" />
+        <div className="admin-voice-row">
+          <SelectInput
+            label={c.voice}
+            value={value.voice}
+            options={(catalog.data?.voices ?? [value.voice]).map((v) => ({ value: v, label: v }))}
+            disabled={locked}
+            onChange={(v) => {
+              sample.stop()
+              set({ voice: v })
+            }}
+            testId="agent-voice"
+          />
+          {!locked && value.voice ? (
+            <VoiceSampleButton voice={value.voice} status={sample.status} onPlay={() => sample.play(value.voice)} onStop={sample.stop} />
+          ) : null}
+        </div>
         <fieldset className="admin-fieldset" data-testid="agent-tools">
           <legend>{c.tools}</legend>
           <p className="admin-muted">{c.toolsHint}</p>
