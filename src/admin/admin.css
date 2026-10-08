@@ -1026,8 +1026,7 @@
   align-items: flex-end;
 }
 
-.admin-pre,
-.admin-diff {
+.admin-pre {
   box-sizing: border-box;
   width: 100%;
   max-width: 100%;
@@ -1044,32 +1043,6 @@
   font-family: var(--font-mono);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-}
-
-.admin-diff:focus-visible {
-  outline: calc(var(--space-unit) / 4) solid var(--brand-focus);
-  outline-offset: calc(var(--space-unit) / 4);
-}
-
-.admin-diff__pre {
-  margin: 0;
-  padding: var(--space-unit);
-  font-family: var(--font-mono);
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
-
-.admin-diff__line--add {
-  color: var(--brand-success);
-}
-
-.admin-diff__line--del {
-  color: var(--brand-danger);
-}
-
-.admin-diff__line--hunk,
-.admin-diff__line--meta {
-  color: var(--brand-muted);
 }
 
 .ui-textarea {
@@ -1285,4 +1258,159 @@
 .admin-record__advanced {
   border-top: calc(var(--space-unit) / 8) solid var(--brand-border);
   padding-top: var(--space-unit);
+}
+
+/* History: version cards and the plain "What changed" list (words, never colour alone). */
+.admin-versions {
+  display: grid;
+  gap: var(--space-unit);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-version {
+  display: grid;
+  gap: calc(var(--space-unit) / 2);
+}
+
+.admin-version p {
+  margin: 0;
+}
+
+.admin-version__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: calc(var(--space-unit) / 2) var(--space-unit);
+}
+
+.admin-version__link,
+.admin-version__heading {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--target-min);
+  font-weight: var(--type-heading-weight);
+  overflow-wrap: anywhere;
+}
+
+.admin-version__link:focus-visible {
+  outline: calc(var(--space-unit) / 4) solid var(--brand-focus);
+  outline-offset: calc(var(--space-unit) / 4);
+}
+
+.admin-version__note,
+.admin-version__summary {
+  overflow-wrap: anywhere;
+}
+
+.admin-changes {
+  display: grid;
+  gap: var(--space-unit);
+}
+
+.admin-changes__group h2,
+.admin-changes__group h3 {
+  margin-top: 0;
+}
+
+.admin-page .admin-changes__area {
+  font-size: calc(var(--type-base-size) * 1.25);
+}
+
+.admin-changes__item + .admin-changes__item {
+  margin-top: var(--space-unit);
+  padding-top: var(--space-unit);
+  border-top: calc(var(--space-unit) / 8) solid var(--brand-border);
+}
+
+.admin-page .admin-changes__title {
+  margin: 0 0 calc(var(--space-unit) / 2);
+  font-size: calc(var(--type-base-size) * 1.125);
+  font-weight: var(--type-heading-weight);
+  overflow-wrap: anywhere;
+}
+
+.admin-changes__kind {
+  font-weight: normal;
+  color: var(--brand-muted);
+}
+
+.admin-changes__lines {
+  display: grid;
+  gap: calc(var(--space-unit) / 2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-change {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 calc(var(--space-unit) / 2);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.admin-change__label {
+  color: var(--brand-muted);
+}
+
+/* Disclosures on History show they open: a turning arrow before the words. */
+.admin-disclosure > summary {
+  list-style: none;
+  color: var(--brand-primary);
+}
+
+.admin-disclosure > summary::-webkit-details-marker {
+  display: none;
+}
+
+.admin-disclosure > summary::before {
+  content: '▸';
+  display: inline-block;
+  margin-right: calc(var(--space-unit) / 2);
+  transition: transform var(--motion-fast);
+}
+
+.admin-disclosure[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-disclosure > summary::before {
+    transition: none;
+  }
+}
+
+.admin-change__values {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0 calc(var(--space-unit) / 2);
+  min-width: 0;
+}
+
+.admin-change__pair {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(var(--space-unit) * 30)), 1fr));
+  gap: var(--space-unit);
+  width: 100%;
+}
+
+.admin-change__side {
+  display: block;
+  color: var(--brand-muted);
+}
+
+.admin-change__block {
+  box-sizing: border-box;
+  width: 100%;
+  margin: calc(var(--space-unit) / 4) 0 0;
+  padding: var(--space-unit);
+  border: calc(var(--space-unit) / 8) solid var(--brand-border);
+  border-radius: var(--radius-sm);
+  background: var(--brand-bg);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }

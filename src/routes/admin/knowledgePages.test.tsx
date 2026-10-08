@@ -201,19 +201,17 @@ describe('T-FE: departments and knowledge pages', () => {
 })
 
 describe('T-FE: history', () => {
-  it('lists what went live with the live one marked, and shows a diff as plain text', async () => {
+  it('lists what went live as plain cards and opens a version without a text diff', async () => {
     renderAt('/admin/versions')
     expect(await screen.findByRole('heading', { level: 1, name: 'History' })).toBeInTheDocument()
-    expect(await screen.findByTestId('config-live-label')).toHaveTextContent('cfg-3-fx1a2b3c')
-    const table = await screen.findByTestId('admin-table-versions')
-    expect(within(table).getByText('cfg-3-fx1a2b3c')).toBeInTheDocument()
-    expect(within(table).getByText('Went back')).toBeInTheDocument()
+    const list = await screen.findByTestId('versions-list')
+    expect(within(list).getByTestId('version-card-2')).toHaveTextContent('Went back on')
+    expect(screen.queryByTestId('config-live-label')).toBeNull()
     cleanup()
     serve()
     renderAt('/admin/versions/2')
-    const diff = await screen.findByTestId('version-diff-agents')
-    expect(diff.querySelector('.admin-diff__line--add')).not.toBeNull()
-    expect(diff.innerHTML).not.toContain('<script')
+    expect(await screen.findByTestId('version-changes')).toBeInTheDocument()
+    expect(document.querySelector('.admin-diff')).toBeNull()
     expect(screen.getByTestId('version-rollback')).toBeInTheDocument()
   })
 })

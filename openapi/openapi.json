@@ -1020,6 +1020,120 @@
         "title": "CatalogResponse",
         "type": "object"
       },
+      "ChangeItem": {
+        "description": "One field-level change (History): the page area, the item and a path inside it.",
+        "properties": {
+          "after": {
+            "title": "After"
+          },
+          "area": {
+            "enum": [
+              "answering",
+              "knowledge",
+              "departments",
+              "forms",
+              "agents"
+            ],
+            "title": "Area",
+            "type": "string"
+          },
+          "before": {
+            "title": "Before"
+          },
+          "field": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Field",
+            "type": "array"
+          },
+          "item": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Item"
+          },
+          "item_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Item Title"
+          },
+          "kind": {
+            "enum": [
+              "added",
+              "removed",
+              "changed"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "section": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Section"
+          }
+        },
+        "required": [
+          "area",
+          "section",
+          "item",
+          "item_title",
+          "kind",
+          "field"
+        ],
+        "title": "ChangeItem",
+        "type": "object"
+      },
+      "ChangeNames": {
+        "description": "Titles for references shown in changes (agents, forms, departments by id).",
+        "properties": {
+          "agents": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Agents",
+            "type": "object"
+          },
+          "departments": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Departments",
+            "type": "object"
+          },
+          "forms": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Forms",
+            "type": "object"
+          }
+        },
+        "required": [
+          "agents",
+          "forms",
+          "departments"
+        ],
+        "title": "ChangeNames",
+        "type": "object"
+      },
       "ChangePasswordRequest": {
         "additionalProperties": false,
         "properties": {
@@ -1037,6 +1151,61 @@
           "new_password"
         ],
         "title": "ChangePasswordRequest",
+        "type": "object"
+      },
+      "ChangeSummaryItem": {
+        "properties": {
+          "area": {
+            "enum": [
+              "answering",
+              "knowledge",
+              "departments",
+              "forms",
+              "agents"
+            ],
+            "title": "Area",
+            "type": "string"
+          },
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "kind": {
+            "enum": [
+              "added",
+              "removed",
+              "changed"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "section": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Section"
+          },
+          "titles": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Titles",
+            "type": "array"
+          }
+        },
+        "required": [
+          "area",
+          "section",
+          "kind",
+          "count",
+          "titles"
+        ],
+        "title": "ChangeSummaryItem",
         "type": "object"
       },
       "CompiledResponse": {
@@ -1272,6 +1441,33 @@
           "before": {
             "title": "Before",
             "type": "string"
+          },
+          "changes": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/ChangeItem"
+            },
+            "title": "Changes",
+            "type": "array"
+          },
+          "compared_with": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Compared With"
+          },
+          "names": {
+            "$ref": "#/components/schemas/ChangeNames",
+            "default": {
+              "agents": {},
+              "departments": {},
+              "forms": {}
+            }
           },
           "sections": {
             "items": {
@@ -3697,6 +3893,14 @@
             ],
             "title": "Source",
             "type": "string"
+          },
+          "summary": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/ChangeSummaryItem"
+            },
+            "title": "Summary",
+            "type": "array"
           }
         },
         "required": [
@@ -3773,6 +3977,14 @@
             ],
             "title": "Source",
             "type": "string"
+          },
+          "summary": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/ChangeSummaryItem"
+            },
+            "title": "Summary",
+            "type": "array"
           }
         },
         "required": [

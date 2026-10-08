@@ -197,10 +197,6 @@ export function LiveStatus({ state }: { state: ConfigState }) {
   return (
     <div className="admin-panel admin-section" data-testid="live-status">
       <p>
-        <span className="admin-muted">{adminCopy.config.live}: </span>
-        <code data-testid="config-live-label">{state.active_label}</code>
-      </p>
-      <p>
         <span className="admin-muted">{adminCopy.config.entryAgent}: </span>
         <strong data-testid="config-entry">{state.entry_agent ?? adminCopy.agents.entryNone}</strong>
       </p>
