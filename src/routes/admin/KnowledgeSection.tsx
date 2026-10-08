@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import {
+  ConfigProblemsError,
   problemsFor,
   useAgents,
   useCatalog,
@@ -12,10 +13,13 @@ import {
 import { DataTable, type Column } from '../../admin/DataTable'
 import { EditDialog, FloorList, SelectInput, type FieldDef, type Rec } from '../../admin/EditDialog'
 import { adminCopy } from '../../admin/copy'
+import { describeProblem, isBlank, rowFieldErrors, shortLabel } from '../../admin/problems'
 import { useUnsavedGuard } from '../../admin/useUnsavedGuard'
 import { Button, EmptyState, ErrorState, TextArea, TextField } from '../../ui'
 
 const c = adminCopy.config
+const cf = adminCopy.fields
+const NOTE: FieldDef = { key: 'source', label: cf.note, hint: cf.noteHint, kind: 'text', max: 80 }
 
 /** Editable list sections: the list key in the document and the row's id field. */
 const ROWS: Partial<Record<KnowledgeSection, { list: string; id: string; fields: (agents: string[]) => FieldDef[] }>> = {
@@ -23,8 +27,8 @@ const ROWS: Partial<Record<KnowledgeSection, { list: string; id: string; fields:
     list: 'roles',
     id: 'role',
     fields: (agents) => [
-      { key: 'role', label: 'Short id (lowercase, no spaces)', kind: 'text', fixedAfterCreate: true, max: 40 },
-      { key: 'title', label: 'Title (what callers hear)', kind: 'text', max: 80 },
+      { key: 'role', label: 'Short id (lowercase, no spaces)', hint: cf.keyHint, kind: 'text', fixedAfterCreate: true, max: 40, required: true, slugFrom: 'title', advanced: true },
+      { key: 'title', label: 'Title (what callers hear)', kind: 'text', max: 80, required: true },
       { key: 'terms', label: 'Need words that belong here', kind: 'list' },
       {
         key: 'handled_by',
@@ -36,33 +40,33 @@ const ROWS: Partial<Record<KnowledgeSection, { list: string; id: string; fields:
       { key: 'after_hours_say', label: 'Line after hours', kind: 'textarea', max: 400 },
       { key: 'extension', label: 'Extension (staff record, never spoken)', kind: 'text', max: 10 },
       { key: 'department', label: 'Department (staff record, never spoken)', kind: 'text', max: 200 },
-      { key: 'source', label: 'Source', kind: 'text', max: 80 },
+      NOTE,
     ],
   },
   services: {
     list: 'services',
     id: 'key',
     fields: () => [
-      { key: 'key', label: 'Key (lowercase, no spaces)', kind: 'text', fixedAfterCreate: true, max: 60 },
-      { key: 'name', label: 'Name', kind: 'text', max: 120 },
+      { key: 'key', label: 'Key (lowercase, no spaces)', hint: cf.keyHint, kind: 'text', fixedAfterCreate: true, max: 60, required: true, slugFrom: 'name', advanced: true },
+      { key: 'name', label: 'Name', kind: 'text', max: 120, required: true },
       { key: 'aliases', label: 'Other names', kind: 'list' },
-      { key: 'description', label: 'Description', kind: 'textarea', max: 600 },
+      { key: 'description', label: 'Description', kind: 'textarea', max: 600, required: true },
       { key: 'documents', label: 'Documents needed', kind: 'textarea', max: 400 },
       { key: 'wait_time', label: 'Wait time', kind: 'text', max: 200 },
       { key: 'location', label: 'Location', kind: 'text', max: 200 },
       { key: 'directions', label: 'Directions', kind: 'textarea', max: 400 },
-      { key: 'source', label: 'Source', kind: 'text', max: 80 },
+      NOTE,
     ],
   },
   referrals: {
     list: 'categories',
     id: 'key',
     fields: () => [
-      { key: 'key', label: 'Key (lowercase, no spaces)', kind: 'text', fixedAfterCreate: true, max: 60 },
-      { key: 'label', label: 'Label', kind: 'text', max: 120 },
+      { key: 'key', label: 'Key (lowercase, no spaces)', hint: cf.keyHint, kind: 'text', fixedAfterCreate: true, max: 60, required: true, slugFrom: 'label', advanced: true },
+      { key: 'label', label: 'Label', kind: 'text', max: 120, required: true },
       { key: 'terms', label: 'Need words', kind: 'list' },
       { key: 'referral', label: 'Referral line (one reply)', kind: 'textarea', max: 600 },
-      { key: 'source', label: 'Source', kind: 'text', max: 80 },
+      NOTE,
     ],
   },
 }
@@ -77,17 +81,81 @@ function rowText(row: Rec): string {
     .toLowerCase()
 }
 
-function ProblemList({ problems, testId }: { problems: Problem[]; testId: string }) {
-  if (problems.length === 0) return null
-  return (
-    <ul className="admin-problems" data-testid={testId}>
-      {problems.map((p, i) => (
-        <li key={i}>
-          <code>{p.path}</code>: {p.message}
-        </li>
-      ))}
-    </ul>
+const CLINIC_LINES = {
+  submitted: 'Line after a request is submitted',
+  submitted_after_hours: 'Line after a request is submitted after hours',
+  custody: 'Line for a custody or records concern',
+} as const
+
+/** Field labels of a section, for plain-word problems. */
+function sectionLabels(section: KnowledgeSection): Record<string, string> {
+  const rows = ROWS[section]
+  const out: Record<string, string> = {}
+  if (rows) for (const f of rows.fields([])) out[f.key] = f.label
+  if (section === 'routing') out.entitlement_words = 'Benefit words'
+  if (section === 'hours') Object.assign(out, { timezone: 'Time zone', weekly: 'Opening hours', closures: 'Closure days', date: 'Date', reason: 'Reason' }, DAY_LABEL)
+  if (section === 'wording') Object.assign(out, WORDING_LABELS)
+  if (section === 'clinic') Object.assign(out, CLINIC_LINES)
+  out.source = cf.note
+  out.status = c.status
+  return out
+}
+
+/** Problems in plain words: "Row 2 (flu_shot): Note is missing". */
+function describeSectionProblems(section: KnowledgeSection, value: Rec | null, problems: readonly Problem[]): string[] {
+  const spec = ROWS[section]
+  const labels = sectionLabels(section)
+  const rows = spec && value && Array.isArray(value[spec.list]) ? (value[spec.list] as Rec[]) : []
+  const listName = spec?.list ?? (section === 'hours' ? 'closures' : undefined)
+  const closures = section === 'hours' && value && Array.isArray(value.closures) ? (value.closures as Rec[]) : []
+  return problems.map((p) =>
+    describeProblem(p, {
+      list: listName,
+      fieldLabel: (k) => labels[k],
+      rowLabel: (seg) => {
+        if (section === 'hours') return /^\d+$/.test(seg) ? `${labels.closures} ${Number(seg) + 1}${closures[Number(seg)]?.date ? ` (${String(closures[Number(seg)].date)})` : ''}` : undefined
+        const idx = /^\d+$/.test(seg) ? Number(seg) : rows.findIndex((r) => String(r[spec?.id ?? '']) === seg)
+        if (idx < 0) return seg
+        return cf.row(idx + 1, String(rows[idx]?.[spec?.id ?? ''] ?? ''))
+      },
+    }),
   )
+}
+
+function ProblemList({ lines, testId }: { lines: string[]; testId: string }) {
+  if (lines.length === 0) return null
+  return (
+    <div role="alert" data-testid={testId}>
+      <p className="ui-field__error">{cf.problemsTitle}</p>
+      <ul className="admin-problems">
+        {lines.map((line, i) => (
+          <li key={i}>{line}</li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
+/** Required fields still empty in the hours / wording / clinic editors. */
+function sectionMissing(section: KnowledgeSection, value: Rec): string[] {
+  if (section === 'hours') {
+    const out = isBlank(value.timezone) ? ['Time zone'] : []
+    const closures = Array.isArray(value.closures) ? (value.closures as Rec[]) : []
+    closures.forEach((cl, i) => {
+      if (isBlank(cl.date)) out.push(`Closure day ${i + 1}: Date`)
+      if (isBlank(cl.reason)) out.push(`Closure day ${i + 1}: Reason`)
+    })
+    return out
+  }
+  if (section === 'wording') {
+    return Object.keys(value)
+      .filter((k) => k !== 'status' && typeof value[k] === 'string' && isBlank(value[k]))
+      .map((k) => shortLabel(wordingLabel(k)))
+  }
+  if (section === 'clinic') {
+    return (Object.keys(CLINIC_LINES) as (keyof typeof CLINIC_LINES)[]).filter((k) => isBlank(value[k])).map((k) => CLINIC_LINES[k])
+  }
+  return []
 }
 
 /** One knowledge section of the draft: view (everyone) and edit (admins). */
@@ -107,6 +175,8 @@ export function KnowledgeSection({
   // Unsaved edits; null = show the draft as stored.
   const [edits, setEdits] = useState<Rec | null>(null)
   const [result, setResult] = useState<'saved' | 'failed' | null>(null)
+  // The server's reasons for the last refused save (422), shown in plain words.
+  const [refused, setRefused] = useState<Problem[]>([])
   const value = edits ?? ((q.data?.value as Rec | undefined) ?? null)
   const dirty = edits !== null
   useUnsavedGuard(dirty)
@@ -120,9 +190,13 @@ export function KnowledgeSection({
     save.mutate(value, {
       onSuccess: () => {
         setEdits(null)
+        setRefused([])
         setResult('saved')
       },
-      onError: () => setResult('failed'),
+      onError: (e) => {
+        setRefused(e instanceof ConfigProblemsError ? e.problems : [])
+        setResult('failed')
+      },
     })
   }
 
@@ -139,13 +213,14 @@ export function KnowledgeSection({
   if (!q.data || !value) {
     return <ErrorState message={c.error} onRetry={() => void q.refetch()} data-testid={`knowledge-${section}-error`} />
   }
-  const sectionProblems = problemsFor(problems, `knowledge.${section}`)
+  const sectionProblems = refused.length ? refused : problemsFor(problems, `knowledge.${section}`)
+  const missing = canEdit ? sectionMissing(section, value) : []
   const agentNames = (agents.data?.agents ?? []).filter((a) => !a.archived).map((a) => a.name)
 
   return (
     <div className="admin-panel admin-section" data-testid={`knowledge-${section}`}>
       <p className="admin-muted">{c.sectionHints[section]}</p>
-      <ProblemList problems={sectionProblems} testId={`knowledge-${section}-problems`} />
+      <ProblemList lines={describeSectionProblems(section, value, sectionProblems)} testId={`knowledge-${section}-problems`} />
       <SelectInput
         label={c.status}
         value={String(value.status ?? 'UNAPPROVED')}
@@ -154,15 +229,20 @@ export function KnowledgeSection({
         onChange={(v) => update({ ...value, status: v })}
         testId={`knowledge-${section}-status`}
       />
-      <SectionBody section={section} value={value} canEdit={canEdit} onChange={update} catalog={catalog.data} agents={agentNames} />
+      <SectionBody section={section} value={value} canEdit={canEdit} onChange={update} catalog={catalog.data} agents={agentNames} problems={sectionProblems} />
       {canEdit ? (
         <div className="admin-actions admin-sticky-actions">
-          <Button onClick={onSave} disabled={!dirty || save.isPending} data-testid={`knowledge-${section}-save`}>
+          <Button onClick={onSave} disabled={!dirty || save.isPending || missing.length > 0} data-testid={`knowledge-${section}-save`}>
             {save.isPending ? c.saving : c.save}
           </Button>
+          {missing.length ? (
+            <span className="admin-muted" data-testid={`knowledge-${section}-missing`}>
+              {cf.fillIn(missing.join(', '))}
+            </span>
+          ) : null}
           {result ? (
             <span role="status" className={result === 'saved' ? 'admin-muted' : 'ui-field__error'} data-testid={`knowledge-${section}-result`}>
-              {result === 'saved' ? c.saved : c.saveFailed}
+              {result === 'saved' ? c.saved : refused.length ? cf.problemsTitle : c.saveFailed}
             </span>
           ) : null}
         </div>
@@ -178,6 +258,7 @@ function SectionBody({
   onChange,
   catalog,
   agents,
+  problems,
 }: {
   section: KnowledgeSection
   value: Rec
@@ -185,9 +266,10 @@ function SectionBody({
   onChange: (next: Rec) => void
   catalog: Catalog | undefined
   agents: string[]
+  problems: readonly Problem[]
 }) {
   const rows = ROWS[section]
-  if (rows) return <RowsEditor section={section} spec={rows} value={value} canEdit={canEdit} onChange={onChange} agents={agents} />
+  if (rows) return <RowsEditor section={section} spec={rows} value={value} canEdit={canEdit} onChange={onChange} agents={agents} problems={problems} />
   if (section === 'hours') return <HoursEditor value={value} canEdit={canEdit} onChange={onChange} />
   if (section === 'wording') return <WordingEditor value={value} canEdit={canEdit} onChange={onChange} />
   const floor = catalog?.floor
@@ -254,7 +336,8 @@ function SectionBody({
       {(['submitted', 'submitted_after_hours', 'custody'] as const).map((k) => (
         <TextArea
           key={k}
-          label={{ submitted: 'Line after a request is submitted', submitted_after_hours: 'Line after a request is submitted after hours', custody: 'Line for a custody or records concern' }[k]}
+          label={CLINIC_LINES[k]}
+          need="required"
           value={String(value[k] ?? '')}
           rows={3}
           max={400}
@@ -274,6 +357,7 @@ function RowsEditor({
   canEdit,
   onChange,
   agents,
+  problems,
 }: {
   section: KnowledgeSection
   spec: { list: string; id: string; fields: (agents: string[]) => FieldDef[] }
@@ -281,6 +365,7 @@ function RowsEditor({
   canEdit: boolean
   onChange: (next: Rec) => void
   agents: string[]
+  problems: readonly Problem[]
 }) {
   const rows = useMemo(() => (Array.isArray(value[spec.list]) ? (value[spec.list] as Rec[]) : []), [value, spec.list])
   const [search, setSearch] = useState('')
@@ -351,6 +436,7 @@ function RowsEditor({
         fields={fields}
         initial={editing?.row ?? {}}
         creating={editing?.index == null}
+        errors={editing && editing.index != null ? rowFieldErrors(problems, spec.list, [String(editing.index), String(editing.row[spec.id] ?? '')]) : {}}
         saving={false}
         onCancel={() => setEditing(null)}
         onSave={(row) => {
@@ -372,7 +458,7 @@ function HoursEditor({ value, canEdit, onChange }: { value: Rec; canEdit: boolea
   const setDay = (day: string, span: [string, string] | null) => onChange({ ...value, weekly: { ...weekly, [day]: span } })
   return (
     <div className="admin-section">
-      <TextField label="Time zone" value={String(value.timezone ?? '')} disabled={!canEdit} onChange={(e) => onChange({ ...value, timezone: e.target.value })} data-testid="hours-timezone" />
+      <TextField label="Time zone" need="required" value={String(value.timezone ?? '')} disabled={!canEdit} onChange={(e) => onChange({ ...value, timezone: e.target.value })} data-testid="hours-timezone" />
       <div className="admin-hours" data-testid="hours-weekly">
         {DAYS.map((day) => {
           const span = weekly[day] ?? null
@@ -404,8 +490,8 @@ function HoursEditor({ value, canEdit, onChange }: { value: Rec; canEdit: boolea
       {closures.length === 0 ? <p className="admin-muted">No closure days.</p> : null}
       {closures.map((cl, i) => (
         <div key={i} className="admin-hours__closure">
-          <TextField label="Date" type="date" value={cl.date} disabled={!canEdit} onChange={(e) => onChange({ ...value, closures: closures.map((x, j) => (j === i ? { ...x, date: e.target.value } : x)) })} data-testid={`hours-closure-${i}-date`} />
-          <TextField label="Reason" value={cl.reason} disabled={!canEdit} onChange={(e) => onChange({ ...value, closures: closures.map((x, j) => (j === i ? { ...x, reason: e.target.value } : x)) })} data-testid={`hours-closure-${i}-reason`} />
+          <TextField label="Date" need="required" type="date" value={cl.date} disabled={!canEdit} onChange={(e) => onChange({ ...value, closures: closures.map((x, j) => (j === i ? { ...x, date: e.target.value } : x)) })} data-testid={`hours-closure-${i}-date`} />
+          <TextField label="Reason" need="required" value={cl.reason} disabled={!canEdit} onChange={(e) => onChange({ ...value, closures: closures.map((x, j) => (j === i ? { ...x, reason: e.target.value } : x)) })} data-testid={`hours-closure-${i}-reason`} />
           {canEdit ? (
             <Button variant="secondary" onClick={() => onChange({ ...value, closures: closures.filter((_, j) => j !== i) })} data-testid={`hours-closure-${i}-remove`}>
               {c.remove}
@@ -435,6 +521,10 @@ const WORDING_LABELS: Record<string, string> = {
   reconnect_greeting: 'Reconnect instruction (to the agent)',
 }
 
+function wordingLabel(k: string): string {
+  return WORDING_LABELS[k] ?? (k.endsWith('_es') ? `${WORDING_LABELS[k.slice(0, -3)] ?? k} (Spanish)` : k)
+}
+
 function WordingEditor({ value, canEdit, onChange }: { value: Rec; canEdit: boolean; onChange: (next: Rec) => void }) {
   const keys = Object.keys(value).filter((k) => k !== 'status' && typeof value[k] === 'string')
   return (
@@ -442,7 +532,8 @@ function WordingEditor({ value, canEdit, onChange }: { value: Rec; canEdit: bool
       {keys.map((k) => (
         <TextArea
           key={k}
-          label={WORDING_LABELS[k] ?? (k.endsWith('_es') ? `${WORDING_LABELS[k.slice(0, -3)] ?? k} (Spanish)` : k)}
+          label={wordingLabel(k)}
+          need="required"
           rows={2}
           max={600}
           value={String(value[k] ?? '')}

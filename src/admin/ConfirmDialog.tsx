@@ -8,6 +8,8 @@ export interface ConfirmDialogProps {
   confirmLabel: string
   cancelLabel: string
   busy?: boolean
+  /** Keeps the confirm button off (e.g. required fields still empty). */
+  confirmDisabled?: boolean
   onConfirm: () => void
   onCancel: () => void
   testId: string
@@ -21,6 +23,7 @@ export function ConfirmDialog({
   confirmLabel,
   cancelLabel,
   busy = false,
+  confirmDisabled = false,
   onConfirm,
   onCancel,
   testId,
@@ -58,7 +61,7 @@ export function ConfirmDialog({
         <Button variant="secondary" onClick={onCancel} disabled={busy} data-testid={`${testId}-cancel`}>
           {cancelLabel}
         </Button>
-        <Button onClick={onConfirm} disabled={busy} data-testid={`${testId}-confirm`}>
+        <Button onClick={onConfirm} disabled={busy || confirmDisabled} data-testid={`${testId}-confirm`}>
           {confirmLabel}
         </Button>
       </div>
