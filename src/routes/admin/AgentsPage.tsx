@@ -4,7 +4,6 @@ import { useAgents, useConfigState, useSaveEntryAgent, type AgentSummary } from 
 import { AdminPage, CellLink, DataTable, SelectField, type Column } from '../../admin/DataTable'
 import { adminCopy } from '../../admin/copy'
 import { Button, EmptyState, ErrorState, StatusBadge } from '../../ui'
-import { LoadExampleButton } from '../../admin/ChangesBar'
 
 const c = adminCopy.agents
 
@@ -56,9 +55,8 @@ export function AgentsPage() {
         {canEdit ? (
           <span className="admin-actions">
             <Button onClick={() => navigate('/admin/agents/new')} data-testid="agents-empty-new">
-              {c.newAgent}
+              {c.createFirst}
             </Button>
-            <LoadExampleButton />
           </span>
         ) : null}
       </EmptyState>

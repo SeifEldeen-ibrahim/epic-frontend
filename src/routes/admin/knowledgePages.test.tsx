@@ -70,6 +70,63 @@ beforeEach(() => {
 })
 afterEach(cleanup)
 
+describe('xxadminformsfixxx: adding a service saves, and refusals read plainly', () => {
+  const services = {
+    name: 'knowledge.services',
+    value: {
+      status: 'UNAPPROVED',
+      services: [{ key: 'intake', name: 'Intake', aliases: [], description: 'New clients.', documents: null, wait_time: null, location: 'Main office', directions: 'Floor 1', source: 'site' }],
+    },
+    draft_problems: [],
+  }
+  beforeEach(() => {
+    replies['/api/admin/config/draft/knowledge/{section}'] = () => reply(200, services)
+  })
+
+  it('marks required fields, keeps Save off until they are filled, and saves a row with blank optional fields', async () => {
+    PUT.mockResolvedValue(reply(200, services))
+    renderAt('/admin/knowledge?section=services')
+    await userEvent.click(await screen.findByTestId('services-add'))
+    const dialog = screen.getByTestId('services-dialog')
+    const name = within(dialog).getByTestId('services-dialog-name')
+    expect(name).toHaveAttribute('aria-required', 'true')
+    expect(within(dialog).getByText('Name').closest('label')).toHaveTextContent('Name *Required')
+    expect(within(dialog).getByTestId('services-dialog-location').closest('.ui-field')).toHaveTextContent('(optional)')
+    expect(within(dialog).getByText('Note (where this info came from)').closest('label')).toHaveTextContent('(optional)')
+    expect(within(dialog).getByTestId('services-dialog-confirm')).toBeDisabled()
+    expect(within(dialog).getByTestId('services-dialog-missing')).toHaveTextContent('Fill in before saving: Name, Description, Key')
+    await userEvent.type(name, 'Flu Shot Clinic')
+    await userEvent.type(within(dialog).getByTestId('services-dialog-description'), 'Seasonal flu shots.')
+    expect(within(dialog).getByTestId('services-dialog-key')).toHaveValue('flu_shot_clinic')
+    expect(within(dialog).queryByTestId('services-dialog-missing')).toBeNull()
+    await userEvent.click(within(dialog).getByTestId('services-dialog-confirm'))
+    await userEvent.click(screen.getByTestId('knowledge-services-save'))
+    await waitFor(() => expect(PUT).toHaveBeenCalled())
+    const row = PUT.mock.calls[0][1].body.value.services[1]
+    expect(row).toMatchObject({ key: 'flu_shot_clinic', name: 'Flu Shot Clinic', description: 'Seasonal flu shots.', location: '', directions: '', source: '', aliases: [] })
+  }, 20_000)
+
+  it('shows a 422 refusal per row and field in plain words, and under the field when the row is opened', async () => {
+    PUT.mockResolvedValue(
+      reply(422, { detail: { code: 'invalid', problems: [{ document: 'knowledge.services', path: 'services.0.source', message: 'missing' }] } }),
+    )
+    renderAt('/admin/knowledge?section=services')
+    await userEvent.click(await screen.findByTestId('services-edit-intake'))
+    const dialog = screen.getByTestId('services-dialog')
+    await userEvent.type(within(dialog).getByTestId('services-dialog-name'), ' 2')
+    await userEvent.click(within(dialog).getByTestId('services-dialog-confirm'))
+    await userEvent.click(screen.getByTestId('knowledge-services-save'))
+    const list = await screen.findByTestId('knowledge-services-problems')
+    expect(list).toHaveTextContent('Row 1 (intake): Note is missing')
+    expect(list).not.toHaveTextContent('services.0.source')
+    expect(screen.getByTestId('knowledge-services-result')).not.toHaveTextContent('Check the values')
+    await userEvent.click(screen.getByTestId('services-edit-intake'))
+    const again = screen.getByTestId('services-dialog')
+    expect(within(again).getByTestId('services-dialog-source')).toHaveAttribute('aria-invalid', 'true')
+    expect(within(again).getByTestId('services-dialog-source').closest('.ui-field')).toHaveTextContent('Note is missing')
+  }, 20_000)
+})
+
 describe('T-FE: departments and knowledge pages', () => {
   it('shows departments on their own page with a help line and searchable rows', async () => {
     renderAt('/admin/departments')
