@@ -1414,3 +1414,29 @@
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+
+/* Voice picker + "Play sample" (agent editor). Wraps under the select on narrow screens. */
+.admin-voice-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-unit) calc(var(--space-unit) * 2);
+}
+
+.admin-voice-row > .ui-field {
+  flex: 1 1 calc(var(--space-unit) * 30);
+  min-width: 0;
+}
+
+.admin-voice-sample {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-unit);
+}
+
+.admin-voice-sample__status {
+  margin: 0;
+  min-height: calc(var(--space-unit) * 3);
+  color: var(--brand-muted);
+}

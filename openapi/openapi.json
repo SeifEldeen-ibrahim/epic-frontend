@@ -6221,6 +6221,89 @@
         ]
       }
     },
+    "/api/admin/config/voices/{voice}/sample": {
+      "get": {
+        "operationId": "get_voice_sample_api_admin_config_voices__voice__sample_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "voice",
+            "required": true,
+            "schema": {
+              "title": "Voice",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "audio/mpeg": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "A short spoken sample in this voice (mp3)"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Bad Gateway"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Get Voice Sample",
+        "tags": [
+          "admin-config"
+        ]
+      }
+    },
     "/api/admin/exports": {
       "get": {
         "operationId": "get_exports_api_admin_exports_get",
