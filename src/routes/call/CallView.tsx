@@ -1,7 +1,8 @@
 import { useEffect, useRef, type ReactNode } from 'react'
 import { Button, Notice, Spinner } from '../../ui'
-import { formatElapsed, type CallState, type CallStateKey } from './callMachine'
-import { COPY, CRISIS, EPIC_MAIN_NUMBER } from './copy'
+import type { ScreenLanguage, ScreenText } from '../../api/calls'
+import { formatElapsed, type CallState, type CallStateKey, type Lang } from './callMachine'
+import { COPY, CRISIS, EPIC_MAIN_NUMBER, SHIPPED_SCREEN_TEXT } from './copy'
 import './call.css'
 
 export interface CallViewProps {
@@ -11,6 +12,8 @@ export interface CallViewProps {
   onEnd: () => void
   onReset: () => void
   onUnlockAudio: () => void
+  /** Screen text from `GET /api/screen-text`; null/absent: the shipped English and Spanish text. */
+  screenText?: ScreenText | null
 }
 
 function Panel({
@@ -33,64 +36,125 @@ function Panel({
   )
 }
 
-function Bilingual({ en, es }: { en: string; es: string }) {
+type ScreenLines = Pick<ScreenLanguage, 'code' | 'dir' | 'lines'>
+
+const SHIPPED = SHIPPED_SCREEN_TEXT.languages
+
+/** en, es (always: the crisis screen needs Spanish), then the other enabled languages. Missing
+ * en/es lines fall back to the shipped text. */
+function languagesOf(text: ScreenText | null | undefined): ScreenLines[] {
+  const served = text?.languages ?? []
+  const merged = SHIPPED.map((shipped) => {
+    const own = served.find((l) => l.code === shipped.code)
+    return { ...shipped, ...own, lines: { ...shipped.lines, ...own?.lines } }
+  })
+  return [...merged, ...served.filter((l) => l.code !== 'en' && l.code !== 'es')]
+}
+
+function numbersOf(text: ScreenText | null | undefined) {
+  const served = text?.crisis_numbers.filter((n) => n.replace(/\D/g, '')) ?? []
+  return served.length ? served.map((label) => ({ label, tel: label.replace(/\D/g, '') })) : CRISIS.numbers
+}
+
+/** A known enabled call language shows only that language; otherwise every enabled one. */
+function shownFor(language: Lang | null | undefined, all: ScreenLines[]): ScreenLines[] {
+  const code = language?.toLowerCase().split(/[-_]/)[0]
+  const known = code ? all.find((l) => l.code === code) : undefined
+  return known ? [known] : all
+}
+
+function lineOf(lang: ScreenLines, key: string, title?: string): string | null {
+  const text = lang.lines[key]
+  if (!text) return null
+  return title === undefined ? text : text.split('{title}').join(title)
+}
+
+/** In right-to-left text a number such as 516-227-8255 is drawn group by group in reverse, which
+ * would show a caller the wrong number to dial. Each number is kept left-to-right in its own
+ * isolate; left-to-right text is returned unchanged. */
+function keepNumbers(text: string, dir: string): ReactNode {
+  if (dir !== 'rtl') return text
+  return text.split(/(\d[\d\- ]*\d|\d)/).map((part, i) =>
+    i % 2 === 1 ? (
+      <bdi key={i} dir="ltr">
+        {part}
+      </bdi>
+    ) : (
+      part
+    ),
+  )
+}
+
+/** One block per language (each with its own `lang`/`dir`); the first is the main status line.
+ * A language without this line is left out; English stands in if none has it. */
+function Lines({ langs, line, title }: { langs: ScreenLines[]; line: string; title?: string }) {
+  const blocks = langs.flatMap((lang) => {
+    const text = lineOf(lang, line, title)
+    return text ? [{ lang, text }] : []
+  })
+  const shown = blocks.length ? blocks : [{ lang: SHIPPED[0], text: lineOf(SHIPPED[0], line, title) ?? '' }]
   return (
     <>
-      <p className="call-status">{en}</p>
-      <p className="call-es" lang="es">
-        {es}
-      </p>
+      {shown.map(({ lang, text }, i) => (
+        <p key={lang.code} className={i === 0 ? 'call-status' : 'call-es'} lang={lang.code} dir={lang.dir}>
+          {keepNumbers(text, lang.dir)}
+        </p>
+      ))}
     </>
   )
 }
 
-type Lang = 'en' | 'es' | null
-
-function langOf(language: string | null | undefined): Lang {
-  const value = language?.toLowerCase() ?? ''
-  return value.startsWith('es') ? 'es' : value.startsWith('en') ? 'en' : null
-}
-
-/** One language once the call's language is known; both until then. */
-function Localized({ en, es, lang }: { en: string; es: string; lang: Lang }) {
-  if (lang === 'es')
+function MainLine({ langs }: { langs: ScreenLines[] }) {
+  const labels = langs.flatMap((lang) => {
+    const text = lineOf(lang, 'main_line_label')
+    return text ? [{ lang, text }] : []
+  })
+  if (EPIC_MAIN_NUMBER.tel) {
+    const first = labels[0] ?? { lang: SHIPPED[0], text: EPIC_MAIN_NUMBER.label }
     return (
-      <p className="call-status" lang="es">
-        {es}
-      </p>
+      <a className="ui-link" href={`tel:${EPIC_MAIN_NUMBER.tel}`} lang={first.lang.code} dir={first.lang.dir}>
+        {first.text}
+      </a>
     )
-  if (lang === 'en') return <p className="call-status">{en}</p>
-  return <Bilingual en={en} es={es} />
-}
-
-function MainLine() {
-  return EPIC_MAIN_NUMBER.tel ? (
-    <a className="ui-link" href={`tel:${EPIC_MAIN_NUMBER.tel}`}>
-      {EPIC_MAIN_NUMBER.label}
-    </a>
-  ) : (
+  }
+  return (
     <p>
-      {EPIC_MAIN_NUMBER.label} <span lang="es">· {EPIC_MAIN_NUMBER.labelEs}</span>
+      {labels.map(({ lang, text }, i) => (
+        <span key={lang.code} lang={lang.code} dir={lang.dir}>
+          {i > 0 ? ' · ' : ''}
+          {keepNumbers(text, lang.dir)}
+        </span>
+      ))}
     </p>
   )
 }
 
-function CrisisHelp() {
+function CrisisNumbers({ numbers }: { numbers: { label: string; tel: string }[] }) {
+  return (
+    <ul className="call-numbers" data-testid="call-crisis-numbers">
+      {numbers.map((n) => (
+        <li key={n.tel}>
+          <a className="ui-link" href={`tel:${n.tel}`}>
+            {n.label}
+          </a>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+function CrisisHelp({ langs, numbers }: { langs: ScreenLines[]; numbers: { label: string; tel: string }[] }) {
   return (
     <div className="call-help">
-      <p>{CRISIS.en}</p>
-      <p className="call-es" lang="es">
-        {CRISIS.es}
-      </p>
-      <ul className="call-numbers">
-        {CRISIS.numbers.map((n) => (
-          <li key={n.tel}>
-            <a className="ui-link" href={`tel:${n.tel}`}>
-              {n.label}
-            </a>
-          </li>
-        ))}
-      </ul>
+      {langs.map((lang, i) => {
+        const text = lineOf(lang, 'crisis_help')
+        return text ? (
+          <p key={lang.code} className={i === 0 ? undefined : 'call-es'} lang={lang.code} dir={lang.dir}>
+            {keepNumbers(text, lang.dir)}
+          </p>
+        ) : null
+      })}
+      <CrisisNumbers numbers={numbers} />
     </div>
   )
 }
@@ -115,9 +179,11 @@ export function CallView(props: CallViewProps) {
   return <div ref={rootRef}>{renderState(props)}</div>
 }
 
-function renderState({ state, elapsedSeconds, onCall, onEnd, onReset, onUnlockAudio }: CallViewProps) {
-  // Crisis and pre-call errors stay bilingual whatever the language.
-  const lang = langOf(state.language)
+function renderState({ state, elapsedSeconds, onCall, onEnd, onReset, onUnlockAudio, screenText }: CallViewProps) {
+  // Crisis and pre-call errors show every enabled language whatever the call's language.
+  const all = languagesOf(screenText)
+  const numbers = numbersOf(screenText)
+  const lang = shownFor(state.language, all)
   switch (state.key) {
     case 'idle':
       return (
@@ -141,18 +207,18 @@ function renderState({ state, elapsedSeconds, onCall, onEnd, onReset, onUnlockAu
     case 'mic_denied':
       return (
         <Panel stateKey="mic_denied">
-          <Bilingual {...COPY.micDenied} />
+          <Lines langs={all} line="mic_denied" />
           <div className="call-actions">
             <Button disabled>{COPY.call}</Button>
           </div>
         </Panel>
       )
     case 'unsupported': {
-      const copy = state.unsupportedReason === 'insecure' ? COPY.insecure : COPY.unsupported
+      const line = state.unsupportedReason === 'insecure' ? 'insecure' : 'unsupported'
       return (
         <Panel stateKey="unsupported">
-          <Bilingual {...copy} />
-          <MainLine />
+          <Lines langs={all} line={line} />
+          <MainLine langs={all} />
         </Panel>
       )
     }
@@ -184,7 +250,7 @@ function renderState({ state, elapsedSeconds, onCall, onEnd, onReset, onUnlockAu
     case 'reconnecting':
       return (
         <Panel stateKey="reconnecting">
-          <Localized {...COPY.reconnecting} lang={lang} />
+          <Lines langs={lang} line="reconnecting" />
           <div className="call-actions">
             <Button data-testid="call-end" onClick={onEnd}>
               {COPY.end}
@@ -195,7 +261,7 @@ function renderState({ state, elapsedSeconds, onCall, onEnd, onReset, onUnlockAu
     case 'ended':
       return (
         <Panel stateKey="ended">
-          <Localized {...COPY.ended} lang={lang} />
+          <Lines langs={lang} line="ended" />
           <div className="call-actions">
             <Button data-testid="call-again" onClick={onReset}>
               {COPY.callAgain}
@@ -206,9 +272,9 @@ function renderState({ state, elapsedSeconds, onCall, onEnd, onReset, onUnlockAu
     case 'unavailable':
       return (
         <Panel stateKey="unavailable">
-          <Bilingual {...COPY.unavailable} />
-          <MainLine />
-          <CrisisHelp />
+          <Lines langs={all} line="unavailable" />
+          <MainLine langs={all} />
+          <CrisisHelp langs={all} numbers={numbers} />
           <div className="call-actions">
             <Button variant="secondary" data-testid="call-retry" onClick={onReset}>
               {COPY.tryAgain}
@@ -217,24 +283,35 @@ function renderState({ state, elapsedSeconds, onCall, onEnd, onReset, onUnlockAu
         </Panel>
       )
     case 'crisis':
-      // Final for this page: no Call again (a reload is acceptable).
+      // Final for this page: no Call again (a reload is acceptable). The numbers come first so
+      // they are on screen without scrolling; then English, Spanish and every other language.
       return (
         <Panel stateKey="crisis" alert>
-          <h2 className="call-status call-heading" tabIndex={-1} data-testid="call-crisis-heading">
-            {COPY.crisis.en}
-          </h2>
-          <p className="call-es" lang="es">
-            {COPY.crisis.es}
-          </p>
-          <CrisisHelp />
+          <CrisisNumbers numbers={numbers} />
+          {all.map((l, i) => {
+            const heading = lineOf(l, 'crisis')
+            const help = lineOf(l, 'crisis_help')
+            return (
+              <div key={l.code} className="call-help" lang={l.code} dir={l.dir} data-testid={`call-crisis-${l.code}`}>
+                {i === 0 ? (
+                  <h2 className="call-status call-heading" tabIndex={-1} data-testid="call-crisis-heading">
+                    {heading && keepNumbers(heading, l.dir)}
+                  </h2>
+                ) : heading ? (
+                  <p className="call-es">{keepNumbers(heading, l.dir)}</p>
+                ) : null}
+                {help ? <p className={i === 0 ? undefined : 'call-es'}>{keepNumbers(help, l.dir)}</p> : null}
+              </div>
+            )
+          })}
         </Panel>
       )
     case 'handoff': {
       const title = state.handoffTitle ?? ''
       return (
         <Panel stateKey="handoff">
-          <Localized en={COPY.handoff.en(title)} es={COPY.handoff.es(title)} lang={lang} />
-          <Localized en={COPY.handoff.recordedEn} es={COPY.handoff.recordedEs} lang={lang} />
+          <Lines langs={lang} line="handoff_title" title={title} />
+          <Lines langs={lang} line="handoff_recorded" />
           <div className="call-actions">
             <Button data-testid="call-again" onClick={onReset}>
               {COPY.callAgain}
@@ -246,8 +323,8 @@ function renderState({ state, elapsedSeconds, onCall, onEnd, onReset, onUnlockAu
     case 'human_needed':
       return (
         <Panel stateKey="human_needed">
-          <Localized {...COPY.humanNeeded} lang={lang} />
-          <MainLine />
+          <Lines langs={lang} line="human_needed_screen" />
+          <MainLine langs={lang} />
           <div className="call-actions">
             <Button data-testid="call-again" onClick={onReset}>
               {COPY.callAgain}

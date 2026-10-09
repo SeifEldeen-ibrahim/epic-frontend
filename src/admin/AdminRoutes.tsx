@@ -12,6 +12,8 @@ import { FormBuilderPage } from '../routes/admin/FormBuilderPage'
 import { FormsPage } from '../routes/admin/FormsPage'
 import { HomePage } from '../routes/admin/HomePage'
 import { KnowledgePage } from '../routes/admin/KnowledgePage'
+import { LanguageDetailPage } from '../routes/admin/LanguageDetailPage'
+import { LanguagesPage } from '../routes/admin/LanguagesPage'
 import { LoginPage } from '../routes/admin/LoginPage'
 import { QueuePage } from '../routes/admin/QueuePage'
 import { ReportsPage } from '../routes/admin/ReportsPage'
@@ -87,6 +89,22 @@ export function AdminRoutes() {
           element={
             <RequireRole allow={['admin']}>
               <SettingsPage />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="languages"
+          element={
+            <RequireRole allow={['admin']}>
+              <LanguagesPage />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="languages/:code"
+          element={
+            <RequireRole allow={['admin']}>
+              <LanguageDetailPage />
             </RequireRole>
           }
         />

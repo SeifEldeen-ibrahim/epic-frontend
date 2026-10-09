@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { Link } from 'react-router'
 import {
   ConfigProblemsError,
   problemsFor,
@@ -277,34 +278,18 @@ function SectionBody({
   const floor = catalog?.floor
   const list = (k: string): string[] => (Array.isArray(value[k]) ? (value[k] as string[]) : [])
   if (section === 'crisis') {
-    const kw = (value.keywords as Rec | undefined) ?? {}
-    const kwList = (k: string): string[] => (Array.isArray(kw[k]) ? (kw[k] as string[]) : [])
     const agency = (value.agency_keywords as Record<string, string[]> | undefined) ?? {}
     return (
       <div className="admin-section">
         <div className="admin-locked-text" data-testid="crisis-instruction">
           <span className="admin-badge">{c.lockedBadge}</span>
           <p>{floor?.crisis_instruction}</p>
-          <p>{floor?.crisis_instruction_es}</p>
         </div>
-        <FloorList
-          label="Crisis phrases (English)"
-          floor={floor?.crisis_en ?? []}
-          additions={kwList('en')}
-          onChange={(v) => onChange({ ...value, keywords: { ...kw, en: v } })}
-          disabled={!canEdit}
-          testId="crisis-en"
-          lockedNote={c.locked}
-        />
-        <FloorList
-          label="Crisis phrases (Spanish)"
-          floor={floor?.crisis_es ?? []}
-          additions={kwList('es')}
-          onChange={(v) => onChange({ ...value, keywords: { ...kw, es: v } })}
-          disabled={!canEdit}
-          testId="crisis-es"
-          lockedNote={c.locked}
-        />
+        <p>
+          <Link className="ui-link" to="/admin/languages" data-testid="crisis-languages-link">
+            {adminCopy.languages.crisisLanguagesLink}
+          </Link>
+        </p>
         {Object.entries(floor?.crisis_agency ?? {}).map(([org, terms]) => (
           <FloorList
             key={org}
@@ -527,8 +512,11 @@ export function wordingLabel(k: string): string {
   return WORDING_LABELS[k] ?? (k.endsWith('_es') ? `${WORDING_LABELS[k.slice(0, -3)] ?? k} (Spanish)` : k)
 }
 
+/** The language-neutral wording fields; per-language lines live on the Language page. */
+const NEUTRAL_WORDING = ['greeting', 'refusal_suffix', 'reconnect_greeting']
+
 function WordingEditor({ value, canEdit, onChange }: { value: Rec; canEdit: boolean; onChange: (next: Rec) => void }) {
-  const keys = Object.keys(value).filter((k) => k !== 'status' && typeof value[k] === 'string')
+  const keys = NEUTRAL_WORDING.filter((k) => typeof value[k] === 'string')
   return (
     <div className="admin-section">
       {keys.map((k) => (
