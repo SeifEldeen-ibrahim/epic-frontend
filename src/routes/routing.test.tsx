@@ -77,7 +77,9 @@ describe('routing', () => {
   it.each([
     ['/admin/languages', 'admin-languages'],
     ['/admin/languages/ar', 'admin-language-detail'],
-  ])('T-LANG-PAGES: resolves %s for an admin', async (path, testId) => {
+    ['/admin/clinic-sim', 'admin-clinic-sim'],
+    ['/admin/clinic-sim?tab=departments', 'admin-clinic-sim'],
+  ])('T-LANG-PAGES / T-CLINIC-PAGES: resolves %s for an admin', async (path, testId) => {
     const GET = vi.mocked(api.GET) as unknown as ReturnType<typeof vi.fn>
     const admin = { id: '00000000-0000-4000-8000-000000000002', email: 'ada@example.test', display_name: 'Ada', role: 'admin', must_change_password: false }
     GET.mockImplementation(async (p: string) =>

@@ -45,6 +45,13 @@ import {
   fxRouting,
   fxVersionDiff,
   fxVersions,
+  fxClinicAppointments,
+  fxClinicDepartments,
+  fxClinicInfo,
+  fxClinicPatients,
+  fxClinicPatientsEmpty,
+  fxClinicProviders,
+  fxClinicSlots,
 } from './data'
 
 type Reply = (n: number) => Response | Promise<Response>
@@ -358,6 +365,48 @@ Object.assign(VIEWS, {
     me: fxAdmin,
     replies: { ...CFG(fxConfigBanners), 'GET /api/admin/config/versions': ok(fxVersions) },
   },
+} satisfies Record<string, ViewSpec>)
+
+// --- clinic-sim views: the practice clinic's patients, appointments and departments ----------
+const CLINIC = (patients: Reply = ok(fxClinicPatients)): Record<string, Reply> => ({
+  'GET /api/admin/clinic-sim/info': ok(fxClinicInfo),
+  'GET /api/admin/clinic-sim/departments': ok(fxClinicDepartments),
+  'GET /api/admin/clinic-sim/providers': ok(fxClinicProviders),
+  'GET /api/admin/clinic-sim/availability': ok(fxClinicSlots),
+  'GET /api/admin/clinic-sim/appointments': ok(fxClinicAppointments),
+  'POST /api/admin/clinic-sim/patients/search': patients,
+})
+const CLINIC_PATH = '/admin/clinic-sim'
+Object.assign(VIEWS, {
+  'clinic-patients': { path: `${CLINIC_PATH}?tab=patients`, me: fxAdmin, replies: CLINIC() },
+  'clinic-patients-empty': { path: `${CLINIC_PATH}?tab=patients`, me: fxAdmin, replies: CLINIC(ok(fxClinicPatientsEmpty)) },
+  'clinic-patients-loading': { path: `${CLINIC_PATH}?tab=patients`, me: fxAdmin, replies: CLINIC(hang) },
+  'clinic-patients-error': { path: `${CLINIC_PATH}?tab=patients`, me: fxAdmin, replies: CLINIC(fail(500, 'fixture error')) },
+  'clinic-patients-unreachable': {
+    path: `${CLINIC_PATH}?tab=patients`,
+    me: fxAdmin,
+    replies: CLINIC(fail(503, 'clinic_sim_unavailable')),
+  },
+  'clinic-appointments': { path: `${CLINIC_PATH}?tab=appointments`, me: fxAdmin, replies: CLINIC() },
+  'clinic-book-dialog': {
+    path: `${CLINIC_PATH}?tab=appointments`,
+    me: fxAdmin,
+    replies: CLINIC(),
+    after: () =>
+      drive(
+        () => click('clinic-book'),
+        () => {
+          const sel = document.querySelector('[data-testid=clinic-book-department]')
+          if (!(sel instanceof HTMLSelectElement) || sel.options.length < 2) return false
+          Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value')?.set?.call(sel, '1')
+          sel.dispatchEvent(new Event('change', { bubbles: true }))
+          return true
+        },
+        () => fill('clinic-book-date', '2026-11-02'),
+      ),
+  },
+  'clinic-departments': { path: `${CLINIC_PATH}?tab=departments`, me: fxAdmin, replies: CLINIC() },
+  'clinic-sim-forbidden': { path: CLINIC_PATH, me: fxReviewer, replies: CLINIC() },
 } satisfies Record<string, ViewSpec>)
 
 /** Clears the parent route match so the nested routes match `/admin/...` from the root. */

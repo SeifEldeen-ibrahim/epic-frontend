@@ -101,7 +101,7 @@ describe('admin guards', () => {
     expect(screen.getByTestId('admin-logout')).toBeInTheDocument()
   })
 
-  it.each(['/admin/exports', '/admin/audit', '/admin/settings', '/admin/languages', '/admin/languages/ar'])('shows a reviewer the 403 page on %s', async (path) => {
+  it.each(['/admin/exports', '/admin/audit', '/admin/settings', '/admin/languages', '/admin/languages/ar', '/admin/clinic-sim', '/admin/clinic-sim?tab=appointments'])('shows a reviewer the 403 page on %s', async (path) => {
     signIn(reviewer)
     renderAt(path)
     const forbidden = await screen.findByTestId('forbidden')
@@ -113,6 +113,7 @@ describe('admin guards', () => {
     expect(within(nav).queryByRole('link', { name: 'Audit log', hidden: true })).toBeNull()
     expect(within(nav).queryByRole('link', { name: 'Voice settings', hidden: true })).toBeNull()
     expect(within(nav).queryByRole('link', { name: 'Language', hidden: true })).toBeNull()
+    expect(within(nav).queryByRole('link', { name: 'Clinic sim', hidden: true })).toBeNull()
     expect(within(nav).getByRole('link', { name: 'Approval queue', hidden: true })).toBeInTheDocument()
     expect(within(nav).getByRole('link', { name: 'Account', hidden: true })).toBeInTheDocument()
   })
@@ -123,6 +124,7 @@ describe('admin guards', () => {
     ['/admin/settings', 'admin-settings'],
     ['/admin/languages', 'admin-languages'],
     ['/admin/languages/ar', 'admin-language-detail'],
+    ['/admin/clinic-sim', 'admin-clinic-sim'],
   ])('lets an admin open %s and see the admin nav links', async (path, testId) => {
     signIn(admin)
     renderAt(path)
@@ -132,6 +134,7 @@ describe('admin guards', () => {
     expect(within(nav).getByRole('link', { name: 'Audit log', hidden: true })).toBeInTheDocument()
     expect(within(nav).getByRole('link', { name: 'Voice settings', hidden: true })).toBeInTheDocument()
     expect(within(nav).getByRole('link', { name: 'Language', hidden: true })).toHaveAttribute('href', '/admin/languages')
+    expect(within(nav).getByRole('link', { name: 'Clinic sim', hidden: true })).toHaveAttribute('href', '/admin/clinic-sim')
     expect(screen.getByTestId('admin-nav-group-more')).toHaveAttribute('data-active', 'true')
   })
 
@@ -160,7 +163,7 @@ describe('admin guards', () => {
       within(screen.getByTestId(`admin-nav-group-${group}`)).getAllByRole('link', { hidden: true }).map((a) => a.textContent)
     expect(links('daily')).toEqual(['Approval queue', 'Follow-up', 'Calls', 'Reports'])
     expect(links('setup')).toEqual(['Knowledge', 'Departments', 'Forms', 'Agents', 'History'])
-    expect(links('more')).toEqual(['Voice settings', 'Language', 'Exports', 'Audit log', 'Account'])
+    expect(links('more')).toEqual(['Voice settings', 'Language', 'Exports', 'Audit log', 'Clinic sim', 'Account'])
   })
 
   it('sends a signed-in user away from the login page to Home', async () => {
