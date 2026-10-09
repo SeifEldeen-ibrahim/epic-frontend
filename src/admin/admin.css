@@ -1553,3 +1553,57 @@
   outline: calc(var(--space-unit) / 4) solid var(--brand-focus);
   outline-offset: calc(var(--space-unit) / 4);
 }
+
+/* Clinic sim: free-time buttons in the book dialog (large, at least --target-min tall). */
+.admin-slots {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, calc(var(--space-unit) * 22)), 1fr));
+  gap: var(--space-unit);
+}
+
+.admin-slot {
+  min-height: var(--target-min);
+  padding: var(--space-unit) calc(var(--space-unit) * 1.5);
+  border: calc(var(--space-unit) / 8) solid var(--brand-border);
+  border-radius: var(--radius-md);
+  background: var(--brand-bg);
+  color: var(--brand-text);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.admin-slot:hover:not(:disabled) {
+  border-color: var(--brand-primary);
+}
+
+.admin-slot:focus-visible {
+  outline: calc(var(--space-unit) / 4) solid var(--brand-focus);
+  outline-offset: calc(var(--space-unit) / 4);
+}
+
+.admin-slot[aria-pressed='true'] {
+  border-color: var(--brand-primary);
+  background: var(--brand-primary);
+  color: var(--brand-on-primary);
+}
+
+.admin-slot:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+@media (max-width: 47.99rem) {
+  .admin-slots {
+    grid-template-columns: 1fr;
+  }
+}
+
+.admin-nowrap,
+.admin-actions--nowrap {
+  white-space: nowrap;
+}
+
+.admin-actions--nowrap {
+  flex-wrap: nowrap;
+}

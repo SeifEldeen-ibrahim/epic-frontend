@@ -4,6 +4,7 @@ import { AgentEditorPage } from '../routes/admin/AgentEditorPage'
 import { AgentsPage } from '../routes/admin/AgentsPage'
 import { AuditPage } from '../routes/admin/AuditPage'
 import { CallDetailPage } from '../routes/admin/CallDetailPage'
+import { ClinicSimPage } from '../routes/admin/ClinicSimPage'
 import { CallsPage } from '../routes/admin/CallsPage'
 import { DepartmentsPage } from '../routes/admin/DepartmentsPage'
 import { ExportsPage } from '../routes/admin/ExportsPage'
@@ -105,6 +106,14 @@ export function AdminRoutes() {
           element={
             <RequireRole allow={['admin']}>
               <LanguageDetailPage />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="clinic-sim"
+          element={
+            <RequireRole allow={['admin']}>
+              <ClinicSimPage />
             </RequireRole>
           }
         />
