@@ -16,6 +16,7 @@ import {
   fxForm,
   fxForms,
   fxFormsEmpty,
+  fxLanguageCatalog,
   fxReviewer,
   fxRouting,
 } from '../../admin/fixtures/data'
@@ -66,6 +67,7 @@ beforeEach(() => {
     '/api/admin/config/draft/agents/{name}': (init) =>
       init?.params?.path?.name === 'switchboard' ? reply(200, fxAgentSwitchboard) : init?.params?.path?.name === 'fixture_desk' ? reply(200, fxAgentDesk) : reply(404, { detail: 'not_found' }),
     '/api/admin/config/draft/agents/{name}/compiled': () => reply(200, fxCompiled),
+    '/api/admin/config/languages/catalog': () => reply(200, fxLanguageCatalog),
     '/api/admin/config/draft/forms/{name}': () => reply(200, fxForm),
   }
   serve()
@@ -106,6 +108,19 @@ describe('T-FE: agents', () => {
     expect(body.route_targets).toEqual(['fixture_dept'])
     expect(body.form).toBeNull()
     expect(Object.keys(body)).not.toContain('prompt')
+  })
+
+  it('T-EDITORS: the agent editor keeps the English handoff line and shows other languages with a link', async () => {
+    replies['/api/admin/config/draft/agents'] = () =>
+      reply(200, { ...fxAgents, agents: fxAgents.agents.map((a) => (a.name === 'fixture_desk' ? { ...a, other_languages: [{ code: 'es', filled: true }, { code: 'ar', filled: false }] } : a)) })
+    renderAt('/admin/agents/fixture_desk')
+    expect(await screen.findByTestId('agent-bridge')).toBeInTheDocument()
+    expect(screen.queryByTestId('agent-bridge-es')).toBeNull()
+    expect(screen.getByTestId('agent-handoff')).not.toHaveTextContent(/\(Spanish\)/)
+    const note = screen.getByTestId('agent-other-languages')
+    await waitFor(() => expect(note).toHaveTextContent('Other languages: Spanish ✓ filled, Arabic ✗ not filled yet, on the Language page'))
+    expect(within(note).getByTestId('agent-other-es').querySelector('.admin-sr-only')).toHaveTextContent('filled')
+    expect(within(note).getByRole('link', { name: 'on the Language page' })).toHaveAttribute('href', '/admin/languages')
   })
 
   it('opens switchboard in the same editor with every tool editable', async () => {

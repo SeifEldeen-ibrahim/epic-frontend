@@ -184,13 +184,33 @@ describe('T-FE: departments and knowledge pages', () => {
     expect(screen.queryByTestId('knowledge-routing-save')).toBeNull()
   })
 
-  it('shows built-in crisis words as always on, not removable', async () => {
+  it('T-EDITORS: crisis keeps agency words (built-in ones locked) and links to the Language page; no Spanish lists', async () => {
     replies['/api/admin/config/draft/knowledge/{section}'] = () =>
-      reply(200, { name: 'knowledge.crisis', value: { status: 'UNAPPROVED', keywords: { en: ['added phrase'], es: [] }, agency_keywords: {} }, draft_problems: [] })
+      reply(200, { name: 'knowledge.crisis', value: { status: 'UNAPPROVED', agency_keywords: { fixture_agency: ['added word'] } }, draft_problems: [] })
     renderAt('/admin/knowledge?section=crisis')
-    const en = await screen.findByTestId('crisis-en')
-    expect(within(en).getByTestId('crisis-en-locked')).toHaveTextContent('fixture crisis phrase')
-    expect(within(en).getAllByTestId('crisis-en-remove')).toHaveLength(1) // only the addition
+    const agency = await screen.findByTestId('crisis-agency-fixture_agency')
+    expect(within(agency).getByTestId('crisis-agency-fixture_agency-locked')).toHaveTextContent('FXA')
+    expect(within(agency).getAllByTestId('crisis-agency-fixture_agency-remove')).toHaveLength(1) // only the addition
+    const link = screen.getByTestId('crisis-languages-link')
+    expect(link).toHaveTextContent('Crisis phrases for each language are on the Language page')
+    expect(link).toHaveAttribute('href', '/admin/languages')
+    expect(screen.queryByTestId('crisis-en')).toBeNull()
+    expect(screen.queryByTestId('crisis-es')).toBeNull()
+    expect(document.body).not.toHaveTextContent(/Spanish/)
+  })
+
+  it('T-EDITORS: the wording editor shows only the language-neutral fields, no _es labels', async () => {
+    replies['/api/admin/config/draft/knowledge/{section}'] = () =>
+      reply(200, {
+        name: 'knowledge.wording',
+        value: { status: 'UNAPPROVED', greeting: 'Hello, this call is recorded.', refusal_suffix: 'Say no kindly.', reconnect_greeting: 'Welcome back.', human_needed_es: 'stale' },
+        draft_problems: [],
+      })
+    renderAt('/admin/knowledge?section=wording')
+    expect(await screen.findByDisplayValue('Hello, this call is recorded.')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Welcome back.')).toBeInTheDocument()
+    expect(screen.queryByDisplayValue('stale')).toBeNull()
+    expect(document.body).not.toHaveTextContent(/Spanish|_es/)
   })
 
   it('shows a retryable error', async () => {

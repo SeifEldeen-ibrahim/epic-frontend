@@ -4,6 +4,7 @@ import { MemoryRouter } from 'react-router'
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createQueryClient } from '../api/queryClient'
 import { App } from '../App'
+import { api } from '../api/client'
 
 vi.mock('../api/client', () => ({
   api: { GET: vi.fn(() => new Promise(() => {})) },
@@ -71,5 +72,23 @@ describe('routing', () => {
     expect(screen.getByTestId('login-password')).toBeInTheDocument()
     expect(screen.getByTestId('login-submit')).toBeInTheDocument()
     expect(screen.queryByTestId('admin-shell')).toBeNull()
+  })
+
+  it.each([
+    ['/admin/languages', 'admin-languages'],
+    ['/admin/languages/ar', 'admin-language-detail'],
+  ])('T-LANG-PAGES: resolves %s for an admin', async (path, testId) => {
+    const GET = vi.mocked(api.GET) as unknown as ReturnType<typeof vi.fn>
+    const admin = { id: '00000000-0000-4000-8000-000000000002', email: 'ada@example.test', display_name: 'Ada', role: 'admin', must_change_password: false }
+    GET.mockImplementation(async (p: string) =>
+      p === '/api/admin/auth/me' ? { data: admin, error: undefined, response: { status: 200 } } : new Promise(() => {}),
+    )
+    try {
+      renderAt(path)
+      expect(await screen.findByTestId(testId)).toBeInTheDocument()
+      expect(screen.queryByTestId('not-found')).toBeNull()
+    } finally {
+      GET.mockImplementation(() => new Promise(() => {}))
+    }
   })
 })

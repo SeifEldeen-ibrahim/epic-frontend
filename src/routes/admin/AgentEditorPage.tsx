@@ -4,11 +4,13 @@ import { AdminApiError } from '../../api/admin'
 import {
   problemsFor,
   useAgent,
+  useAgents,
   useCatalog,
   useCompiled,
   useConfigState,
   useForms,
   useKnowledgeSection,
+  useLanguageCatalog,
   useSaveAgent,
   type Problem,
 } from '../../api/config'
@@ -36,7 +38,6 @@ const LABELS: Record<string, string> = {
   form: c.formPick,
   handoff: c.handoff,
   bridge_say: c.bridgeSay,
-  bridge_say_es: c.bridgeSayEs,
   greeting: c.greeting,
   archived: 'Archived',
 }
@@ -44,6 +45,35 @@ const LABELS: Record<string, string> = {
 function describe(p: Problem): string {
   return describeProblem(p, { list: 'knowledge', rowLabel: (seg) => (/^\d+$/.test(seg) ? cf.item(Number(seg) + 1) : seg), fieldLabel: (k) => LABELS[k] })
 }
+/** "Other languages: Spanish ✓, Arabic ✗, on the Language page" — the handoff line in each other language. */
+function OtherLanguagesNote({ name }: { name: string }) {
+  const agents = useAgents()
+  const languages = useLanguageCatalog()
+  const others = (name && agents.data?.agents.find((a) => a.name === name)?.other_languages) || []
+  const nameOf = (lang: string) => languages.data?.languages.find((l) => l.code === lang)?.name ?? lang
+  return (
+    <p data-testid="agent-other-languages">
+      {others.length ? (
+        <>
+          {c.otherLanguages}{' '}
+          {others.map((o) => (
+            <span key={o.code} data-testid={`agent-other-${o.code}`}>
+              {nameOf(o.code)} <span aria-hidden="true">{o.filled ? '✓' : '✗'}</span>
+              <span className="admin-sr-only">{` ${o.filled ? c.filled : c.notFilled}`}</span>
+              {', '}
+            </span>
+          ))}
+        </>
+      ) : (
+        `${c.otherLanguagesNone} `
+      )}
+      <Link className="ui-link" to="/admin/languages" data-testid="agent-other-languages-link">
+        {c.onLanguagePage}
+      </Link>
+    </p>
+  )
+}
+
 const FORM_TOOLS = ['save_fields', 'confirm_callback', 'submit_form']
 const NAME = /^[a-z][a-z0-9_]{2,31}$/
 
@@ -53,7 +83,6 @@ interface Item {
 }
 interface Handoff {
   bridge_say: string
-  bridge_say_es: string
   greeting: string
 }
 interface AgentValue {
@@ -168,7 +197,7 @@ export function AgentEditorPage() {
   const onSave = () => {
     const body = {
       ...value,
-      handoff: value.handoff && (value.handoff.bridge_say || value.handoff.bridge_say_es || value.handoff.greeting) ? value.handoff : null,
+      handoff: value.handoff && (value.handoff.bridge_say || value.handoff.greeting) ? value.handoff : null,
       tools: value.tools.includes('end_call') ? value.tools : [...value.tools, 'end_call'],
     }
     save.mutate(body, {
@@ -363,9 +392,9 @@ export function AgentEditorPage() {
         </fieldset>
         <fieldset className="admin-fieldset" data-testid="agent-handoff">
           <legend>{c.handoff}</legend>
-          <TextField label={c.bridgeSay} need="optional" value={value.handoff?.bridge_say ?? ''} maxLength={300} disabled={locked} onChange={(e) => set({ handoff: { ...(value.handoff ?? { bridge_say: '', bridge_say_es: '', greeting: '' }), bridge_say: e.target.value } })} data-testid="agent-bridge" />
-          <TextField label={c.bridgeSayEs} need="optional" value={value.handoff?.bridge_say_es ?? ''} maxLength={300} disabled={locked} onChange={(e) => set({ handoff: { ...(value.handoff ?? { bridge_say: '', bridge_say_es: '', greeting: '' }), bridge_say_es: e.target.value } })} data-testid="agent-bridge-es" />
-          <TextField label={c.greeting} need="optional" hint={c.greetingHint} value={value.handoff?.greeting ?? ''} maxLength={300} disabled={locked} onChange={(e) => set({ handoff: { ...(value.handoff ?? { bridge_say: '', bridge_say_es: '', greeting: '' }), greeting: e.target.value } })} data-testid="agent-greeting" />
+          <TextField label={c.bridgeSay} need="optional" value={value.handoff?.bridge_say ?? ''} maxLength={300} disabled={locked} onChange={(e) => set({ handoff: { ...(value.handoff ?? { bridge_say: '', greeting: '' }), bridge_say: e.target.value } })} data-testid="agent-bridge" />
+          <TextField label={c.greeting} need="optional" hint={c.greetingHint} value={value.handoff?.greeting ?? ''} maxLength={300} disabled={locked} onChange={(e) => set({ handoff: { ...(value.handoff ?? { bridge_say: '', greeting: '' }), greeting: e.target.value } })} data-testid="agent-greeting" />
+          <OtherLanguagesNote name={creating ? '' : value.name} />
         </fieldset>
         <CheckboxInput label={c.archivedLabel} checked={value.archived} disabled={locked} onChange={(on) => set({ archived: on })} testId="agent-archived" />
         {saved ? (

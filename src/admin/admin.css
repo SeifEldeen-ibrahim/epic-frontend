@@ -1440,3 +1440,116 @@
   min-height: calc(var(--space-unit) * 3);
   color: var(--brand-muted);
 }
+
+/* Language list: one row per language; wraps to stacked rows on phones. */
+.admin-lang-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-unit);
+}
+.admin-lang-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-unit) calc(var(--space-unit) * 2);
+  padding: calc(var(--space-unit) * 1.5);
+  border: calc(var(--space-unit) / 8) solid var(--brand-border);
+  border-radius: var(--radius-md);
+  background: var(--brand-surface);
+  min-width: 0;
+}
+.admin-lang-row__name {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 calc(var(--space-unit) * 18);
+  min-width: 0;
+}
+.admin-lang-row__status {
+  margin: 0;
+  flex: 0 1 auto;
+}
+.admin-lang-row__fill {
+  display: inline-flex;
+  align-items: center;
+  min-height: calc(var(--space-unit) * 5.5);
+  min-width: calc(var(--space-unit) * 5.5);
+}
+.admin-lang-row__error {
+  flex-basis: 100%;
+  margin: 0;
+}
+.admin-lang-row__skeleton {
+  display: block;
+  width: 100%;
+  height: calc(var(--space-unit) * 5.5);
+}
+.admin-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-unit);
+  min-height: calc(var(--space-unit) * 5.5);
+}
+.admin-switch__input {
+  appearance: none;
+  position: relative;
+  flex: none;
+  margin: 0;
+  width: calc(var(--space-unit) * 5.5);
+  height: calc(var(--space-unit) * 3);
+  border: calc(var(--space-unit) / 8) solid var(--brand-border);
+  border-radius: calc(var(--space-unit) * 1.5);
+  background: var(--brand-bg);
+  cursor: pointer;
+  transition: background var(--motion-normal) ease;
+}
+.admin-switch__input::after {
+  content: '';
+  position: absolute;
+  inset-block-start: calc(var(--space-unit) / 4);
+  inset-inline-start: calc(var(--space-unit) / 4);
+  width: calc(var(--space-unit) * 2.25);
+  height: calc(var(--space-unit) * 2.25);
+  border-radius: 50%;
+  background: var(--brand-muted);
+  transition: transform var(--motion-normal) ease;
+}
+.admin-switch__input:checked {
+  background: var(--brand-primary);
+  border-color: var(--brand-primary);
+}
+.admin-switch__input:checked::after {
+  background: var(--brand-on-primary);
+  transform: translateX(calc(var(--space-unit) * 2.5));
+}
+.admin-switch__input[aria-disabled='true'] {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+.admin-switch__input:focus-visible {
+  outline: calc(var(--space-unit) / 4) solid var(--brand-focus);
+  outline-offset: calc(var(--space-unit) / 4);
+}
+@media (prefers-reduced-motion: reduce) {
+  .admin-switch__input,
+  .admin-switch__input::after {
+    transition: none;
+  }
+}
+.admin-lang-detail__name {
+  overflow-wrap: anywhere;
+}
+.admin-lang-group {
+  display: grid;
+  gap: calc(var(--space-unit) * 2);
+}
+.admin-lang-locked__text {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.admin-lang-locked:focus-visible,
+.admin-lang-group [tabindex='-1']:focus-visible {
+  outline: calc(var(--space-unit) / 4) solid var(--brand-focus);
+  outline-offset: calc(var(--space-unit) / 4);
+}

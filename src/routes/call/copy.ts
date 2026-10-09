@@ -3,6 +3,8 @@
  * approves the wording and the owner supplies the number (see the talking-demo plan).
  */
 
+import type { ScreenText } from '../../api/calls'
+
 export const EPIC_MAIN_NUMBER = {
   /** UNAPPROVED: number not yet supplied. */
   label: "The clinic's main line — number to be confirmed",
@@ -69,4 +71,50 @@ export const COPY = {
     en: 'A member of the clinic staff needs to help with this.',
     es: 'Un miembro del personal de la clínica necesita ayudarle con esto.',
   },
+}
+
+/** The shipped English and Spanish screen text, keyed like `GET /api/screen-text` lines. Used when
+ * the fetch fails or is still loading, and for any en/es line the server leaves out. */
+export const SHIPPED_SCREEN_TEXT: ScreenText = {
+  languages: [
+    {
+      code: 'en',
+      name: 'English',
+      dir: 'ltr',
+      lines: {
+        reconnecting: COPY.reconnecting.en,
+        ended: COPY.ended.en,
+        mic_denied: COPY.micDenied.en,
+        unsupported: COPY.unsupported.en,
+        insecure: COPY.insecure.en,
+        unavailable: COPY.unavailable.en,
+        crisis: COPY.crisis.en,
+        crisis_help: CRISIS.en,
+        handoff_title: COPY.handoff.en('{title}'),
+        handoff_recorded: COPY.handoff.recordedEn,
+        human_needed_screen: COPY.humanNeeded.en,
+        main_line_label: EPIC_MAIN_NUMBER.label,
+      },
+    },
+    {
+      code: 'es',
+      name: 'Español',
+      dir: 'ltr',
+      lines: {
+        reconnecting: COPY.reconnecting.es,
+        ended: COPY.ended.es,
+        mic_denied: COPY.micDenied.es,
+        unsupported: COPY.unsupported.es,
+        insecure: COPY.insecure.es,
+        unavailable: COPY.unavailable.es,
+        crisis: COPY.crisis.es,
+        crisis_help: CRISIS.es,
+        handoff_title: COPY.handoff.es('{title}'),
+        handoff_recorded: COPY.handoff.recordedEs,
+        human_needed_screen: COPY.humanNeeded.es,
+        main_line_label: EPIC_MAIN_NUMBER.labelEs,
+      },
+    },
+  ],
+  crisis_numbers: CRISIS.numbers.map((n) => n.label),
 }
