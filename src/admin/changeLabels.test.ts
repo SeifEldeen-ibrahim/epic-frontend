@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { ChangeItem } from '../api/config'
-import { fieldLabel, formatValue, groupChanges, summarize, type LabelContext } from './changeLabels'
+import { fieldLabel, formatValue, groupChanges, languageLabel, plainLabel, summarize, type LabelContext } from './changeLabels'
 
 const ctx: LabelContext = {
   names: { agents: { clinic: 'Clinic Intake', desk: 'Receptionist' }, forms: { intake: 'Intake request' }, departments: { billing: 'Billing' } },
@@ -26,7 +26,6 @@ describe('T-FE-LABELS: plain labels for every editor field', () => {
     ['knowledge', 'services', ['status']],
     ...['title', 'persona', 'voice', 'knowledge', 'tools', 'route_targets', 'form', 'archived'].map((k) => ['agents', null, [k]] as [ChangeItem['area'], null, string[]]),
     ['agents', null, ['handoff', 'bridge_say']],
-    ['agents', null, ['handoff', 'bridge_say_es']],
     ['agents', null, ['handoff', 'greeting']],
     ...['title', 'archived', 'never_collect'].map((k) => ['forms', null, [k]] as [ChangeItem['area'], null, string[]]),
     ...['label', 'type', 'required', 'help', 'readback_label', 'values', 'stop_values', 'max_length', 'max_items', 'minimum', 'maximum'].map(
@@ -115,5 +114,13 @@ describe('T-FE-LABELS: summary sentence', () => {
       ]),
     ).toBe('3 services added, 1 department changed, agent Receptionist changed, Hours & closures changed')
     expect(summarize([])).toBe('Nothing changed.')
+  })
+})
+
+describe('T-LANG-PAGES: change labels name any language', () => {
+  it('reads "(Arabic)"', () => {
+    expect(languageLabel('Closed now', 'Arabic')).toBe('Closed now (Arabic)')
+    expect(plainLabel('Closed now (Arabic)')).toBe('Closed now (Arabic)')
+    expect(plainLabel('Line the previous agent says (Spanish)')).toBe('Line the previous agent says (Spanish)')
   })
 })

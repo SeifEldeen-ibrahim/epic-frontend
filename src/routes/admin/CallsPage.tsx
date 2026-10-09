@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { useSearchParams } from 'react-router'
 import { useCalls, type CallListResponse, type CallsParams } from '../../api/admin'
+import { useLanguageCatalog } from '../../api/config'
 import { AdminPage, CellLink, DataTable, Pager, SelectField, type Column } from '../../admin/DataTable'
 import { adminCopy as c, formStatusTone, formatTime, label, orDash, outcomeTone } from '../../admin/copy'
 import { Button, EmptyState, ErrorState, StatusBadge, TextField } from '../../ui'
@@ -66,7 +67,13 @@ function toParams(d: Draft): CallsParams {
   }
 }
 
-const columns: Column<Item>[] = [
+type Lang = { code: string; name: string }
+
+/** A language's name; the stored value when the language list is not available. */
+export const languageName = (langs: readonly Lang[] | undefined, value: string | null | undefined) =>
+  value ? (langs?.find((l) => l.code === value)?.name ?? value) : c.dash
+
+const makeColumns = (langs: readonly Lang[] | undefined): Column<Item>[] => [
   {
     key: 'started',
     header: c.cols.started,
@@ -86,7 +93,7 @@ const columns: Column<Item>[] = [
     cell: (r) => (r.outcome ? <StatusBadge tone={outcomeTone(r.outcome)}>{label(r.outcome)}</StatusBadge> : c.dash),
   },
   { key: 'route', header: c.cols.route, cell: (r) => label(r.route_role) },
-  { key: 'language', header: c.cols.language, cell: (r) => orDash(r.language) },
+  { key: 'language', header: c.cols.language, cell: (r) => languageName(langs, r.language) },
   {
     key: 'form',
     header: c.cols.formStatus,
@@ -98,7 +105,7 @@ const columns: Column<Item>[] = [
   { key: 'version', header: c.cols.agentVersion, cell: (r) => r.agent_version },
 ]
 
-function Filters({ initial, onApply, onClear }: { initial: Draft; onApply: (d: Draft) => void; onClear: () => void }) {
+function Filters({ initial, onApply, onClear, langs }: { initial: Draft; onApply: (d: Draft) => void; onClear: () => void; langs?: readonly Lang[] }) {
   const [d, setD] = useState(initial)
   const set = (k: Key) => (v: string) => setD((prev) => ({ ...prev, [k]: v }))
   const text = (k: Key, fieldLabel: string, type = 'text') => (
@@ -127,7 +134,21 @@ function Filters({ initial, onApply, onClear }: { initial: Draft; onApply: (d: D
         options={options(FORM_STATUSES)}
         testId="calls-filter-form_status"
       />
-      {text('language', c.cols.language)}
+      {langs ? (
+        <SelectField
+          label={c.cols.language}
+          value={d.language}
+          onChange={set('language')}
+          options={[
+            any,
+            ...langs.map((l) => ({ value: l.code, label: l.name })),
+            ...(d.language && !langs.some((l) => l.code === d.language) ? [{ value: d.language, label: d.language }] : []),
+          ]}
+          testId="calls-filter-language"
+        />
+      ) : (
+        text('language', c.cols.language)
+      )}
       <SelectField
         label={c.calls.hasFlags}
         value={d.has_open_flags}
@@ -158,6 +179,8 @@ export function CallsPage() {
   const stack = pager.key === qs ? pager.stack : []
   const cursor = stack.length ? stack[stack.length - 1] : undefined
   const q = useCalls({ ...toParams(draft), cursor })
+  const langs = useLanguageCatalog().data?.languages
+  const columns = makeColumns(langs)
 
   const apply = (d: Draft) => {
     const next = new URLSearchParams()
@@ -183,7 +206,7 @@ export function CallsPage() {
   const next = q.data?.next_cursor ?? null
   return (
     <AdminPage page="calls">
-      <Filters key={qs} initial={draft} onApply={apply} onClear={() => setSp(new URLSearchParams())} />
+      <Filters key={`${qs}|${langs ? 1 : 0}`} langs={langs} initial={draft} onApply={apply} onClear={() => setSp(new URLSearchParams())} />
       {body}
       <Pager
         name="calls"

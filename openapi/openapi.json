@@ -68,6 +68,14 @@
             "title": "Name",
             "type": "string"
           },
+          "other_languages": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/OtherLanguage"
+            },
+            "title": "Other Languages",
+            "type": "array"
+          },
           "route_targets": {
             "items": {
               "type": "string"
@@ -1959,6 +1967,16 @@
             "title": "Clinical Terms",
             "type": "array"
           },
+          "crisis": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "title": "Crisis",
+            "type": "object"
+          },
           "crisis_agency": {
             "additionalProperties": {
               "items": {
@@ -1969,26 +1987,8 @@
             "title": "Crisis Agency",
             "type": "object"
           },
-          "crisis_en": {
-            "items": {
-              "type": "string"
-            },
-            "title": "Crisis En",
-            "type": "array"
-          },
-          "crisis_es": {
-            "items": {
-              "type": "string"
-            },
-            "title": "Crisis Es",
-            "type": "array"
-          },
           "crisis_instruction": {
             "title": "Crisis Instruction",
-            "type": "string"
-          },
-          "crisis_instruction_es": {
-            "title": "Crisis Instruction Es",
             "type": "string"
           },
           "crisis_numbers": {
@@ -2035,11 +2035,9 @@
           }
         },
         "required": [
-          "crisis_en",
-          "crisis_es",
+          "crisis",
           "crisis_agency",
           "crisis_instruction",
-          "crisis_instruction_es",
           "crisis_numbers",
           "staff_names",
           "denylist",
@@ -2791,6 +2789,92 @@
         "title": "HomeSetup",
         "type": "object"
       },
+      "LanguageItem": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "dir": {
+            "enum": [
+              "ltr",
+              "rtl"
+            ],
+            "title": "Dir",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "native": {
+            "title": "Native",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "name",
+          "native",
+          "dir"
+        ],
+        "title": "LanguageItem",
+        "type": "object"
+      },
+      "LanguagesCatalogResponse": {
+        "properties": {
+          "builtin_lines": {
+            "additionalProperties": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            },
+            "title": "Builtin Lines",
+            "type": "object"
+          },
+          "crisis_floor": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "title": "Crisis Floor",
+            "type": "object"
+          },
+          "group_labels": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Group Labels",
+            "type": "object"
+          },
+          "languages": {
+            "items": {
+              "$ref": "#/components/schemas/LanguageItem"
+            },
+            "title": "Languages",
+            "type": "array"
+          },
+          "line_keys": {
+            "items": {
+              "$ref": "#/components/schemas/LineKeyItem"
+            },
+            "title": "Line Keys",
+            "type": "array"
+          }
+        },
+        "required": [
+          "languages",
+          "line_keys",
+          "group_labels",
+          "builtin_lines",
+          "crisis_floor"
+        ],
+        "title": "LanguagesCatalogResponse",
+        "type": "object"
+      },
       "LatencyItem": {
         "properties": {
           "agent_version": {
@@ -2857,6 +2941,51 @@
         "title": "LimitsResponse",
         "type": "object"
       },
+      "LineKeyItem": {
+        "properties": {
+          "builtin": {
+            "title": "Builtin",
+            "type": "boolean"
+          },
+          "group": {
+            "enum": [
+              "speech",
+              "screen"
+            ],
+            "title": "Group",
+            "type": "string"
+          },
+          "help": {
+            "title": "Help",
+            "type": "string"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "placeholders": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Placeholders",
+            "type": "array"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "help",
+          "group",
+          "placeholders",
+          "builtin"
+        ],
+        "title": "LineKeyItem",
+        "type": "object"
+      },
       "LoginRequest": {
         "additionalProperties": false,
         "properties": {
@@ -2887,6 +3016,25 @@
           "detail"
         ],
         "title": "NotFoundResponse",
+        "type": "object"
+      },
+      "OtherLanguage": {
+        "description": "An enabled language other than English and whether this agent's handoff line is filled.",
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "filled": {
+            "title": "Filled",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "code",
+          "filled"
+        ],
+        "title": "OtherLanguage",
         "type": "object"
       },
       "OutcomeItem": {
@@ -3292,6 +3440,65 @@
           "count"
         ],
         "title": "RoutingMixItem",
+        "type": "object"
+      },
+      "ScreenLanguage": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "dir": {
+            "enum": [
+              "ltr",
+              "rtl"
+            ],
+            "title": "Dir",
+            "type": "string"
+          },
+          "lines": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Lines",
+            "type": "object"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "name",
+          "dir",
+          "lines"
+        ],
+        "title": "ScreenLanguage",
+        "type": "object"
+      },
+      "ScreenTextResponse": {
+        "properties": {
+          "crisis_numbers": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Crisis Numbers",
+            "type": "array"
+          },
+          "languages": {
+            "items": {
+              "$ref": "#/components/schemas/ScreenLanguage"
+            },
+            "title": "Languages",
+            "type": "array"
+          }
+        },
+        "required": [
+          "languages",
+          "crisis_numbers"
+        ],
+        "title": "ScreenTextResponse",
         "type": "object"
       },
       "SectionPutRequest": {
@@ -5816,6 +6023,137 @@
         ]
       }
     },
+    "/api/admin/config/draft/languages": {
+      "get": {
+        "operationId": "get_languages_api_admin_config_draft_languages_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SectionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Get Languages",
+        "tags": [
+          "admin-config"
+        ]
+      },
+      "put": {
+        "description": "Audited as `config:languages` (section name only, never the text).",
+        "operationId": "put_languages_api_admin_config_draft_languages_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SectionPutRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SectionSaveResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Put Languages",
+        "tags": [
+          "admin-config"
+        ]
+      }
+    },
     "/api/admin/config/draft/load-defaults": {
       "post": {
         "operationId": "post_load_defaults_api_admin_config_draft_load_defaults_post",
@@ -5882,6 +6220,28 @@
           }
         },
         "summary": "Post Load Defaults",
+        "tags": [
+          "admin-config"
+        ]
+      }
+    },
+    "/api/admin/config/languages/catalog": {
+      "get": {
+        "description": "Supported languages, every line with its plain label, our en/es lines, the crisis floor.",
+        "operationId": "get_languages_catalog_api_admin_config_languages_catalog_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LanguagesCatalogResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Languages Catalog",
         "tags": [
           "admin-config"
         ]
@@ -7090,6 +7450,27 @@
         "summary": "Service health",
         "tags": [
           "health"
+        ]
+      }
+    },
+    "/api/screen-text": {
+      "get": {
+        "operationId": "getScreenText",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScreenTextResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Caller-screen text per language and the crisis numbers (active setup, public)",
+        "tags": [
+          "calls"
         ]
       }
     }

@@ -196,4 +196,11 @@ describe('callReducer reconnecting (T-FE-CALL)', () => {
     expect(callReducer(ended, { type: 'CRISIS' })).toEqual({ key: 'crisis', language: 'es' })
     expect(callReducer(ended, { type: 'RESET' })).toEqual({ key: 'idle' })
   })
+  it('keeps any language code (Lang is a code string), e.g. ar, until RESET', () => {
+    const ar = callReducer(onCall, { type: 'LANGUAGE', language: 'ar' })
+    expect(ar.language).toBe('ar')
+    const ended = callReducer(ar, { type: 'ENDED' })
+    expect(ended).toEqual({ key: 'ended', language: 'ar' })
+    expect(callReducer(ended, { type: 'HUMAN_NEEDED' })).toEqual({ key: 'human_needed', language: 'ar' })
+  })
 })

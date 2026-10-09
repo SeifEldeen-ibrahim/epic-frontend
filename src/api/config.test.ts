@@ -3,7 +3,17 @@ import { renderHook, waitFor } from '@testing-library/react'
 import { createElement, type ReactNode } from 'react'
 import { beforeEach, describe, expect, it, vi, type Mock } from 'vitest'
 import { api } from './client'
-import { ConfigProblemsError, configKeys, isStale, problemsFor, usePublish, useSaveAgent } from './config'
+import {
+  ConfigProblemsError,
+  configKeys,
+  isStale,
+  problemsFor,
+  useLanguageCatalog,
+  useLanguages,
+  usePublish,
+  useSaveAgent,
+  useSaveLanguages,
+} from './config'
 import { createQueryClient } from './queryClient'
 
 vi.mock('./client', () => ({ api: { GET: vi.fn(), POST: vi.fn(), PUT: vi.fn() } }))
@@ -55,5 +65,44 @@ describe('T-FE: config hooks', () => {
       { document: 'agents.ab', path: 'x', message: 'm' },
     ]
     expect(problemsFor(list, 'agents.a')).toEqual([list[0]])
+  })
+})
+
+describe('T-HOOKS: language hooks', () => {
+  const GET = vi.mocked(api.GET) as unknown as Mock
+
+  it('the language hooks fetch, save and invalidate the draft and diff keys', async () => {
+    GET.mockReset()
+    const { qc, wrapper } = setup()
+    const spy = vi.spyOn(qc, 'invalidateQueries')
+    const catalog = { languages: [{ code: 'ar', name: 'Arabic', native: 'العربية', dir: 'rtl' }], line_keys: [], group_labels: {}, builtin_lines: {}, crisis_floor: {} }
+    const section = { name: 'languages', value: { default: 'en' }, draft_problems: [] }
+    GET.mockImplementation(async (path: string) =>
+      reply(200, path === '/api/admin/config/languages/catalog' ? catalog : section),
+    )
+    const cat = renderHook(() => useLanguageCatalog(), { wrapper })
+    const langs = renderHook(() => useLanguages(), { wrapper })
+    await waitFor(() => expect(cat.result.current.data).toEqual(catalog))
+    await waitFor(() => expect(langs.result.current.data).toEqual(section))
+    expect(GET).toHaveBeenCalledWith('/api/admin/config/draft/languages')
+
+    const saved = { name: 'languages', value: { default: 'en', enabled: ['en', 'ar'] }, draft_problems: [] }
+    PUT.mockResolvedValueOnce(reply(200, saved))
+    const save = renderHook(() => useSaveLanguages(), { wrapper })
+    await save.result.current.mutateAsync(saved.value)
+    expect(PUT).toHaveBeenCalledWith('/api/admin/config/draft/languages', { body: { value: saved.value } })
+    await waitFor(() => expect(qc.getQueryData(configKeys.languages())).toEqual(saved))
+    expect(spy).toHaveBeenCalledWith({ queryKey: configKeys.state() })
+    expect(spy).toHaveBeenCalledWith({ queryKey: configKeys.draftDiff() })
+  })
+
+  it('a refused language save throws its problems', async () => {
+    const { wrapper } = setup()
+    const problems = [{ document: 'languages', path: 'ar.lines.after_hours_note', message: 'Arabic: missing' }]
+    PUT.mockResolvedValueOnce(reply(422, { detail: { code: 'invalid', problems } }))
+    const save = renderHook(() => useSaveLanguages(), { wrapper })
+    const err = await save.result.current.mutateAsync({}).catch((e: unknown) => e)
+    expect(err).toBeInstanceOf(ConfigProblemsError)
+    expect((err as ConfigProblemsError).problems).toEqual(problems)
   })
 })

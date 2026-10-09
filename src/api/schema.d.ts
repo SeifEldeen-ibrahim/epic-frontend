@@ -422,6 +422,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/config/draft/languages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Languages */
+        get: operations["get_languages_api_admin_config_draft_languages_get"];
+        /**
+         * Put Languages
+         * @description Audited as `config:languages` (section name only, never the text).
+         */
+        put: operations["put_languages_api_admin_config_draft_languages_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/config/draft/load-defaults": {
         parameters: {
             query?: never;
@@ -433,6 +454,26 @@ export interface paths {
         put?: never;
         /** Post Load Defaults */
         post: operations["post_load_defaults_api_admin_config_draft_load_defaults_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/config/languages/catalog": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Languages Catalog
+         * @description Supported languages, every line with its plain label, our en/es lines, the crisis floor.
+         */
+        get: operations["get_languages_catalog_api_admin_config_languages_catalog_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -769,6 +810,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/screen-text": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Caller-screen text per language and the crisis numbers (active setup, public) */
+        get: operations["getScreenText"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -795,6 +853,11 @@ export interface components {
             form: string | null;
             /** Name */
             name: string;
+            /**
+             * Other Languages
+             * @default []
+             */
+            other_languages: components["schemas"]["OtherLanguage"][];
             /** Route Targets */
             route_targets: string[];
             /** Takes Calls For */
@@ -1463,18 +1526,16 @@ export interface components {
             clinical_exclusions: string[];
             /** Clinical Terms */
             clinical_terms: string[];
+            /** Crisis */
+            crisis: {
+                [key: string]: string[];
+            };
             /** Crisis Agency */
             crisis_agency: {
                 [key: string]: string[];
             };
-            /** Crisis En */
-            crisis_en: string[];
-            /** Crisis Es */
-            crisis_es: string[];
             /** Crisis Instruction */
             crisis_instruction: string;
-            /** Crisis Instruction Es */
-            crisis_instruction_es: string;
             /** Crisis Numbers */
             crisis_numbers: string[];
             /** Denylist */
@@ -1723,6 +1784,41 @@ export interface components {
             /** Test Call */
             test_call: boolean;
         };
+        /** LanguageItem */
+        LanguageItem: {
+            /** Code */
+            code: string;
+            /**
+             * Dir
+             * @enum {string}
+             */
+            dir: "ltr" | "rtl";
+            /** Name */
+            name: string;
+            /** Native */
+            native: string;
+        };
+        /** LanguagesCatalogResponse */
+        LanguagesCatalogResponse: {
+            /** Builtin Lines */
+            builtin_lines: {
+                [key: string]: {
+                    [key: string]: string;
+                };
+            };
+            /** Crisis Floor */
+            crisis_floor: {
+                [key: string]: string[];
+            };
+            /** Group Labels */
+            group_labels: {
+                [key: string]: string;
+            };
+            /** Languages */
+            languages: components["schemas"]["LanguageItem"][];
+            /** Line Keys */
+            line_keys: components["schemas"]["LineKeyItem"][];
+        };
         /** LatencyItem */
         LatencyItem: {
             /** Agent Version */
@@ -1749,6 +1845,24 @@ export interface components {
             /** Persona Max */
             persona_max: number;
         };
+        /** LineKeyItem */
+        LineKeyItem: {
+            /** Builtin */
+            builtin: boolean;
+            /**
+             * Group
+             * @enum {string}
+             */
+            group: "speech" | "screen";
+            /** Help */
+            help: string;
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Placeholders */
+            placeholders: string[];
+        };
         /** LoginRequest */
         LoginRequest: {
             /** Email */
@@ -1760,6 +1874,16 @@ export interface components {
         NotFoundResponse: {
             /** Detail */
             detail: string;
+        };
+        /**
+         * OtherLanguage
+         * @description An enabled language other than English and whether this agent's handoff line is filled.
+         */
+        OtherLanguage: {
+            /** Code */
+            code: string;
+            /** Filled */
+            filled: boolean;
         };
         /** OutcomeItem */
         OutcomeItem: {
@@ -1888,6 +2012,29 @@ export interface components {
             count: number;
             /** Route Role */
             route_role: string | null;
+        };
+        /** ScreenLanguage */
+        ScreenLanguage: {
+            /** Code */
+            code: string;
+            /**
+             * Dir
+             * @enum {string}
+             */
+            dir: "ltr" | "rtl";
+            /** Lines */
+            lines: {
+                [key: string]: string;
+            };
+            /** Name */
+            name: string;
+        };
+        /** ScreenTextResponse */
+        ScreenTextResponse: {
+            /** Crisis Numbers */
+            crisis_numbers: string[];
+            /** Languages */
+            languages: components["schemas"]["ScreenLanguage"][];
         };
         /** SectionPutRequest */
         SectionPutRequest: {
@@ -3444,6 +3591,122 @@ export interface operations {
             };
         };
     };
+    get_languages_api_admin_config_draft_languages_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SectionResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            /** @description Request Entity Too Large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+        };
+    };
+    put_languages_api_admin_config_draft_languages_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SectionPutRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SectionSaveResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            /** @description Request Entity Too Large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+        };
+    };
     post_load_defaults_api_admin_config_draft_load_defaults_post: {
         parameters: {
             query?: never;
@@ -3500,6 +3763,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+        };
+    };
+    get_languages_catalog_api_admin_config_languages_catalog_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LanguagesCatalogResponse"];
                 };
             };
         };
@@ -4371,6 +4654,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HealthResponse"];
+                };
+            };
+        };
+    };
+    getScreenText: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScreenTextResponse"];
                 };
             };
         };

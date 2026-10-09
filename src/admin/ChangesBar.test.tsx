@@ -137,4 +137,22 @@ describe('T-FE: changes bar', () => {
     expect(screen.getByTestId('changes-discard')).toBeDisabled()
     expect(screen.getByTestId('changes-unsaved')).toHaveTextContent('Save or cancel your edits first.')
   })
+
+  it('T-LANG-PAGES: shows on the language pages, and language problems link to the field', async () => {
+    renderAt('/admin/languages')
+    expect(await screen.findByTestId('changes-bar')).toBeInTheDocument()
+    cleanup()
+    replies['/api/admin/config'] = () =>
+      reply(200, {
+        ...fxConfigState,
+        draft_problems: [
+          { document: 'languages', path: 'ar.lines.after_hours_note', message: "Arabic: 'Closed now' is missing." },
+          { document: 'languages', path: 'ar.handoff.fixture_desk', message: 'Arabic: a line is missing.' },
+        ],
+      })
+    renderAt('/admin/languages/ar')
+    const links = within(await screen.findByTestId('changes-problems')).getAllByRole('link')
+    expect(links[0]).toHaveAttribute('href', '/admin/languages/ar#lang-ar-after_hours_note')
+    expect(links[1]).toHaveAttribute('href', '/admin/languages/ar#lang-ar-handoff-fixture_desk')
+  })
 })

@@ -7,6 +7,7 @@ import { AdminRoutes } from '../../admin/AdminRoutes'
 import type { StaffMe } from '../../api/auth'
 import { api } from '../../api/client'
 import { createQueryClient } from '../../api/queryClient'
+import { fxLanguageCatalog } from '../../admin/fixtures/data'
 
 vi.mock('../../api/client', () => ({ api: { GET: vi.fn(), POST: vi.fn() } }))
 
@@ -244,11 +245,13 @@ describe('calls', () => {
 
   it('writes filters to the URL and queries with them', async () => {
     handlers['/api/admin/calls'] = () => reply(200, { items: [callItem], next_cursor: 'c-2' })
+    handlers['/api/admin/config/languages/catalog'] = () => reply(200, fxLanguageCatalog)
     renderAt('/admin/calls')
     await screen.findByTestId('admin-table-calls')
+    await waitFor(() => expect(within(screen.getByTestId('calls-filter-language')).getByRole('option', { name: 'Spanish' })).toHaveValue('es'))
     await userEvent.selectOptions(screen.getByTestId('calls-filter-outcome'), 'crisis')
     await userEvent.selectOptions(screen.getByTestId('calls-filter-form_status'), 'incomplete')
-    await userEvent.type(screen.getByTestId('calls-filter-language'), 'es')
+    await userEvent.selectOptions(screen.getByTestId('calls-filter-language'), 'es')
     await userEvent.click(screen.getByTestId('calls-apply'))
     await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent('outcome=crisis'))
     expect(screen.getByTestId('location')).toHaveTextContent('form_status=incomplete')
@@ -264,6 +267,20 @@ describe('calls', () => {
     )
     await userEvent.click(screen.getByTestId('calls-clear'))
     await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent(/^\/admin\/calls$/))
+  })
+
+  it('T-EDITORS: the calls list shows language names, and falls back to the stored value without the language list', async () => {
+    handlers['/api/admin/calls'] = () => reply(200, { items: [callItem], next_cursor: null })
+    handlers['/api/admin/config/languages/catalog'] = () => reply(200, fxLanguageCatalog)
+    renderAt('/admin/calls')
+    const table = await screen.findByTestId('admin-table-calls')
+    await waitFor(() => expect(table).toHaveTextContent('English'))
+    expect(within(screen.getByTestId('calls-filter-language')).getAllByRole('option').map((o) => o.textContent)).toEqual(['Any', 'English', 'Spanish', 'Arabic', 'French'])
+    cleanup()
+    handlers['/api/admin/config/languages/catalog'] = () => reply(500, { detail: 'down' })
+    renderAt('/admin/calls?language=es')
+    await screen.findByTestId('admin-table-calls')
+    expect(screen.getByTestId('calls-filter-language')).toHaveValue('es')
   })
 })
 

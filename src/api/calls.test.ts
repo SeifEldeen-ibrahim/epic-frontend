@@ -1,5 +1,9 @@
+import { QueryClientProvider } from '@tanstack/react-query'
+import { renderHook, waitFor } from '@testing-library/react'
+import { createElement, type ReactNode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { answerSession, createCall, endCall, endCallOnUnload, getCall, reconnectCall } from './calls'
+import { answerSession, createCall, endCall, endCallOnUnload, getCall, reconnectCall, useScreenText } from './calls'
+import { createQueryClient } from './queryClient'
 import { api } from './client'
 
 vi.mock('./client', () => ({ api: { GET: vi.fn(), POST: vi.fn() } }))
@@ -149,5 +153,31 @@ describe('createCall test options and reconnectCall', () => {
       throw new TypeError('Failed to fetch')
     })
     expect(await reconnectCall('c1', 's', 'o')).toEqual({ ok: false, status: 0 })
+  })
+})
+
+describe('T-HOOKS: useScreenText', () => {
+  function wrapper({ children }: { children: ReactNode }) {
+    return createElement(QueryClientProvider, { client: createQueryClient() }, children)
+  }
+
+  it('reads the caller-screen text', async () => {
+    GET.mockReset()
+    const body = { languages: [{ code: 'ar', name: 'Arabic', dir: 'rtl', lines: { title: 'x' } }], crisis_numbers: ['988'] }
+    GET.mockResolvedValueOnce(reply(200, body))
+    const { result } = renderHook(() => useScreenText(), { wrapper })
+    expect(result.current.status).toBe('loading')
+    await waitFor(() => expect(result.current).toEqual({ status: 'ready', text: body }))
+    expect(GET).toHaveBeenCalledWith('/api/screen-text')
+  })
+
+  it('a failed useScreenText gives the fallback state without throwing', async () => {
+    GET.mockReset()
+    GET.mockResolvedValueOnce(reply(503, { detail: 'unavailable' }))
+    const first = renderHook(() => useScreenText(), { wrapper })
+    await waitFor(() => expect(first.result.current).toEqual({ status: 'fallback', text: null }))
+    GET.mockRejectedValueOnce(new TypeError('offline'))
+    const second = renderHook(() => useScreenText(), { wrapper })
+    await waitFor(() => expect(second.result.current).toEqual({ status: 'fallback', text: null }))
   })
 })

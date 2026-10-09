@@ -42,4 +42,14 @@ describe('T-COPY: plain words in the admin area', () => {
     expect(adminCopy.home.steps[1].title).toBe('Departments')
     expect(adminCopy.agents.redirectTargets).toBe('Where can this agent send callers? — Departments and agents')
   })
+
+  it('T-LANG-PAGES: menu, page names and help never say catalog, format, built-in or code', () => {
+    const words = /\b(catalog|format|built-in|code)\b/i
+    for (const part of [adminCopy.nav, adminCopy.pages, adminCopy.help]) {
+      for (const text of Object.values(part)) expect(words.test(text), text).toBe(false)
+    }
+    expect(adminCopy.nav.languages).toBe('Language')
+    expect(adminCopy.help.languages).toBeTruthy()
+    expect(adminCopy.help['language-detail']).toBeTruthy()
+  })
 })
