@@ -19,6 +19,9 @@ export type DiffResponse = S['DiffResponse']
 export type ChangeItem = S['ChangeItem']
 export type ChangeNames = S['ChangeNames']
 export type ChangeSummaryItem = S['ChangeSummaryItem']
+export type LanguagesCatalog = S['LanguagesCatalogResponse']
+/** Code-owned floors; `crisis` maps a language code to its locked crisis phrases. */
+export type CatalogFloor = Catalog['floor']
 
 /** Knowledge sections the editor knows (the API refuses any other). */
 export const KNOWLEDGE_SECTIONS = [
@@ -79,6 +82,8 @@ export const configKeys = {
   version: (seq: number) => ['admin', 'config', 'version', seq] as const,
   versionDiff: (seq: number) => ['admin', 'config', 'version-diff', seq] as const,
   draftDiff: () => ['admin', 'config', 'draft-diff'] as const,
+  languageCatalog: () => ['admin', 'config', 'language-catalog'] as const,
+  languages: () => ['admin', 'config', 'languages'] as const,
 }
 
 export function useConfigState() {
@@ -184,6 +189,25 @@ export function useDraftDiff(enabled: boolean) {
   })
 }
 
+/** The language list, line keys, built-in en/es lines and crisis floors (code-owned, never changes at runtime). */
+export function useLanguageCatalog() {
+  const qc = useQueryClient()
+  return useQuery({
+    queryKey: configKeys.languageCatalog(),
+    queryFn: async () => unwrap(qc, await api.GET('/api/admin/config/languages/catalog')),
+    staleTime: Infinity,
+  })
+}
+
+/** The draft `languages` section. */
+export function useLanguages() {
+  const qc = useQueryClient()
+  return useQuery({
+    queryKey: configKeys.languages(),
+    queryFn: async () => unwrap(qc, await api.GET('/api/admin/config/draft/languages')),
+  })
+}
+
 /** After any draft write: the state (problems, changed sections) and draft lists refetch. */
 function draftChanged(qc: QueryClient) {
   void qc.invalidateQueries({ queryKey: configKeys.state() })
@@ -239,6 +263,23 @@ export function useSaveForm(name: string) {
       unwrap(qc, await api.PUT('/api/admin/config/draft/forms/{name}', { params: { path: { name } }, body: { value } })),
     onSuccess: (saved) => {
       qc.setQueryData<SectionResponse>(configKeys.form(name), {
+        name: saved.name,
+        value: saved.value,
+        draft_problems: saved.draft_problems,
+      })
+      draftChanged(qc)
+    },
+  })
+}
+
+/** Saves the whole draft `languages` section; a 422 throws `ConfigProblemsError` (paths like `ar.lines.<key>`). */
+export function useSaveLanguages() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (value: unknown) =>
+      unwrap(qc, await api.PUT('/api/admin/config/draft/languages', { body: { value } })),
+    onSuccess: (saved) => {
+      qc.setQueryData<SectionResponse>(configKeys.languages(), {
         name: saved.name,
         value: saved.value,
         draft_problems: saved.draft_problems,

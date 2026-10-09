@@ -17,6 +17,8 @@ export const CALL_STATES = [
 
 export type CallStateKey = (typeof CALL_STATES)[number]
 export type UnsupportedReason = 'no_webrtc' | 'insecure'
+/** A call language code from the server ("en", "es", "ar", ...): any enabled language. */
+export type Lang = string
 
 export interface CallState {
   key: CallStateKey
@@ -28,7 +30,7 @@ export interface CallState {
   /** Department title the caller's request is for (handoff only; title, never a name). */
   handoffTitle?: string
   /** The call's language from the server (null/absent: not known yet). Kept until RESET. */
-  language?: string | null
+  language?: Lang | null
 }
 
 export type CallEvent =
@@ -47,7 +49,7 @@ export type CallEvent =
   | { type: 'HUMAN_NEEDED' }
   | { type: 'RECONNECTING' }
   | { type: 'RECONNECTED' }
-  | { type: 'LANGUAGE'; language: string | null }
+  | { type: 'LANGUAGE'; language: Lang | null }
 
 export const INITIAL_CALL_STATE: CallState = { key: 'idle' }
 

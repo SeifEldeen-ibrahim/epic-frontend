@@ -4,9 +4,11 @@ import { Link, useParams } from 'react-router'
 import { adminCopy, formatTime, label, orDash, outcomeTone, yesNo } from '../../admin/copy'
 import { AdminPage, ResultNotice } from '../../admin/DataTable'
 import { AdminApiError, sessionQueryKey, useCallDetail, type CallDetail } from '../../api/admin'
+import { useLanguageCatalog } from '../../api/config'
 import type { Session } from '../../api/auth'
 import { ErrorState, Notice, StatusBadge } from '../../ui'
 import { CallTimeline } from './CallTimeline'
+import { languageName } from './CallsPage'
 import { FormPanel, type HistoryItem } from './FormPanel'
 
 const c = adminCopy.detail
@@ -135,6 +137,7 @@ function CallDetailBody({
 }) {
   const headerId = useId()
   const recordingId = useId()
+  const langs = useLanguageCatalog().data?.languages
   const { call, recording } = detail
   const live = call.status === 'live'
   const flagsOpen = detail.timeline.some((e) => e.entry_type === 'flag' && (e.status === 'open' || e.status === 'carried'))
@@ -158,7 +161,7 @@ function CallDetailBody({
             </Fact>
             <Fact term={adminCopy.cols.started}>{formatTime(call.started_at)}</Fact>
             <Fact term={adminCopy.cols.ended}>{formatTime(call.ended_at)}</Fact>
-            <Fact term={adminCopy.cols.language}>{orDash(call.language)}</Fact>
+            <Fact term={adminCopy.cols.language}>{languageName(langs, call.language)}</Fact>
             <Fact term={adminCopy.cols.route}>{label(call.route_role)}</Fact>
             <Fact term={adminCopy.cols.category}>{label(call.inquiry_category)}</Fact>
             <Fact term={adminCopy.cols.agentVersion}>{call.agent_version}</Fact>

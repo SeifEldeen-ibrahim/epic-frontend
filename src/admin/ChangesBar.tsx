@@ -6,6 +6,7 @@ import {
   isStale,
   useConfigState,
   useDiscardDraft,
+  useLanguageCatalog,
   useLoadDefaults,
   usePublish,
   type ConfigState,
@@ -21,10 +22,23 @@ const c = adminCopy.changes
 const sections = adminCopy.config.sections
 
 /** Setup pages: the changes bar shows only here. */
-const SETUP_PATHS = ['/admin/knowledge', '/admin/departments', '/admin/forms', '/admin/agents', '/admin/versions']
+const SETUP_PATHS = ['/admin/knowledge', '/admin/departments', '/admin/forms', '/admin/agents', '/admin/versions', '/admin/languages']
 
 function isSetupPath(pathname: string): boolean {
   return SETUP_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`))
+}
+
+/** A language problem (`languages` + `<code>.lines.<key>`): the language page, at the field. */
+function languagePlace(p: Problem, names: Record<string, string>): { name: string; to: string } {
+  const rest = p.document === 'languages' ? '' : p.document.slice('languages.'.length)
+  const path = [rest, p.path && p.path !== '<root>' ? p.path : ''].filter(Boolean).join('.')
+  const [code, kind, key] = path.split('.')
+  const lang = c.places.languages
+  if (!code) return { name: lang, to: '/admin/languages' }
+  const page = `/admin/languages/${code}`
+  const anchor =
+    kind === 'lines' && key ? `lang-${code}-${key}` : kind === 'handoff' && key ? `lang-${code}-handoff-${key}` : kind === 'crisis_phrases' ? `lang-${code}-crisis` : null
+  return { name: `${lang} › ${names[code] ?? code}`, to: anchor ? `${page}#${anchor}` : page }
 }
 
 /** Where a problem is fixed, in the admin's words, with a link. */
@@ -50,10 +64,13 @@ function changedPlaces(state: ConfigState): string {
 }
 
 function ProblemLinks({ problems }: { problems: Problem[] }) {
+  const catalog = useLanguageCatalog()
+  const names: Record<string, string> = {}
+  for (const l of catalog.data?.languages ?? []) names[l.code] = l.name
   return (
     <ul className="admin-problems" data-testid="changes-problems">
       {problems.map((p, i) => {
-        const place = placeOf(p.document)
+        const place = p.document === 'languages' || p.document.startsWith('languages.') ? languagePlace(p, names) : placeOf(p.document)
         return (
           <li key={i}>
             <Link className="ui-link" to={place.to}>

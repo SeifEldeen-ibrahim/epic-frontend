@@ -11,9 +11,10 @@ import {
   endCallOnUnload,
   getCall,
   reconnectCall,
+  useScreenText,
   type ReconnectResult,
 } from '../../api/calls'
-import { COPY } from './copy'
+import { COPY, CRISIS, SHIPPED_SCREEN_TEXT } from './copy'
 import { CallPage } from './CallPage'
 import { MAX_STREAM_FAILURES, RECONNECT_MS, STATUS_POLL_MS, SWAP_DEADLINE_MS } from './useCall'
 
@@ -24,6 +25,7 @@ vi.mock('../../api/calls', () => ({
   getCall: vi.fn(),
   endCallOnUnload: vi.fn(),
   reconnectCall: vi.fn(),
+  useScreenText: vi.fn(),
 }))
 
 vi.mock('../../api/callEvents', () => ({ streamCallEvents: vi.fn() }))
@@ -42,6 +44,7 @@ const getCallMock = vi.mocked(getCall)
 const unloadMock = vi.mocked(endCallOnUnload)
 const answerMock = vi.mocked(answerSession)
 const reconnectMock = vi.mocked(reconnectCall)
+const screenTextMock = vi.mocked(useScreenText)
 
 class FakePC {
   static instances: FakePC[] = []
@@ -120,6 +123,7 @@ beforeEach(() => {
     .mockResolvedValue({ status: 'live', outcome: null, end_reason: null, language: null })
   unloadMock.mockReset()
   reconnectMock.mockReset().mockResolvedValue({ ok: false, status: 409, reason: 'limit' })
+  screenTextMock.mockReset().mockReturnValue({ status: 'fallback', text: null })
   streams = []
   streamMock.mockReset().mockImplementation(
     (_callId, _secret, onEvent, signal) =>
@@ -741,6 +745,35 @@ describe('CallPage voice reconnect (T-FE-CALL)', () => {
     await user.click(screen.getByTestId('call-button'))
     expect(await screen.findByText(COPY.unavailable.en)).toBeInTheDocument()
     expect(screen.getByText(COPY.unavailable.es)).toBeInTheDocument()
+  })
+
+  it('if the screen-text fetch fails, the shipped EN/ES text shows (T-CALLER)', async () => {
+    createCallMock.mockResolvedValue({ ok: false, reason: 'unavailable' })
+    const user = userEvent.setup()
+    renderPage()
+    await user.click(screen.getByTestId('call-button'))
+    expect(await screen.findByText(COPY.unavailable.en)).toBeInTheDocument()
+    expect(screen.getByText(COPY.unavailable.es)).toBeInTheDocument()
+    expect(screen.getByText(CRISIS.en)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: '911' })).toHaveAttribute('href', 'tel:911')
+  })
+
+  it('an ar call ends in Arabic only when the server has Arabic on (T-CALLER)', async () => {
+    const ar = { code: 'ar', name: 'العربية', dir: 'rtl' as const, lines: { ended: 'انتهت المكالمة.' } }
+    screenTextMock.mockReturnValue({
+      status: 'ready',
+      text: { ...SHIPPED_SCREEN_TEXT, languages: [...SHIPPED_SCREEN_TEXT.languages, ar] },
+    })
+    await startCall()
+    act(() => streams[0].onEvent({ type: 'state', ...LIVE_S, language: 'ar' } as CallEventMsg))
+    act(() => {
+      streams[0].onEvent({ type: 'state', ...ENDED, language: 'ar' } as CallEventMsg)
+      streams[0].resolve('ended')
+    })
+    const text = await screen.findByText('انتهت المكالمة.')
+    expect(text).toHaveAttribute('dir', 'rtl')
+    expect(screen.queryByText(COPY.ended.en)).toBeNull()
+    expect(screen.queryByText(COPY.ended.es)).toBeNull()
   })
 
   it('a swap request with no HTTP answer is retried once for the same seq', async () => {

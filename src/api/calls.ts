@@ -1,7 +1,10 @@
+import { useQuery } from '@tanstack/react-query'
 import { api } from './client'
 import type { components } from './schema'
 
 export type CallStatus = components['schemas']['CallStatusResponse']
+export type ScreenText = components['schemas']['ScreenTextResponse']
+export type ScreenLanguage = components['schemas']['ScreenLanguage']
 /** Test-only start options (`?test=` on the caller page). */
 export type CallTestOptions = NonNullable<components['schemas']['CreateCallRequest']['test']>
 
@@ -141,4 +144,35 @@ export function endCallOnUnload(callId: string, secret: string): void {
   } catch {
     // nothing more can be done while the page unloads
   }
+}
+
+export const screenTextKey = ['screen-text'] as const
+
+/** Caller-screen text: `loading`, `ready` with the active setup's text, or `fallback` when it
+ * cannot be read (error, offline). Never throws; the page keeps its built-in English text. */
+export type ScreenTextState =
+  | { status: 'loading'; text: null }
+  | { status: 'ready'; text: ScreenText }
+  | { status: 'fallback'; text: null }
+
+async function fetchScreenText(): Promise<ScreenText | null> {
+  try {
+    const { data } = await api.GET('/api/screen-text')
+    return data ?? null
+  } catch {
+    return null
+  }
+}
+
+export function useScreenText(): ScreenTextState {
+  const q = useQuery({
+    queryKey: screenTextKey,
+    queryFn: fetchScreenText,
+    retry: false,
+    staleTime: 5 * 60_000,
+    throwOnError: false,
+  })
+  if (q.isPending) return { status: 'loading', text: null }
+  if (q.data) return { status: 'ready', text: q.data }
+  return { status: 'fallback', text: null }
 }

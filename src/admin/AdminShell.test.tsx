@@ -95,4 +95,11 @@ describe('xxadminformsfixxx: header menu', () => {
     expect(screen.getByText('Rey Reviewer')).toBeInTheDocument()
     expect(screen.getByTestId('admin-logout')).toBeInTheDocument()
   })
+
+  it('T-LANG-PAGES: admins find Language under More', async () => {
+    const nav = await renderAt('/admin')
+    await userEvent.click(nav.getByTestId('admin-nav-trigger-more'))
+    const more = within(screen.getByTestId('admin-nav-group-more'))
+    expect(more.getByRole('link', { name: 'Language' })).toHaveAttribute('href', '/admin/languages')
+  })
 })

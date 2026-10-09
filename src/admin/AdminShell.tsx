@@ -68,6 +68,7 @@ export function AdminShell() {
               ...(user?.role === 'admin'
                 ? [
                     { key: 'settings', to: '/admin/settings', label: c.settings },
+                    { key: 'languages', to: '/admin/languages', label: c.languages },
                     { key: 'exports', to: '/admin/exports', label: c.exports },
                     { key: 'audit', to: '/admin/audit', label: c.audit },
                   ]

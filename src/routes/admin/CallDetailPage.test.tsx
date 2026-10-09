@@ -7,6 +7,7 @@ import { AdminRoutes } from '../../admin/AdminRoutes'
 import type { StaffMe } from '../../api/auth'
 import { api } from '../../api/client'
 import { createQueryClient } from '../../api/queryClient'
+import { fxLanguageCatalog } from '../../admin/fixtures/data'
 
 vi.mock('../../api/client', () => ({ api: { GET: vi.fn(), POST: vi.fn() } }))
 
@@ -140,6 +141,18 @@ beforeEach(() => {
 afterEach(() => cleanup())
 
 describe('call detail page', () => {
+  it('T-EDITORS: shows the language name, not the stored value', async () => {
+    GET.mockImplementation(async (path: string) => {
+      if (path === '/api/admin/auth/me') return reply(200, admin)
+      if (path === DETAIL) return detailReply()
+      if (path === '/api/admin/config/languages/catalog') return reply(200, fxLanguageCatalog)
+      return new Promise(() => {})
+    })
+    renderPage()
+    const term = await screen.findByText('Language', { selector: 'dt' })
+    await waitFor(() => expect(term.parentElement).toHaveTextContent('LanguageEnglish'))
+  })
+
   it('shows a skeleton that reserves space while loading', async () => {
     detailReply = () => new Promise(() => {})
     renderPage()

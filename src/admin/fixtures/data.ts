@@ -11,7 +11,7 @@ import type {
   VoiceModeResponse,
 } from '../../api/admin'
 import type { StaffMe } from '../../api/auth'
-import type { Catalog, Compiled, ConfigState, DiffResponse, SectionResponse } from '../../api/config'
+import type { Catalog, Compiled, ConfigState, DiffResponse, LanguagesCatalog, SectionResponse } from '../../api/config'
 import type { components } from '../../api/schema'
 
 type AgentListResponse = components['schemas']['AgentListResponse']
@@ -418,11 +418,9 @@ export const fxCatalog: Catalog = {
   ],
   knowledge_sections: ['routing', 'services', 'referrals', 'hours', 'crisis', 'never_spoken', 'wording', 'clinic'],
   floor: {
-    crisis_en: ['fixture crisis phrase'],
-    crisis_es: ['frase de crisis ficticia'],
+    crisis: { en: ['fixture crisis phrase'], es: ['frase de crisis ficticia'] },
     crisis_agency: { fixture_agency: ['FXA'] },
     crisis_instruction: 'If you are in crisis, call the fictional crisis line.',
-    crisis_instruction_es: 'Si está en crisis, llame a la línea ficticia.',
     crisis_numbers: ['000'],
     staff_names: ['Fixture Staffer'],
     denylist: ['fixture banned term'],
@@ -451,8 +449,8 @@ export const fxRouting: SectionResponse = {
 export const fxAgents: AgentListResponse = {
   entry_agent: 'switchboard',
   agents: [
-    { name: 'switchboard', title: 'Receptionist', voice: 'marin', tools: ['route_to', 'give_referral', 'lookup_service', 'end_call'], route_targets: ['fixture_dept', 'fixture_desk'], form: null, takes_calls_for: [], archived: false, entry: true },
-    { name: 'fixture_desk', title: 'Fixture Desk', voice: 'sage', tools: ['save_fields', 'confirm_callback', 'submit_form', 'end_call'], route_targets: [], form: 'fixture_form', takes_calls_for: ['fixture_desk'], archived: false, entry: false },
+    { name: 'switchboard', title: 'Receptionist', voice: 'marin', tools: ['route_to', 'give_referral', 'lookup_service', 'end_call'], route_targets: ['fixture_dept', 'fixture_desk'], form: null, takes_calls_for: [], archived: false, entry: true, other_languages: [] },
+    { name: 'fixture_desk', title: 'Fixture Desk', voice: 'sage', tools: ['save_fields', 'confirm_callback', 'submit_form', 'end_call'], route_targets: [], form: 'fixture_form', takes_calls_for: ['fixture_desk'], archived: false, entry: false, other_languages: [{ code: 'es', filled: true }] },
   ],
 }
 
@@ -467,7 +465,7 @@ export const fxAgentDesk: SectionResponse = {
     tools: ['save_fields', 'confirm_callback', 'submit_form', 'end_call'],
     route_targets: [],
     form: 'fixture_form',
-    handoff: { bridge_say: 'Passing you to the Fixture Desk now.', bridge_say_es: 'Le paso con el escritorio ficticio.', greeting: 'Greet the caller and ask your first question.' },
+    handoff: { bridge_say: 'Passing you to the Fixture Desk now.', greeting: 'Greet the caller and ask your first question.' },
     archived: false,
   },
   draft_problems: [],
@@ -611,4 +609,40 @@ export const fxDetailGenericForm: CallDetail = {
         },
       }
     : null,
+}
+
+
+/** Language list, lines and floors (fictional): English and Spanish have lines set by us. */
+export const fxLanguageCatalog: LanguagesCatalog = {
+  languages: [
+    { code: 'en', name: 'English', native: 'English', dir: 'ltr' },
+    { code: 'es', name: 'Spanish', native: 'Español', dir: 'ltr' },
+    { code: 'ar', name: 'Arabic', native: 'العربية', dir: 'rtl' },
+    { code: 'fr', name: 'French', native: 'Français', dir: 'ltr' },
+  ],
+  line_keys: [
+    { key: 'after_hours_note', label: 'Closed now', help: 'Said when the clinic is closed.', group: 'speech', placeholders: ['{next_opening}'], builtin: false },
+    { key: 'goodbye', label: 'Goodbye', help: 'Said at the end of every call.', group: 'speech', placeholders: [], builtin: true },
+    { key: 'screen_title', label: 'Screen title', help: 'Shown at the top of the caller screen.', group: 'screen', placeholders: [], builtin: true },
+    { key: 'crisis_screen', label: 'Crisis screen', help: 'Shown when a call stops for a crisis.', group: 'screen', placeholders: [], builtin: false },
+  ],
+  group_labels: { speech: 'What callers hear', screen: "What the caller's screen shows" },
+  builtin_lines: {
+    en: { goodbye: 'Thank you for calling. Goodbye.', screen_title: 'Fixture clinic line' },
+    es: { goodbye: 'Gracias por llamar. Adiós.', screen_title: 'Línea de la clínica ficticia' },
+  },
+  crisis_floor: { en: ['fixture crisis'], es: ['crisis ficticia'] },
+}
+
+export const fxLanguages: SectionResponse = {
+  name: 'languages',
+  value: {
+    default: 'en',
+    items: {
+      en: { enabled: true, lines: { after_hours_note: 'We are closed. We open {next_opening}.', crisis_screen: 'Call the fixture crisis number.' }, handoff: {}, crisis_phrases: [] },
+      es: { enabled: true, lines: { after_hours_note: 'Estamos cerrados. Abrimos {next_opening}.' }, handoff: { fixture_desk: 'Le paso con el escritorio ficticio.' }, crisis_phrases: [] },
+      ar: { enabled: false, lines: {}, handoff: {}, crisis_phrases: [] },
+    },
+  },
+  draft_problems: [],
 }

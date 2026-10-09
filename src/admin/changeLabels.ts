@@ -59,7 +59,6 @@ const AGENT_LABELS: Record<string, string> = {
   form: a.formPick,
   handoff: a.handoff,
   'handoff.bridge_say': a.bridgeSay,
-  'handoff.bridge_say_es': a.bridgeSayEs,
   'handoff.greeting': a.greeting,
   archived: shortLabel(a.archivedLabel),
 }
@@ -87,9 +86,15 @@ const FIELD_PROP_LABELS: Record<string, string> = {
   maximum: f.maximum,
 }
 
-/** An editor label without its hint in brackets, keeping language and case variants. */
-function plain(text: string): string {
-  return /\((Spanish|English|exact case)\)$/.test(text) ? text : shortLabel(text)
+/** An editor label without its hint in brackets, keeping any language name ("(Arabic)") and case variants. */
+export function plainLabel(text: string): string {
+  return /\(([A-Z][\p{L}\p{M} -]*|exact case)\)$/u.test(text) ? text : shortLabel(text)
+}
+const plain = plainLabel
+
+/** A language page line named with its language: "Closed now (Arabic)". */
+export function languageLabel(label: string, languageName: string): string {
+  return `${shortLabel(label)} (${languageName})`
 }
 
 function knowledgeLabels(section: string): Record<string, string> {
