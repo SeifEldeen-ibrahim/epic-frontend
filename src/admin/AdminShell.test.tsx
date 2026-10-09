@@ -102,4 +102,15 @@ describe('xxadminformsfixxx: header menu', () => {
     const more = within(screen.getByTestId('admin-nav-group-more'))
     expect(more.getByRole('link', { name: 'Language' })).toHaveAttribute('href', '/admin/languages')
   })
+
+  it('T-CLINIC-PAGES: admins find Clinic sim under More; reviewers do not', async () => {
+    const nav = await renderAt('/admin')
+    await userEvent.click(nav.getByTestId('admin-nav-trigger-more'))
+    const more = within(screen.getByTestId('admin-nav-group-more'))
+    expect(more.getByRole('link', { name: 'Clinic sim' })).toHaveAttribute('href', '/admin/clinic-sim')
+    cleanup()
+    const nav2 = await renderAt('/admin', reviewer)
+    await userEvent.click(nav2.getByTestId('admin-nav-trigger-more'))
+    expect(within(screen.getByTestId('admin-nav-group-more')).queryByRole('link', { name: 'Clinic sim' })).toBeNull()
+  })
 })

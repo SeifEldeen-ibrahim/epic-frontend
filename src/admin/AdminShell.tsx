@@ -71,6 +71,7 @@ export function AdminShell() {
                     { key: 'languages', to: '/admin/languages', label: c.languages },
                     { key: 'exports', to: '/admin/exports', label: c.exports },
                     { key: 'audit', to: '/admin/audit', label: c.audit },
+                    { key: 'clinic-sim', to: '/admin/clinic-sim', label: c.clinicSim },
                   ]
                 : []),
               account,

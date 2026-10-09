@@ -56,6 +56,7 @@ export const adminCopy = {
     forms: 'Forms',
     versions: 'History',
     languages: 'Language',
+    clinicSim: 'Clinic sim',
     account: 'Account',
   },
   pages: {
@@ -78,6 +79,7 @@ export const adminCopy = {
     'version-detail': 'Version',
     languages: 'Language',
     'language-detail': 'Language',
+    'clinic-sim': 'Clinic sim',
   },
   /** One plain line under every page title: what the page is for. */
   help: {
@@ -101,6 +103,7 @@ export const adminCopy = {
     languages: 'The languages callers can speak with the assistant, and what is left to fill in for each.',
     'language-detail': 'What callers hear in this language, and what their screen shows.',
     account: 'Your sign-in details.',
+    'clinic-sim': 'A practice clinic with made-up patients, used to test booking.',
   } as Record<string, string>,
   placeholderBody: 'This page is being built.',
   logout: 'Sign out',
@@ -456,6 +459,115 @@ export const adminCopy = {
     crisisHintFloor: 'If a caller says one of these, the call stops and they are given the crisis numbers. Ours are always included; you can add more.',
     crisisLanguagesLink: 'Crisis phrases for each language are on the Language page',
   },
+  /** The practice clinic (made-up patients, departments and appointments). */
+  clinicSim: {
+    tabs: { patients: 'Patients', appointments: 'Appointments', departments: 'Departments' },
+    unreachable: "The clinic sim isn't reachable right now",
+    gone: 'This record no longer exists',
+    saving: 'Saving…',
+    save: 'Save',
+    cancel: 'Cancel',
+    saveFailed: 'Could not save. Try again.',
+    fixFields: 'Some fields need fixing. See the note under each one.',
+    actions: 'Actions',
+    patients: {
+      caption: 'Patients',
+      search: 'Find a patient',
+      searchHint: 'Name, phone or record number.',
+      searchButton: 'Search',
+      clearSearch: 'Show all',
+      add: 'Add patient',
+      addTitle: 'Add patient',
+      edit: 'Edit',
+      editLabel: (name: string) => `Edit ${name}`,
+      editTitle: (name: string) => `Edit ${name}`,
+      delete: 'Delete',
+      deleteLabel: (name: string) => `Delete ${name}`,
+      deleteTitle: 'Delete patient',
+      deleteBody: (name: string) => `Delete ${name}? Their upcoming appointments will be cancelled.`,
+      deleting: 'Deleting…',
+      deleteFailed: 'Could not delete. Try again.',
+      empty: 'No patients yet',
+      emptyBody: 'Add a made-up patient to start booking.',
+      filteredEmpty: 'No patients match',
+      filteredEmptyBody: 'Try another name, phone or record number.',
+      error: 'Could not load the patients.',
+      cols: { name: 'Name', dob: 'Date of birth', phone: 'Phone', mrn: 'Record number' },
+      fields: {
+        first_name: 'First name',
+        last_name: 'Last name',
+        date_of_birth: 'Date of birth',
+        dobHint: 'Year-month-day, for example 1980-04-23.',
+        phone: 'Phone',
+        email: 'Email',
+      },
+      unknown: (id: string) => `Patient ${String(id).slice(0, 8)}`,
+    },
+    appointments: {
+      caption: 'Appointments',
+      filters: 'Filter appointments',
+      department: 'Department',
+      status: 'Status',
+      show: 'Show',
+      upcoming: 'Upcoming',
+      all: 'All',
+      statuses: { booked: 'Booked', cancelled: 'Cancelled' } as Record<string, string>,
+      visitTypes: { new_patient: 'New patient', follow_up: 'Follow-up' } as Record<string, string>,
+      book: 'Book appointment',
+      reschedule: 'Reschedule',
+      rescheduleLabel: (when: string) => `Reschedule the appointment on ${when}`,
+      cancel: 'Cancel',
+      cancelLabel: (when: string) => `Cancel the appointment on ${when}`,
+      cancelTitle: 'Cancel appointment',
+      cancelBody: (name: string, when: string) => `Cancel ${name}'s appointment on ${when}?`,
+      cancelConfirm: 'Cancel appointment',
+      keep: 'Keep it',
+      cancelling: 'Cancelling…',
+      cancelFailed: 'Could not cancel. Try again.',
+      empty: 'No appointments yet',
+      emptyBody: 'Book one for a made-up patient.',
+      filteredEmpty: 'No appointments match',
+      filteredEmptyBody: 'Try another department, status or show all.',
+      error: 'Could not load the appointments.',
+      cols: { when: 'When', patient: 'Patient', department: 'Department', provider: 'Provider', type: 'Visit type', status: 'Status' },
+    },
+    book: {
+      title: 'Book appointment',
+      rescheduleTitle: 'Reschedule appointment',
+      patientSearch: 'Find a patient',
+      patientSearchHint: 'Type a name, phone or record number.',
+      patient: 'Patient',
+      choosePatient: 'Choose a patient',
+      noPatients: 'No patients match.',
+      department: 'Department',
+      chooseDepartment: 'Choose a department',
+      date: 'Date',
+      slots: 'Free times',
+      slotsHint: 'Choose a department and a date to see free times.',
+      slotsLoading: 'Loading free times',
+      noSlots: 'No free times on this day. Try another date.',
+      slotsError: 'Could not load the free times.',
+      slotLabel: (time: string, provider: string) => `${time} with ${provider}`,
+      visitType: 'Visit type',
+      note: 'Note',
+      submit: 'Book',
+      submitting: 'Booking…',
+      rescheduleSubmit: 'Move appointment',
+      rescheduling: 'Moving…',
+      current: (when: string) => `Now: ${when}`,
+      taken: 'That time was just taken. Choose another time.',
+      failed: 'Could not book. Try again.',
+    },
+    departments: {
+      caption: 'Departments and providers',
+      loading: 'Loading departments',
+      empty: 'No departments yet',
+      error: 'Could not load the departments.',
+      providers: 'Providers',
+      none: 'No providers',
+      cols: { department: 'Department', providers: 'Providers' },
+    },
+  },
   changes: {
     pending: "You have changes that aren't live yet.",
     makeLive: 'Make changes live',
@@ -706,6 +818,38 @@ export function orDash(value: string | null | undefined): string {
 export function formatTime(iso: string | null | undefined): string {
   if (!iso) return adminCopy.dash
   return new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
+}
+
+/** Date and time in the clinic's own time zone, with its short zone name ("Nov 2, 2026, 9:00 AM EST"). */
+export function formatClinicTime(iso: string, timeZone: string | undefined): string {
+  return new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZoneName: 'short',
+  }).format(new Date(iso))
+}
+
+/** Time of day in the clinic's own time zone, with its short zone name ("9:00 AM EST"). */
+export function formatClinicClock(iso: string, timeZone: string | undefined): string {
+  return new Intl.DateTimeFormat('en-US', { timeZone, hour: 'numeric', minute: '2-digit', timeZoneName: 'short' }).format(
+    new Date(iso),
+  )
+}
+
+/** "Ana Example" for a clinic-sim patient. */
+export function clinicPatientName(p: { first_name: string; last_name: string }): string {
+  return `${p.first_name} ${p.last_name}`
+}
+
+/** Today's YYYY-MM-DD in the given time zone. */
+export function todayIn(timeZone: string | undefined, now: Date): string {
+  const parts = new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(now)
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? ''
+  return `${get('year')}-${get('month')}-${get('day')}`
 }
 
 /** Local HH:MM for an epoch-ms value. */
