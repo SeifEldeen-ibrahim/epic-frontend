@@ -52,4 +52,11 @@ describe('T-COPY: plain words in the admin area', () => {
     expect(adminCopy.help.languages).toBeTruthy()
     expect(adminCopy.help['language-detail']).toBeTruthy()
   })
+
+  it('T-CLINIC-PAGES: the clinic sim has its menu name, page name and one-line help', () => {
+    expect(adminCopy.nav.clinicSim).toBe('Clinic sim')
+    expect(adminCopy.pages['clinic-sim']).toBe('Clinic sim')
+    expect(adminCopy.help['clinic-sim']).toBe('A practice clinic with made-up patients, used to test booking.')
+    expect(adminCopy.clinicSim.gone).toBe('This record no longer exists')
+  })
 })

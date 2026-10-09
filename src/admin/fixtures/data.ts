@@ -646,3 +646,92 @@ export const fxLanguages: SectionResponse = {
   },
   draft_problems: [],
 }
+
+// --- Clinic sim (fictional practice clinic; every name is made up) -----------------------------
+type ClinicSchemas = components['schemas']
+const clinicId = (n: number) => `00000000-0000-4000-9000-${String(n).padStart(12, '0')}`
+
+export const fxClinicInfo: ClinicSchemas['ClinicInfo'] = {
+  name: 'Fixture Practice Clinic (fictional)',
+  time_zone: 'America/New_York',
+  slot_minutes: 30,
+  opens: '09:00',
+  closes: '17:00',
+  weekdays: ['mon', 'tue', 'wed', 'thu', 'fri'],
+}
+
+export const fxClinicDepartments: ClinicSchemas['ClinicDepartment'][] = [
+  { id: 1, code: 'fixture_family', name: 'Family Medicine (fixture)' },
+  { id: 2, code: 'fixture_skin', name: 'Dermatology (fixture)' },
+]
+
+export const fxClinicProviders: ClinicSchemas['ClinicProvider'][] = [
+  { id: 11, department_id: 1, code: 'fx_okafor', display_name: 'Dr. Fixture Okafor' },
+  { id: 12, department_id: 1, code: 'fx_lind', display_name: 'Dr. Fixture Lind' },
+  { id: 21, department_id: 2, code: 'fx_moreau', display_name: 'Dr. Fixture Moreau' },
+]
+
+const clinicPatient = (n: number, first: string, last: string, dob: string): ClinicSchemas['ClinicPatient'] => ({
+  id: clinicId(n),
+  first_name: first,
+  last_name: last,
+  date_of_birth: dob,
+  phone: `555-0${String(100 + n)}`,
+  email: null,
+  mrn: `FX-${String(n).padStart(5, '0')}`,
+  created_at: '2026-10-01T12:00:00Z',
+  updated_at: '2026-10-01T12:00:00Z',
+})
+
+export const fxClinicPatients: ClinicSchemas['ClinicPatientList'] = {
+  items: [
+    clinicPatient(1, 'Ana', 'Fixture', '1980-04-23'),
+    clinicPatient(2, 'Ben', 'Example', '1975-11-02'),
+    clinicPatient(3, 'Chloe', 'Sample', '1992-07-15'),
+  ],
+  total: 3,
+}
+export const fxClinicPatientsEmpty: ClinicSchemas['ClinicPatientList'] = { items: [], total: 0 }
+
+const clinicAppt = (
+  n: number,
+  patient: number,
+  department: number,
+  provider: ClinicSchemas['ClinicProvider'],
+  startsAt: string,
+  status: 'booked' | 'cancelled' = 'booked',
+): ClinicSchemas['ClinicAppointment'] => ({
+  id: clinicId(100 + n),
+  patient_id: clinicId(patient),
+  department_id: department,
+  provider_id: provider.id,
+  provider_name: provider.display_name,
+  starts_at: startsAt,
+  ends_at: new Date(Date.parse(startsAt) + 30 * 60_000).toISOString().replace('.000Z', 'Z'),
+  visit_type: n % 2 ? 'new_patient' : 'follow_up',
+  status,
+  note: null,
+  cancelled_at: status === 'cancelled' ? '2026-10-05T12:00:00Z' : null,
+  created_at: '2026-10-01T12:00:00Z',
+  updated_at: '2026-10-01T12:00:00Z',
+})
+
+export const fxClinicAppointments: ClinicSchemas['ClinicAppointmentList'] = {
+  items: [
+    clinicAppt(1, 1, 1, fxClinicProviders[0], '2026-11-02T14:00:00Z'),
+    clinicAppt(2, 2, 2, fxClinicProviders[2], '2026-11-03T15:30:00Z'),
+    clinicAppt(3, 3, 1, fxClinicProviders[1], '2026-11-04T19:00:00Z', 'cancelled'),
+  ],
+  total: 3,
+}
+
+export const fxClinicSlots: ClinicSchemas['ClinicFreeSlot'][] = ['14:00', '14:30', '15:00', '16:30'].flatMap((t) =>
+  fxClinicProviders
+    .filter((p) => p.department_id === 1)
+    .map((p) => ({
+      provider_id: p.id,
+      provider_name: p.display_name,
+      starts_at: `2026-11-02T${t}:00Z`,
+      ends_at: new Date(Date.parse(`2026-11-02T${t}:00Z`) + 30 * 60_000).toISOString().replace('.000Z', 'Z'),
+    })),
+)
