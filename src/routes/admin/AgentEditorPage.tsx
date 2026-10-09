@@ -384,6 +384,17 @@ export function AgentEditorPage() {
               testId="agent-form"
             />
           ) : null}
+          {tools.some((t) => t.group === 'booking') ? (
+            <fieldset className="admin-fieldset admin-fieldset--nested" data-testid="agent-tools-booking">
+              <legend>{c.bookingGroup}</legend>
+              <p className="admin-muted">{c.bookingHint}</p>
+              {tools
+                .filter((t) => t.group === 'booking')
+                .map((t) => (
+                  <CheckboxInput key={t.name} label={t.description} checked={value.tools.includes(t.name)} disabled={locked} onChange={(on) => toggleTool(t.name, on)} testId={`agent-tool-${t.name}`} />
+                ))}
+            </fieldset>
+          ) : null}
           {tools
             .filter((t) => t.group === 'end')
             .map((t) => (
