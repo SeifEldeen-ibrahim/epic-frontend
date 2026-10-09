@@ -669,6 +669,8 @@ export const adminCopy = {
     removeItem: 'Remove fact',
     toolsHint: 'Each tool is code; pick what this agent may do. Safety checks always apply.',
     formGroup: 'Fill a form: save details, confirm the callback number, submit',
+    bookingGroup: 'Appointments',
+    bookingHint: 'Let this agent check who the caller is and manage their clinic appointments.',
     formPick: 'Form',
     noForm: 'Choose a form',
     noForms: 'No forms yet.',

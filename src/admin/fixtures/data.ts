@@ -407,6 +407,12 @@ export const fxCatalog: Catalog = {
     { name: 'confirm_callback', description: 'Fill a form: confirm the callback number and permission to phone.', group: 'form', locked: false },
     { name: 'submit_form', description: 'Fill a form: submit the request for staff review.', group: 'form', locked: false },
     { name: 'end_call', description: 'End the call (always on).', group: 'end', locked: true },
+    { name: 'verify_patient', description: 'Check who the caller is (phone, name, date of birth)', group: 'booking', locked: false },
+    { name: 'find_slots', description: 'Find open appointment times', group: 'booking', locked: false },
+    { name: 'book_appointment', description: 'Book an appointment', group: 'booking', locked: false },
+    { name: 'list_my_appointments', description: "List the caller's appointments", group: 'booking', locked: false },
+    { name: 'reschedule_appointment', description: 'Move an appointment', group: 'booking', locked: false },
+    { name: 'cancel_appointment', description: 'Cancel an appointment', group: 'booking', locked: false },
   ],
   field_types: [
     { type: 'text', label: 'Text', options: ['max_length'] },

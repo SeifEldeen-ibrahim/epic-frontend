@@ -110,6 +110,36 @@ describe('T-FE: agents', () => {
     expect(Object.keys(body)).not.toContain('prompt')
   })
 
+  it('xxclinicbookingxx: Appointments tools are their own group; checked ones are saved; other groups are unchanged', async () => {
+    renderAt('/admin/agents/fixture_desk')
+    const booking = await screen.findByTestId('agent-tools-booking')
+    expect(within(booking).getByText('Appointments')).toBeInTheDocument()
+    expect(within(booking).getByText('Let this agent check who the caller is and manage their clinic appointments.')).toBeInTheDocument()
+    const names = ['verify_patient', 'find_slots', 'book_appointment', 'list_my_appointments', 'reschedule_appointment', 'cancel_appointment']
+    expect(within(booking).getAllByRole('checkbox')).toHaveLength(6)
+    for (const n of names) {
+      expect(within(booking).getByTestId(`agent-tool-${n}`)).not.toBeChecked()
+      expect(within(booking).getByTestId(`agent-tool-${n}`)).not.toBeDisabled()
+    }
+    // the other groups render as before, outside the Appointments group
+    for (const id of ['agent-tool-route_to', 'agent-tool-give_referral', 'agent-tool-lookup_service', 'agent-tool-form', 'agent-tool-end_call']) {
+      expect(screen.getByTestId(id)).toBeInTheDocument()
+      expect(within(booking).queryByTestId(id)).toBeNull()
+    }
+    expect(screen.getByTestId('agent-tool-form')).toBeChecked()
+    expect(screen.getByTestId('agent-tool-end_call')).toBeChecked()
+    expect(screen.getByTestId('agent-tool-end_call')).toBeDisabled()
+    await userEvent.click(screen.getByTestId('agent-tool-verify_patient'))
+    await userEvent.click(screen.getByTestId('agent-tool-book_appointment'))
+    PUT.mockResolvedValue(reply(200, { name: 'agents.fixture_desk', value: {}, draft_problems: [] }))
+    await userEvent.click(screen.getByTestId('agent-save'))
+    await waitFor(() => expect(PUT).toHaveBeenCalled())
+    const body = PUT.mock.calls[0][1].body.value
+    expect(body.tools).toEqual(expect.arrayContaining(['verify_patient', 'book_appointment', 'save_fields', 'confirm_callback', 'submit_form', 'end_call']))
+    expect(body.tools).not.toContain('find_slots')
+    expect(body.tools).not.toContain('cancel_appointment')
+  })
+
   it('T-EDITORS: the agent editor keeps the English handoff line and shows other languages with a link', async () => {
     replies['/api/admin/config/draft/agents'] = () =>
       reply(200, { ...fxAgents, agents: fxAgents.agents.map((a) => (a.name === 'fixture_desk' ? { ...a, other_languages: [{ code: 'es', filled: true }, { code: 'ar', filled: false }] } : a)) })
