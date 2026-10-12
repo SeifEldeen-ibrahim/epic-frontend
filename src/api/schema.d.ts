@@ -2647,7 +2647,7 @@ export interface components {
              * Group
              * @enum {string}
              */
-            group: "redirect" | "form" | "info" | "end";
+            group: "redirect" | "form" | "info" | "end" | "booking";
             /** Locked */
             locked: boolean;
             /** Name */

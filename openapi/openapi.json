@@ -4509,7 +4509,8 @@
               "redirect",
               "form",
               "info",
-              "end"
+              "end",
+              "booking"
             ],
             "title": "Group",
             "type": "string"
